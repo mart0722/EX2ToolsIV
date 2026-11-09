@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg">#20272E</color>
+    <color name="hero_scrim">#0020272E</color>
+    <color name="clock_text">#FFFFFFFF</color>
+    <color name="bg_rail">#0020272E</color>
+    <color name="surface">#F22C2F3D</color>
+    <color name="surface_2">#D93A3D4B</color>
+    <color name="surface_3">#993A3D4B</color>
+    <color name="surface_4">#593A3D4B</color>
+    <color name="glass">#F22C2F3D</color>
+    <color name="stroke">#00000000</color>
+    <color name="cyan_dim">#1E2A44</color>
+    <color name="emerald_dim">#123326</color>
+    <color name="text">#E5FFFFFF</color>
+    <color name="text_dim">#99FFFFFF</color>
+    <color name="text_faint">#66FFFFFF</color>
+
+    <color name="flyme_window_background">#20272E</color>
+    <color name="flyme_fill_a1_1">#F22C2F3D</color>
+    <color name="flyme_fill_a1_2">#D93A3D4B</color>
+    <color name="flyme_fill_a1_3">#993A3D4B</color>
+    <color name="flyme_fill_a1_5">#593A3D4B</color>
+    <color name="flyme_fill_b2">#4A4D5B</color>
+    <color name="flyme_label_level1">#E5FFFFFF</color>
+    <color name="flyme_label_level2">#99FFFFFF</color>
+    <color name="flyme_label_level3">#66FFFFFF</color>
+    <color name="flyme_label_level4">#33FFFFFF</color>
+    <color name="flyme_label_level5">#1AFFFFFF</color>
+    <color name="flyme_side_nav_start">#993A3D4B</color>
+    <color name="flyme_side_nav_end">#003A3D4B</color>
+    <color name="flyme_toast_background">@color/flyme_fill_a1_1</color>
+    <color name="flyme_toast_text">@color/flyme_label_level1</color>
+    <color name="flyme_icon_inactive">@color/flyme_label_level2</color>
+    <color name="flyme_badge_neutral">@color/flyme_fill_b2</color>
+
+    <!-- Night palette for widgets. -->
+    <color name="cx_accent_soft_bg">#0B1A39</color>
+    <color name="cx_bg_panel">#0B131E</color>
+    <color name="cx_bg_root">#01040D</color>
+    <color name="cx_card_stroke">#2EFFFFFF</color>
+    <color name="cx_on_accent_soft">#FFFFFF</color>
+    <color name="cx_surface">#0F1722</color>
+    <color name="cx_surface_alt">#26333F</color>
+    <color name="cx_text_hi">#DCE7F5</color>
+    <color name="cx_text_muted">#8FA0BC</color>
+    <color name="cx_text_primary">#F2F7FC</color>
+    <color name="cx_text_secondary">#B9BABF</color>
+    <color name="widget_apps_bg_base">#14181C</color>
+    <color name="widget_bg_alpha_000">#000F1722</color>
+    <color name="widget_bg_alpha_020">#330F1722</color>
+    <color name="widget_bg_alpha_040">#660F1722</color>
+    <color name="widget_bg_alpha_060">#990F1722</color>
+    <color name="widget_bg_alpha_080">#CC0F1722</color>
+    <color name="widget_bg_alpha_100">#FF0F1722</color>
+    <color name="widget_card_stroke">#1FFFFFFF</color>
+    <color name="widget_chip_ac_off_bg">#000000</color>
+    <color name="widget_divider">#1AFFFFFF</color>
+
+    <color name="overview_card_top">#CC2C2F3D</color>
+    <color name="overview_card_bottom">#992C2F3D</color>
+    <color name="overview_card_stroke">#1FFFFFFF</color>
+    <color name="overview_icon_bg">#331368FB</color>
+    <color name="overview_icon_tint">#FFFFFFFF</color>
+    <color name="overview_track">#33FFFFFF</color>
+    <color name="overview_glow_center">#33FFFFFF</color>
+    <color name="overview_glow_edge">#00FFFFFF</color>
+</resources>

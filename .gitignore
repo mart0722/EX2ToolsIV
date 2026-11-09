@@ -1,0 +1,25 @@
+# Gradle / Android build output
+.gradle/
+build/
+**/build/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Local SDK path and machine-specific files
+local.properties
+*.iml
+.idea/
+
+# Signing material must never be committed
+signing/*.jks
+signing/*.keystore
+signing/*.pk8
+signing/*.pem
+signing/*.p12
+
+# Built packages
+*.apk
+*.aab
+*.ap_
+*.dex

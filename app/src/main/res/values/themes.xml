@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.EX2ToolsIV" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/flyme_blue</item>
+        <item name="colorOnPrimary">@color/flyme_white</item>
+        <item name="colorPrimaryContainer">@color/flyme_blue</item>
+        <item name="colorOnPrimaryContainer">@color/flyme_white</item>
+        <item name="colorSecondary">@color/flyme_blue</item>
+        <item name="colorOnSecondary">@color/flyme_white</item>
+        <item name="colorSecondaryContainer">@color/flyme_blue</item>
+        <item name="colorOnSecondaryContainer">@color/flyme_white</item>
+        <item name="colorTertiary">@color/flyme_blue</item>
+        <item name="colorSurface">@color/flyme_fill_a1_1</item>
+        <item name="colorOnSurface">@color/flyme_label_level1</item>
+        <item name="colorSurfaceVariant">@color/flyme_fill_a1_2</item>
+        <item name="colorOnSurfaceVariant">@color/flyme_label_level2</item>
+        <item name="colorOutline">@color/transparent</item>
+        <item name="colorError">@color/flyme_red</item>
+        <item name="android:colorBackground">@color/flyme_window_background</item>
+        <item name="android:windowBackground">@color/flyme_window_background</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">@bool/light_system_bars</item>
+        <item name="android:windowLightNavigationBar">@bool/light_system_bars</item>
+        <item name="android:fontFamily">sans-serif</item>
+    </style>
+
+    <style name="Text.EX2.Title" parent="TextAppearance.Material3.HeadlineSmall">
+        <item name="android:textColor">@color/flyme_label_level1</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textSize">33sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="Text.EX2.Section" parent="TextAppearance.Material3.TitleMedium">
+        <item name="android:textColor">@color/flyme_label_level1</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textSize">22sp</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <style name="Text.EX2.GroupLabel" parent="TextAppearance.Material3.BodySmall">
+        <item name="android:textColor">@color/flyme_label_level2</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textSize">20sp</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <style name="Text.EX2.Body" parent="TextAppearance.Material3.BodyMedium">
+        <item name="android:textColor">@color/flyme_label_level1</item>
+        <item name="android:textSize">21sp</item>
+    </style>
+
+    <style name="Text.EX2.Caption" parent="TextAppearance.Material3.BodySmall">
+        <item name="android:textColor">@color/flyme_label_level2</item>
+        <item name="android:textSize">19sp</item>
+    </style>
+
+    <style name="Text.EX2.Number" parent="TextAppearance.Material3.DisplaySmall">
+        <item name="android:textColor">@color/flyme_label_level1</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textSize">46sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0</item>
+    </style>
+
+    <style name="Text.EX2.NumberSmall" parent="TextAppearance.Material3.HeadlineSmall">
+        <item name="android:textColor">@color/flyme_label_level1</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textSize">30sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="Text.EX2.HeroNumber" parent="TextAppearance.Material3.DisplayLarge">
+        <item name="android:textColor">@color/flyme_label_level1</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textSize">64sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:letterSpacing">0</item>
+    </style>
+
+    <style name="Text.EX2.Metric" parent="TextAppearance.Material3.HeadlineMedium">
+        <item name="android:textColor">@color/flyme_label_level1</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textSize">38sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:letterSpacing">0</item>
+    </style>
+
+    <style name="Text.EX2.ListTitle" parent="TextAppearance.Material3.TitleMedium">
+        <item name="android:textColor">@color/flyme_label_level1</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textSize">22sp</item>
+    </style>
+
+    <style name="Text.EX2.ListMeta" parent="TextAppearance.Material3.BodyMedium">
+        <item name="android:textColor">@color/flyme_label_level2</item>
+        <item name="android:textSize">19sp</item>
+    </style>
+
+    <style name="Text.EX2.ListSmall" parent="TextAppearance.Material3.BodySmall">
+        <item name="android:textColor">@color/flyme_label_level3</item>
+        <item name="android:textSize">17sp</item>
+    </style>
+
+    <style name="Widget.EX2.Card" parent="Widget.Material3.CardView.Filled">
+        <item name="cardBackgroundColor">@android:color/transparent</item>
+        <item name="cardCornerRadius">@dimen/card_radius</item>
+        <item name="cardElevation">0dp</item>
+        <item name="strokeWidth">0dp</item>
+        <item name="android:layout_margin">8dp</item>
+    </style>
+
+    <style name="Widget.EX2.Block" parent="Widget.EX2.Card">
+        <item name="android:layout_margin">0dp</item>
+    </style>
+
+    <style name="Widget.EX2.NavItem" parent="">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">@dimen/nav_item_height</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:background">@drawable/bg_rail_item</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+    </style>
+
+    <style name="Widget.EX2.Toggle" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="android:textColor">@color/toggle_text</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textSize">22sp</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="backgroundTint">@color/toggle_button_bg</item>
+        <item name="cornerRadius">6dp</item>
+        <item name="strokeWidth">0dp</item>
+        <item name="strokeColor">@color/transparent</item>
+    </style>
+
+    <style name="Widget.EX2.DangerButton" parent="Widget.Material3.Button">
+        <item name="android:textColor">@color/flyme_white</item>
+        <item name="android:textSize">20sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:background">@drawable/flyme_action_danger</item>
+        <item name="cornerRadius">7dp</item>
+    </style>
+
+    <style name="Widget.EX2.PrimaryButton" parent="Widget.Material3.Button">
+        <item name="android:textColor">@color/flyme_white</item>
+        <item name="android:textSize">20sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:background">@drawable/flyme_scan_button_background</item>
+        <item name="cornerRadius">7dp</item>
+    </style>
+
+    <style name="Widget.EX2.SecondaryButton" parent="Widget.Material3.Button">
+        <item name="android:textColor">@color/flyme_label_level1</item>
+        <item name="android:textSize">20sp</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="backgroundTint">@color/flyme_fill_a1_2</item>
+        <item name="cornerRadius">7dp</item>
+        <item name="strokeWidth">0dp</item>
+        <item name="strokeColor">@color/transparent</item>
+    </style>
+
+    <style name="Widget.EX2.FlymeButton" parent="">
+        <item name="android:gravity">center</item>
+        <item name="android:textSize">21sp</item>
+        <item name="android:textColor">@color/flyme_label_level1</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:paddingStart">16dp</item>
+        <item name="android:paddingEnd">16dp</item>
+    </style>
+
+    <style name="Widget.EX2.FlymeButton.Secondary">
+        <item name="android:background">@drawable/flyme_button_background</item>
+    </style>
+
+    <style name="Widget.EX2.FlymeButton.Primary">
+        <item name="android:background">@drawable/flyme_scan_button_background</item>
+        <item name="android:textColor">@color/flyme_white</item>
+    </style>
+
+    <style name="Widget.EX2.FlymeButton.Danger">
+        <item name="android:background">@drawable/flyme_action_danger</item>
+        <item name="android:textColor">@color/flyme_white</item>
+    </style>
+
+    <style name="Theme.EX2ToolsIV.Dialog" parent="Theme.Material3.DayNight.Dialog">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:backgroundDimEnabled">false</item>
+        <item name="android:colorBackground">@color/flyme_window_background</item>
+        <item name="colorPrimary">@color/flyme_blue</item>
+        <item name="colorOnPrimary">@color/flyme_white</item>
+        <item name="colorPrimaryContainer">@color/flyme_blue</item>
+        <item name="colorOnPrimaryContainer">@color/flyme_white</item>
+        <item name="colorSecondary">@color/flyme_blue</item>
+        <item name="colorOnSecondary">@color/flyme_white</item>
+        <item name="colorSecondaryContainer">@color/flyme_blue</item>
+        <item name="colorOnSecondaryContainer">@color/flyme_white</item>
+        <item name="colorSurface">@color/flyme_fill_a1_1</item>
+        <item name="colorOnSurface">@color/flyme_label_level1</item>
+        <item name="colorSurfaceVariant">@color/flyme_fill_a1_2</item>
+        <item name="colorOnSurfaceVariant">@color/flyme_label_level2</item>
+        <item name="colorError">@color/flyme_red</item>
+        <item name="android:colorControlActivated">@color/flyme_blue</item>
+    </style>
+
+    <style name="Theme.EX2ToolsIV.Transparent" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:colorBackground">@color/flyme_window_background</item>
+    </style>
+
+</resources>

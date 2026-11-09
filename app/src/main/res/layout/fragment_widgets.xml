@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ScrollView
+        android:layout_width="@dimen/content_width"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        android:padding="@dimen/screen_padding"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="48dp">
+
+            <TextView
+                style="@style/Text.EX2.GroupLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/widgets_group_design" />
+
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.EX2.Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/card_padding">
+
+                    <TextView
+                        style="@style/Text.EX2.Section"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/widgets_size" />
+
+                    <TextView
+                        style="@style/Text.EX2.Caption"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="@string/widgets_size_note" />
+
+                    <LinearLayout
+                        android:id="@+id/widgetSizeList"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:orientation="vertical" />
+
+                    <TextView
+                        style="@style/Text.EX2.Section"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="32dp"
+                        android:text="@string/widgets_opacity" />
+
+                    <TextView
+                        style="@style/Text.EX2.Caption"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="@string/widgets_opacity_note" />
+
+                    <SeekBar
+                        android:id="@+id/widgetOpacitySeek"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:max="100"
+                        android:progress="100"
+                        android:progressTint="@color/flyme_blue"
+                        android:thumbTint="@color/flyme_blue" />
+
+                    <TextView
+                        android:id="@+id/widgetOpacityValue"
+                        style="@style/Text.EX2.Caption"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp" />
+
+                    <LinearLayout
+                        android:id="@+id/widgetOpacityPreview"
+                        android:layout_width="match_parent"
+                        android:layout_height="150dp"
+                        android:layout_marginTop="16dp"
+                        android:background="@drawable/widget_card_bg_100"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:padding="12dp">
+
+                        <TextClock
+                            android:id="@+id/clockPreview"
+                            android:layout_width="match_parent"
+                            android:layout_height="0dp"
+                            android:layout_weight="1"
+                            android:autoSizeMaxTextSize="64sp"
+                            android:autoSizeMinTextSize="18sp"
+                            android:autoSizeStepGranularity="2sp"
+                            android:autoSizeTextType="uniform"
+                            android:fontFamily="serif"
+                            android:format12Hour="h:mm"
+                            android:format24Hour="HH:mm"
+                            android:gravity="center"
+                            android:includeFontPadding="false"
+                            android:textColor="@color/clock_text"
+                            android:textSize="48sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/clockDatePreview"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:ellipsize="end"
+                            android:fontFamily="serif"
+                            android:gravity="center"
+                            android:includeFontPadding="false"
+                            android:maxLines="1"
+                            android:textColor="@color/clock_text"
+                            android:textSize="16sp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                style="@style/Text.EX2.GroupLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="32dp"
+                android:text="@string/widgets_clock" />
+
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.EX2.Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/card_padding">
+
+                    <com.ex2tools.iv.ui.FlymeSwitchRow
+                        android:id="@+id/clockDate"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/widgets_clock_date"
+                        android:textColor="@color/flyme_label_level1"
+                        android:textSize="22sp"
+                        app:rowDescription="@string/widgets_clock_date_note" />
+
+                    <TextView
+                        style="@style/Text.EX2.Section"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="24dp"
+                        android:text="@string/widgets_clock_font" />
+
+                    <com.ex2tools.iv.ui.FlymeSegmentedGroup
+                        android:id="@+id/clockFontGroup"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/clockFontClassic"
+                            style="@style/Widget.EX2.Toggle"
+                            android:layout_width="0dp"
+                            android:layout_height="56dp"
+                            android:layout_weight="1"
+                            android:minWidth="0dp"
+                            android:text="@string/widget_clock_font_classic" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/clockFontCondensed"
+                            style="@style/Widget.EX2.Toggle"
+                            android:layout_width="0dp"
+                            android:layout_height="56dp"
+                            android:layout_weight="1"
+                            android:minWidth="0dp"
+                            android:text="@string/widget_clock_font_condensed" />
+                    </com.ex2tools.iv.ui.FlymeSegmentedGroup>
+
+                    <TextView
+                        style="@style/Text.EX2.Section"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="24dp"
+                        android:text="@string/widgets_clock_color" />
+
+                    <com.ex2tools.iv.ui.FlymeSegmentedGroup
+                        android:id="@+id/clockColorGroup"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/clockColorAuto"
+                            style="@style/Widget.EX2.Toggle"
+                            android:layout_width="0dp"
+                            android:layout_height="56dp"
+                            android:layout_weight="1"
+                            android:minWidth="0dp"
+                            android:text="@string/widget_clock_color_auto" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/clockColorWhite"
+                            style="@style/Widget.EX2.Toggle"
+                            android:layout_width="0dp"
+                            android:layout_height="56dp"
+                            android:layout_weight="1"
+                            android:minWidth="0dp"
+                            android:text="@string/widget_clock_color_white" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/clockColorBlack"
+                            style="@style/Widget.EX2.Toggle"
+                            android:layout_width="0dp"
+                            android:layout_height="56dp"
+                            android:layout_weight="1"
+                            android:minWidth="0dp"
+                            android:text="@string/widget_clock_color_black" />
+                    </com.ex2tools.iv.ui.FlymeSegmentedGroup>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                style="@style/Text.EX2.Caption"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/widgets_clock_hint" />
+        </LinearLayout>
+    </ScrollView>
+</FrameLayout>

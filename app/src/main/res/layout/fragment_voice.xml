@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="@dimen/content_width"
+    android:layout_height="match_parent"
+    android:layout_gravity="start"
+    android:clipToPadding="false"
+    android:fillViewport="true"
+    android:padding="@dimen/screen_padding"
+    android:scrollbars="none">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingBottom="48dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                style="@style/Text.EX2.GroupLabel"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/voice_enable" />
+
+            <TextView
+                android:id="@+id/voiceCommandsInfo"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="@drawable/bg_info_circle"
+                android:clickable="true"
+                android:contentDescription="@string/voice_available_commands"
+                android:focusable="true"
+                android:fontFamily="sans-serif-medium"
+                android:gravity="center"
+                android:text="i"
+                android:textColor="@color/flyme_label_level1"
+                android:textSize="23sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:baselineAligned="false"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <com.ex2tools.iv.ui.FlymeSwitchRow
+                    android:id="@+id/voiceEnable"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/voice_enable"
+                    android:textColor="@color/flyme_label_level1"
+                    android:textSize="22sp"
+                    app:rowDescription="@string/voice_enable_note" />
+
+                <com.ex2tools.iv.ui.FlymeSwitchRow
+                    android:id="@+id/voiceMicKey"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:text="@string/voice_mic_key"
+                    android:textColor="@color/flyme_label_level1"
+                    android:textSize="22sp"
+                    app:rowDescription="@string/voice_mic_key_note" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <com.ex2tools.iv.ui.FlymeSwitchRow
+                    android:id="@+id/voiceWake"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/voice_wake"
+                    android:textColor="@color/flyme_label_level1"
+                    android:textSize="22sp"
+                    app:rowDescription="@string/voice_wake_note" />
+
+                <com.ex2tools.iv.ui.FlymeSwitchRow
+                    android:id="@+id/voiceOverlay"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:text="@string/voice_overlay"
+                    android:textColor="@color/flyme_label_level1"
+                    android:textSize="22sp"
+                    app:rowDescription="@string/voice_overlay_note" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <TextView
+            style="@style/Text.EX2.GroupLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="48dp"
+            android:text="@string/voice_state" />
+
+        <TextView
+            android:id="@+id/voiceStatus"
+            style="@style/Text.EX2.Body"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/voice_status_disabled" />
+
+        <TextView
+            android:id="@+id/voiceLast"
+            style="@style/Text.EX2.Caption"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/voiceTest"
+                style="@style/Widget.EX2.PrimaryButton"
+                android:layout_width="0dp"
+                android:layout_height="64dp"
+                android:layout_weight="1"
+                android:text="@string/voice_test"
+                android:textSize="21sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/voicePermissions"
+                style="@style/Widget.EX2.SecondaryButton"
+                android:layout_width="0dp"
+                android:layout_height="64dp"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:text="@string/voice_permissions"
+                android:textSize="21sp" />
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/voiceCustomCommands"
+            style="@style/Widget.EX2.SecondaryButton"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:layout_marginTop="20dp"
+            android:text="@string/voice_custom_commands"
+            android:textSize="21sp" />
+    </LinearLayout>
+</ScrollView>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/k_widget_hvac_direction_vertical_desc"
+    android:minWidth="90dp"
+    android:minHeight="210dp"
+    android:updatePeriodMillis="1800000"
+    android:initialLayout="@layout/widget_hvac_direction_vertical"
+    android:previewImage="@mipmap/ic_launcher"
+    android:previewLayout="@layout/widget_hvac_direction_vertical"
+    android:resizeMode="vertical|horizontal"
+    android:widgetCategory="home_screen"
+    android:targetCellWidth="1"
+    android:targetCellHeight="3"/>
