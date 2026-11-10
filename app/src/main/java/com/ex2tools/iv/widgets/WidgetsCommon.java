@@ -59,6 +59,7 @@ public final class WidgetsCommon {
     private static final int[] DRIVE_ORDER = {CarProps.DRIVE_ECO, CarProps.DRIVE_COMFORT, CarProps.DRIVE_SPORT};
     private static final int[] REGEN_ORDER = {CarProps.REGEN_WEAK, CarProps.REGEN_MEDIUM, CarProps.REGEN_STRONG};
     private static final int[] VENT_ORDER = {1, 2, 3, 4, 6};
+    private static final int SEAT_HEAT_MAX_LEVEL = 3;
 
     public static final int WINDOW_FRONT_LEFT = 16;
     public static final int WINDOW_FRONT_RIGHT = 64;
@@ -237,7 +238,7 @@ public final class WidgetsCommon {
 
     public static void setSeatHeat(Context c, int area, int level) {
         writeIntAny(CarProps.SEAT_HEAT, new int[]{area},
-                Math.max(0, Math.min(4, level)));
+                Math.max(0, Math.min(SEAT_HEAT_MAX_LEVEL, level)));
     }
 
     public static void stepVent(int direction) {
@@ -299,8 +300,8 @@ public final class WidgetsCommon {
 
     public static void cycleSeat(Context c, int area) {
         Integer current = readSeatHeat(area);
-        int value = current == null ? 0 : current;
-        value = (value + 1) % 5;
+        int value = current == null ? 0 : Math.max(0, Math.min(SEAT_HEAT_MAX_LEVEL, current));
+        value = (value + 1) % (SEAT_HEAT_MAX_LEVEL + 1);
         writeIntAny(CarProps.SEAT_HEAT, new int[]{area}, value);
     }
 

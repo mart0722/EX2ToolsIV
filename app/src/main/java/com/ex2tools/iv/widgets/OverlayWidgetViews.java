@@ -356,8 +356,7 @@ final class OverlayWidgetViews {
                              Integer level, String label) {
         boolean active = level != null && level > 0;
         chip(c, root, chipId, textId, active);
-        String value = level == null ? "—" : (level >= 4
-                ? c.getString(R.string.k_widget_lbl_heat_auto) : String.valueOf(level));
+        String value = level == null ? "—" : String.valueOf(level);
         text(root, textId, label + " " + value);
     }
 

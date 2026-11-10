@@ -238,8 +238,7 @@ public final class WidgetsRenderer {
                              Integer level, String label) {
         boolean active = level != null && level > 0;
         chip(v, c, chipId, textId, active);
-        String value = level == null ? "—" : (level >= 4 ? c.getString(R.string.k_widget_lbl_heat_auto)
-                : String.valueOf(level));
+        String value = level == null ? "—" : String.valueOf(level);
         v.setTextViewText(textId, label + " " + value);
     }
 
