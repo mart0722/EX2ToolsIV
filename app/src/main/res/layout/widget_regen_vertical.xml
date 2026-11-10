@@ -44,7 +44,7 @@
                 android:id="@+id/tv_regen_level_label"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="вЂ”"/>
+                android:text="—"/>
             <TextView
                 android:textSize="10sp"
                 android:textColor="@color/cx_text_secondary"
@@ -53,7 +53,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:text="Р РµРєСѓРїРµСЂР°С†РёСЏ"/>
+                android:text="Рекуперация"/>
         </LinearLayout>
         <TextView
             android:textSize="22sp"
@@ -64,6 +64,6 @@
             android:background="@drawable/btn_circle"
             android:layout_width="44dp"
             android:layout_height="44dp"
-            android:text="вЂ“"/>
+            android:text="−"/>
     </LinearLayout>
 </FrameLayout>

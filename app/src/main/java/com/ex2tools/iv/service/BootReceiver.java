@@ -19,6 +19,10 @@ public final class BootReceiver extends BroadcastReceiver {
         LogStore.add(context, "boot receiver: " + action);
 
         ServiceModeManager.onBoot(context);
+        if (Prefs.ttl65(context)) {
+            new Thread(() -> com.ex2tools.iv.car.Ttl65.applyOnBoot(context),
+                    "ttl65-boot").start();
+        }
         if (ServiceModeManager.isActive(context)) {
             LogStore.add(context, "boot: service mode active, user services stay hidden");
             return;
@@ -30,6 +34,11 @@ public final class BootReceiver extends BroadcastReceiver {
         com.ex2tools.iv.tasks.TaskManagerButtonService.sync(context);
         if (isUserUnlocked(context)) {
             com.ex2tools.iv.widgets.WidgetUpdateService.sync(context);
+            com.ex2tools.iv.widgets.OverlayWidgetService.sync(context);
+            if (Prefs.rvcBlackBackground(context)) {
+                new Thread(() -> com.ex2tools.iv.car.RvcBlackBackground.applyIfNeeded(context),
+                        "rvc-black-boot").start();
+            }
         } else {
             LogStore.add(context, "boot: user locked, widget sync deferred");
         }

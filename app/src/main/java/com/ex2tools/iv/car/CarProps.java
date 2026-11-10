@@ -17,6 +17,8 @@ public final class CarProps {
     public static final int REGEN_STRONG = 537003267;    // 0x20020503
 
     public static final int GEAR = 289408001;            // 0x11400401
+    public static final int PERF_VEHICLE_SPEED = 291504647;
+    public static final int ESC_SPEED = 557884185;
     public static final int SOC = 557885165;
     public static final int RANGE = 289407752;
     public static final int AVG_CONSUMPTION = 557885176;
@@ -42,6 +44,7 @@ public final class CarProps {
     public static final int OUTSIDE_TEMP = 658548345;
     public static final int OUTSIDE_TEMP_AOSP = 289408771;
 
+    public static final int SPEED_AUTO_LOCK = 557850645;   // 0x21402015, as in Sapo
     public static final int WINDOW_POSITION = 322964416;
     public static final int DAY_NIGHT_SETTING = 538247424;
     public static final int DAY_NIGHT_DAY = 538247425;

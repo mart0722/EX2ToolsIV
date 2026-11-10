@@ -16,8 +16,8 @@ android {
         applicationId 'com.ex2tools.iv'
         minSdk 28
         targetSdk 29
-    versionCode 58
-    versionName '1.7.12'
+    versionCode 87
+    versionName '1.8.27'
         resConfigs 'ru'
         ndk {
             abiFilters 'arm64-v8a'

@@ -24,7 +24,7 @@
             android:background="@drawable/btn_circle"
             android:layout_width="67dp"
             android:layout_height="67dp"
-            android:text="вЂ“"/>
+            android:text="−"/>
         <LinearLayout
             android:gravity="center"
             android:orientation="vertical"
@@ -37,7 +37,8 @@
                 android:layout_width="36dp"
                 android:layout_height="36dp"
                 android:layout_marginBottom="2dp"
-                android:src="@drawable/ic_widget_thermometer"/>
+                android:src="@drawable/ic_widget_thermometer"
+                android:tint="@color/cx_text_primary" />
             <LinearLayout
                 android:gravity="bottom"
                 android:orientation="horizontal"
@@ -50,7 +51,7 @@
                     android:id="@+id/tv_temp_value"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="вЂ”"/>
+                    android:text="—"/>
                 <TextView
                     android:textSize="14sp"
                     android:textStyle="bold"
@@ -59,7 +60,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="4dp"
-                    android:text="В°C"
+                    android:text="°C"
                     android:layout_marginStart="2dp"/>
             </LinearLayout>
             <TextView
@@ -69,7 +70,7 @@
                 android:visibility="gone"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="РўРµРјРїРµСЂР°С‚СѓСЂР°"/>
+                android:text="Температура"/>
         </LinearLayout>
         <TextView
             android:textSize="31sp"

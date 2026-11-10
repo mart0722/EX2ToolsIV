@@ -36,7 +36,8 @@
                 android:layout_width="36dp"
                 android:layout_height="36dp"
                 android:layout_marginBottom="4dp"
-                android:src="@drawable/ic_widget_vent_face"/>
+                android:src="@drawable/ic_climate_vent_face"
+                android:tint="@color/cx_text_primary" />
             <TextView
                 android:textSize="13sp"
                 android:textStyle="bold"
@@ -44,7 +45,7 @@
                 android:id="@+id/tv_vent_mode_label"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="вЂ”"/>
+                android:text="—"/>
             <TextView
                 android:textSize="10sp"
                 android:textColor="@color/cx_text_secondary"
@@ -53,7 +54,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:text="РћР±РґСѓРІ"/>
+                android:text="Обдув"/>
         </LinearLayout>
         <TextView
             android:textSize="22sp"
@@ -64,7 +65,7 @@
             android:background="@drawable/btn_circle"
             android:layout_width="44dp"
             android:layout_height="44dp"
-            android:text="вЂ“"/>
+            android:text="−"/>
         <TextView
             android:background="@color/widget_divider"
             android:layout_width="match_parent"
@@ -83,7 +84,8 @@
             <ImageView
                 android:layout_width="36dp"
                 android:layout_height="36dp"
-                android:src="@drawable/ic_widget_recirc"
+                android:src="@drawable/ic_climate_recirc"
+                android:tint="@color/cx_text_primary"
                 android:layout_marginEnd="6dp"/>
             <TextView
                 android:textSize="11sp"
@@ -92,7 +94,7 @@
                 android:id="@+id/txt_recirc_v"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Р РµС†РёСЂРєСѓР»СЏС†РёСЏ"/>
+                android:text="Рециркуляция"/>
         </LinearLayout>
     </LinearLayout>
 </FrameLayout>

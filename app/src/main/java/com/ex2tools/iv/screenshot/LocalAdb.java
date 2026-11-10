@@ -17,7 +17,8 @@ import java.nio.charset.StandardCharsets;
 
 /**
  * Minimal ADB client for the head unit's local adbd.
- * Uses: screencap -p | base64.
+ * Uses the same shell command as the Sapo phone app:
+ * screencap -p | base64.
  */
 public final class LocalAdb {
 

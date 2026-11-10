@@ -1,10 +1,12 @@
 package com.ex2tools.iv.apps;
 
+import android.Manifest;
 import android.app.Dialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
@@ -45,6 +47,7 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.ChipGroup;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.List;
@@ -88,6 +91,7 @@ public final class AppsFragment extends Fragment {
     private ProgressBar qrProgress;
 
     private volatile boolean loadingApps;
+    private static final int REQ_STORAGE = 71;
 
     private final BroadcastReceiver refreshReceiver = new BroadcastReceiver() {
         @Override
@@ -165,7 +169,7 @@ public final class AppsFragment extends Fragment {
         picker = registerForActivityResult(new ActivityResultContracts.OpenDocument(), uri -> {
             if (uri != null) importUri(uri);
         });
-        usb.setOnClickListener(v -> picker.launch(new String[]{"*/*"}));
+        usb.setOnClickListener(v -> openApkPicker());
         qr.setOnClickListener(v -> startQr());
 
         updateSummary();
@@ -253,6 +257,57 @@ public final class AppsFragment extends Fragment {
         boolean none = adapter == null || adapter.visibleCount() == 0;
         empty.setVisibility(none ? View.VISIBLE : View.GONE);
         empty.setText(R.string.apps_empty);
+    }
+
+    private void openApkPicker() {
+        if (!isAdded()) return;
+        if (ContextCompat.checkSelfPermission(requireContext(),
+                Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, REQ_STORAGE);
+            return;
+        }
+        launchApkPicker();
+    }
+
+    private void launchApkPicker() {
+        if (!isAdded()) return;
+        ApkPickerDialog.show(requireContext(), this::importFile);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQ_STORAGE) {
+            launchApkPicker();
+        }
+    }
+
+    private void importFile(File source) {
+        Context c = getContext();
+        if (c == null || source == null) return;
+        if (loading != null) loading.setVisibility(View.VISIBLE);
+        executor.execute(() -> {
+            File out = new File(c.getCacheDir(), "import_" + System.currentTimeMillis() + ".apk");
+            try (InputStream in = new FileInputStream(source);
+                 FileOutputStream fos = new FileOutputStream(out)) {
+                byte[] buffer = new byte[64 * 1024];
+                int read;
+                while ((read = in.read(buffer)) >= 0) {
+                    fos.write(buffer, 0, read);
+                }
+                fos.flush();
+                LogStore.add(c, "apk picked: " + source.getName() + " -> " + out.length() + " bytes");
+                runOnUi(() -> inspectAndConfirm(out, "USB"));
+            } catch (Throwable t) {
+                out.delete();
+                LogStore.add(c, "apk import failed: " + t);
+                runOnUi(() -> {
+                    if (loading != null) loading.setVisibility(View.GONE);
+                    toast(R.string.apps_pick_failed);
+                });
+            }
+        });
     }
 
     private void importUri(Uri uri) {

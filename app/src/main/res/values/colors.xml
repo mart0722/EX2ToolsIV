@@ -50,9 +50,11 @@
     <color name="flyme_icon_inactive">#888888</color>
     <color name="flyme_badge_neutral">@color/flyme_fill_b2</color>
 
+    <color name="cx_text_hi">#1E2530</color>
     <color name="cx_text_primary">#12161C</color>
     <color name="cx_text_secondary">#525A66</color>
     <color name="cx_text_muted">#6B7684</color>
+    <color name="widget_apps_bg_base">#FFFFFF</color>
     <color name="cx_accent">#1368FB</color>
     <color name="cx_on_accent">#FFFFFF</color>
     <color name="cx_surface">#FFFFFF</color>

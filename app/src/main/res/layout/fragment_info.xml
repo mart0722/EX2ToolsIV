@@ -54,6 +54,24 @@
             android:text="@string/info_note"
             android:textAlignment="center" />
 
+        <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.EX2.Card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp">
+
+            <TextView
+                style="@style/Text.EX2.Caption"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:padding="16dp"
+                android:text="@string/info_disclaimer"
+                android:textAlignment="center"
+                android:textColor="@color/flyme_label_level1"
+                android:textStyle="bold" />
+        </com.google.android.material.card.MaterialCardView>
+
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"

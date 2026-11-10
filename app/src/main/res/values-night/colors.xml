@@ -34,7 +34,7 @@
     <color name="flyme_icon_inactive">@color/flyme_label_level2</color>
     <color name="flyme_badge_neutral">@color/flyme_fill_b2</color>
 
-    <!-- Night palette for widgets. -->
+    <!-- Night palette for widgets (Sapo 2.19.8 / 2.19.78 / 3.3.12). -->
     <color name="cx_accent_soft_bg">#0B1A39</color>
     <color name="cx_bg_panel">#0B131E</color>
     <color name="cx_bg_root">#01040D</color>

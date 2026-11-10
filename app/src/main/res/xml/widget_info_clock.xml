@@ -2,6 +2,7 @@
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:description="@string/widget_clock_desc"
     android:initialLayout="@layout/widget_clock_classic"
+    android:previewImage="@drawable/qr_icon"
     android:minHeight="80dp"
     android:minResizeHeight="50dp"
     android:minResizeWidth="110dp"

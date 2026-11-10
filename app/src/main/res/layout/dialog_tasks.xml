@@ -77,10 +77,10 @@
     </FrameLayout>
 
     <TextView
-        android:id="@+id/taskCloseAll"
+        android:id="@+id/taskCloseSelected"
         style="@style/Widget.EX2.FlymeButton.Danger"
         android:layout_width="match_parent"
         android:layout_height="64dp"
         android:layout_marginTop="8dp"
-        android:text="@string/task_close_all" />
+        android:text="@string/task_close_selected" />
 </LinearLayout>

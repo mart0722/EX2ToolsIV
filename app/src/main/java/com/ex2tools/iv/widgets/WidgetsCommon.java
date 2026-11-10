@@ -54,6 +54,7 @@ public final class WidgetsCommon {
     public static final String SIZE_VENT = "vent";
     public static final String SIZE_VENT_FAN = "vent_fan";
     public static final String SIZE_HEATING = "heating";
+    public static final String SIZE_SPEED = "speed";
 
     private static final int[] DRIVE_ORDER = {CarProps.DRIVE_ECO, CarProps.DRIVE_COMFORT, CarProps.DRIVE_SPORT};
     private static final int[] REGEN_ORDER = {CarProps.REGEN_WEAK, CarProps.REGEN_MEDIUM, CarProps.REGEN_STRONG};
@@ -74,6 +75,16 @@ public final class WidgetsCommon {
     public static Float readTemp(Context c) {
         float v = Telemetry.hvacTarget(c);
         return Float.isNaN(v) ? null : v;
+    }
+
+    public static float readSpeed(Context c) {
+        CarConnection cc = CarConnection.get();
+        if (!cc.ensure(c)) return Float.NaN;
+        float perf = cc.readFloat(CarProps.PERF_VEHICLE_SPEED, 0);
+        if (!Float.isNaN(perf) && perf >= 0f) return perf;
+        float esc = cc.readFloat(CarProps.ESC_SPEED, 0);
+        if (!Float.isNaN(esc) && esc >= 0f) return esc * 0.05625f;
+        return Float.NaN;
     }
 
     public static Integer readVent() {
@@ -310,12 +321,6 @@ public final class WidgetsCommon {
         }
     }
 
-    public static void applyWidgetScale(RemoteViews v, Context c, String key) {
-        float scale = Prefs.widgetSizePct(c, key) / 100f;
-        v.setFloat(R.id.widget_root, "setScaleX", scale);
-        v.setFloat(R.id.widget_root, "setScaleY", scale);
-    }
-
     public static int bgDrawableResForPct(Context c) {
         int pct = Math.round(Prefs.widgetBgOpacity(c) / 20f) * 20;
         switch (pct) {
@@ -337,16 +342,16 @@ public final class WidgetsCommon {
     public static int ventIcon(int mode) {
         switch (mode) {
             case 2:
-                return R.drawable.ic_widget_vent_floor;
+                return R.drawable.ic_climate_vent_floor;
             case 3:
-                return R.drawable.ic_widget_vent_face_floor;
+                return R.drawable.ic_climate_vent_face_floor;
             case 4:
-                return R.drawable.ic_widget_vent_windshield;
+                return R.drawable.ic_climate_vent_windshield;
             case 6:
-                return R.drawable.ic_widget_vent_floor_windshield;
+                return R.drawable.ic_climate_vent_floor_windshield;
             case 1:
             default:
-                return R.drawable.ic_widget_vent_face;
+                return R.drawable.ic_climate_vent_face;
         }
     }
 

@@ -29,7 +29,7 @@ public final class TaskPanel {
     private Dialog dialog;
     private TaskListAdapter adapter;
     private TextView empty;
-    private TextView closeAll;
+    private TextView closeSelectedButton;
     private boolean loading;
 
     public TaskPanel(Context context) {
@@ -58,19 +58,29 @@ public final class TaskPanel {
 
         RecyclerView list = dialog.findViewById(R.id.taskList);
         empty = dialog.findViewById(R.id.taskEmpty);
-        closeAll = dialog.findViewById(R.id.taskCloseAll);
-        FlymePress.bind(closeAll);
+        closeSelectedButton = dialog.findViewById(R.id.taskCloseSelected);
+        FlymePress.bind(closeSelectedButton);
         list.setLayoutManager(new LinearLayoutManager(context));
         adapter = new TaskListAdapter(new TaskListAdapter.Listener() {
             @Override
-            public void onClose(TaskEntry entry) {
-                close(entry);
+            public void onToggleSelected(TaskEntry entry) {
+                adapter.toggleSelected(entry);
+                updateCloseButton();
             }
 
             @Override
             public void onToggleLock(TaskEntry entry) {
-                Tasks.setLocked(context, entry, !entry.locked);
-                adapter.toggleLock(entry);
+                boolean locked = !entry.locked;
+                Tasks.setLocked(context, entry, locked);
+                entry.locked = locked;
+                entry.selected = !locked;
+                adapter.notifyEntry(entry);
+                updateCloseButton();
+            }
+
+            @Override
+            public void onSelectionChanged() {
+                updateCloseButton();
             }
         });
         list.setAdapter(adapter);
@@ -79,9 +89,10 @@ public final class TaskPanel {
         refresh.setOnClickListener(v -> load());
         ImageButton close = dialog.findViewById(R.id.taskDialogClose);
         close.setOnClickListener(v -> dismiss());
-        closeAll.setOnClickListener(v -> closeAll());
+        closeSelectedButton.setOnClickListener(v -> closeSelected());
         dialog.setOnDismissListener(d -> dialog = null);
         dialog.show();
+        updateCloseButton();
         load();
     }
 
@@ -102,35 +113,20 @@ public final class TaskPanel {
                 if (dialog == null || adapter == null) return;
                 adapter.setItems(tasks);
                 updateEmpty();
-                FlymePress.setEnabled(closeAll, !tasks.isEmpty());
+                updateCloseButton();
             });
         }, "ex2-tasks-load").start();
     }
 
-    private void close(TaskEntry entry) {
-        if (entry.locked) {
-            Toast.makeText(context, R.string.task_locked_toast, Toast.LENGTH_SHORT).show();
-            return;
-        }
-        new Thread(() -> {
-            Tasks.close(context, entry);
-            handler.post(() -> {
-                if (dialog == null || adapter == null) return;
-                adapter.remove(entry);
-                updateEmpty();
-                FlymePress.setEnabled(closeAll, adapter.getItemCount() > 0);
-            });
-        }, "ex2-task-close").start();
-    }
-
-    private void closeAll() {
+    private void closeSelected() {
         if (adapter == null) return;
         List<TaskEntry> snapshot = adapter.items();
-        FlymePress.setEnabled(closeAll, false);
+        if (adapter.selectedCount() == 0) return;
+        FlymePress.setEnabled(closeSelectedButton, false);
         new Thread(() -> {
             int count = 0;
             for (TaskEntry entry : snapshot) {
-                if (!entry.locked && Tasks.close(context, entry)) count++;
+                if (entry.selected && Tasks.close(context, entry)) count++;
             }
             final int closed = count;
             handler.post(() -> {
@@ -140,7 +136,16 @@ public final class TaskPanel {
                         Toast.LENGTH_SHORT).show();
                 load();
             });
-        }, "ex2-tasks-close-all").start();
+        }, "ex2-tasks-close").start();
+    }
+
+    private void updateCloseButton() {
+        if (closeSelectedButton == null) return;
+        int count = adapter == null ? 0 : adapter.selectedCount();
+        closeSelectedButton.setText(count > 0
+                ? context.getString(R.string.task_close_selected_fmt, count)
+                : context.getString(R.string.task_close_selected));
+        FlymePress.setEnabled(closeSelectedButton, count > 0);
     }
 
     private void updateEmpty() {

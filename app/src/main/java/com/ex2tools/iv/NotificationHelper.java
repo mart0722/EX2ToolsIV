@@ -24,6 +24,7 @@ public final class NotificationHelper {
     public static final int ID_DRIVE_WATCH = 2110;
     public static final int ID_TRIP_RESET = 2111;
     public static final int ID_VOICE = 2112;
+    public static final int ID_OVERLAY = 2113;
 
     private NotificationHelper() {
     }
@@ -132,6 +133,15 @@ public final class NotificationHelper {
         return base(c, App.CH_WIDGETS, R.drawable.ic_tasks,
                 c.getString(R.string.widget_notification_title),
                 c.getString(R.string.widget_notification_text))
+                .setOngoing(true)
+                .setContentIntent(openApp(c))
+                .build();
+    }
+
+    public static Notification overlay(Context c) {
+        return base(c, App.CH_WIDGETS, R.drawable.ic_widgets,
+                c.getString(R.string.overlay_notification_title),
+                c.getString(R.string.overlay_notification_text))
                 .setOngoing(true)
                 .setContentIntent(openApp(c))
                 .build();

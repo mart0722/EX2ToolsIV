@@ -70,6 +70,30 @@ public final class Prefs {
         get(c).edit().putBoolean("auto_apply", value).apply();
     }
 
+    public static boolean speedAutoLock(Context c) {
+        return get(c).getBoolean("speed_auto_lock_enabled", true);
+    }
+
+    public static void setSpeedAutoLock(Context c, boolean value) {
+        get(c).edit().putBoolean("speed_auto_lock_enabled", value).apply();
+    }
+
+    public static boolean rvcBlackBackground(Context c) {
+        return get(c).getBoolean("rvc_black_bg", false);
+    }
+
+    public static void setRvcBlackBackground(Context c, boolean value) {
+        get(c).edit().putBoolean("rvc_black_bg", value).apply();
+    }
+
+    public static boolean ttl65(Context c) {
+        return get(c).getBoolean("ttl_65_ativo", false);
+    }
+
+    public static void setTtl65(Context c, boolean value) {
+        get(c).edit().putBoolean("ttl_65_ativo", value).apply();
+    }
+
     public static boolean statusWifi(Context c) {
         SharedPreferences p = get(c);
         if (p.contains("status_wifi_enabled")) return p.getBoolean("status_wifi_enabled", false);
@@ -343,23 +367,136 @@ public final class Prefs {
         get(c).edit().putInt("widget_bg_opacity_pct", Math.max(0, Math.min(100, value))).apply();
     }
 
+    public static final int WIDGET_MODE_UNSET = -1;
+    public static final int WIDGET_MODE_STOCK = 0;
+    public static final int WIDGET_MODE_THIRD_PARTY = 1;
+
+    public static int widgetMode(Context c) {
+        return get(c).getInt("widget_mode", WIDGET_MODE_UNSET);
+    }
+
+    public static void setWidgetMode(Context c, int mode) {
+        get(c).edit().putInt("widget_mode", mode == WIDGET_MODE_STOCK
+                ? WIDGET_MODE_STOCK : WIDGET_MODE_THIRD_PARTY).apply();
+    }
+
+    public static boolean widgetModeManual(Context c) {
+        return get(c).getBoolean("widget_mode_manual", false);
+    }
+
+    public static void setWidgetModeManual(Context c, boolean value) {
+        get(c).edit().putBoolean("widget_mode_manual", value).apply();
+    }
+
+    public static String widgetModeLauncher(Context c) {
+        return get(c).getString("widget_mode_launcher", "");
+    }
+
+    public static void setWidgetModeLauncher(Context c, String pkg) {
+        get(c).edit().putString("widget_mode_launcher", pkg == null ? "" : pkg).apply();
+    }
+
+    public static int speedMode(Context c) {
+        return get(c).getInt("speed_mode", 0) == 1 ? 1 : 0;
+    }
+
+    public static void setSpeedMode(Context c, int mode) {
+        get(c).edit().putInt("speed_mode", mode == 1 ? 1 : 0).apply();
+    }
+
+    public static boolean speedBackground(Context c) {
+        return get(c).getBoolean("speed_background", true);
+    }
+
+    public static void setSpeedBackground(Context c, boolean value) {
+        get(c).edit().putBoolean("speed_background", value).apply();
+    }
+
+    public static int speedColor(Context c) {
+        return Math.max(0, Math.min(2, get(c).getInt("speed_color", 0)));
+    }
+
+    public static void setSpeedColor(Context c, int value) {
+        get(c).edit().putInt("speed_color", Math.max(0, Math.min(2, value))).apply();
+    }
+
+    public static float speedCache(Context c) {
+        return get(c).getFloat("speed_cache", Float.NaN);
+    }
+
+    public static void setSpeedCache(Context c, float value) {
+        if (Float.isNaN(value)) return;
+        get(c).edit().putFloat("speed_cache", value).apply();
+    }
+
+    public static boolean overlayEnabled(Context c, String key) {
+        return get(c).getBoolean("overlay_" + key + "_enabled", false);
+    }
+
+    public static void setOverlayEnabled(Context c, String key, boolean value) {
+        get(c).edit().putBoolean("overlay_" + key + "_enabled", value).apply();
+    }
+
+    public static boolean overlayPinned(Context c, String key) {
+        return get(c).getBoolean("overlay_" + key + "_pinned", false);
+    }
+
+    public static void setOverlayPinned(Context c, String key, boolean value) {
+        get(c).edit().putBoolean("overlay_" + key + "_pinned", value).apply();
+    }
+
+    public static int overlayX(Context c, String key, int fallback) {
+        return get(c).getInt("overlay_" + key + "_x", fallback);
+    }
+
+    public static int overlayY(Context c, String key, int fallback) {
+        return get(c).getInt("overlay_" + key + "_y", fallback);
+    }
+
+    public static void setOverlayPos(Context c, String key, int x, int y) {
+        get(c).edit()
+                .putInt("overlay_" + key + "_x", x)
+                .putInt("overlay_" + key + "_y", y)
+                .apply();
+    }
+
+    public static int overlaySizePct(Context c, String key) {
+        return Math.max(50, Math.min(200,
+                get(c).getInt("overlay_" + key + "_size_pct", 100)));
+    }
+
+    public static void setOverlaySizePct(Context c, String key, int value) {
+        get(c).edit().putInt("overlay_" + key + "_size_pct",
+                Math.max(50, Math.min(200, value))).apply();
+    }
+
+    public static int overlayAlphaPct(Context c, String key) {
+        return Math.max(0, Math.min(100,
+                get(c).getInt("overlay_" + key + "_alpha_pct", 100)));
+    }
+
+    public static void setOverlayAlphaPct(Context c, String key, int value) {
+        get(c).edit().putInt("overlay_" + key + "_alpha_pct",
+                Math.max(0, Math.min(100, value))).apply();
+    }
+
     public static int widgetSizePct(Context c) {
-        return Math.max(50, Math.min(200, get(c).getInt("widget_size_pct", 100)));
+        return Math.max(50, Math.min(250, get(c).getInt("widget_size_pct", 100)));
     }
 
     public static void setWidgetSizePct(Context c, int value) {
-        get(c).edit().putInt("widget_size_pct", Math.max(50, Math.min(200, value))).apply();
+        get(c).edit().putInt("widget_size_pct", Math.max(50, Math.min(250, value))).apply();
     }
 
     public static int widgetSizePct(Context c, String key) {
         int fallback = widgetSizePct(c);
-        return Math.max(50, Math.min(200,
+        return Math.max(50, Math.min(250,
                 get(c).getInt("widget_size_" + key + "_pct", fallback)));
     }
 
     public static void setWidgetSizePct(Context c, String key, int value) {
         get(c).edit().putInt("widget_size_" + key + "_pct",
-                Math.max(50, Math.min(200, value))).apply();
+                Math.max(50, Math.min(250, value))).apply();
     }
 
     public static int widgetFanCache(Context c) {

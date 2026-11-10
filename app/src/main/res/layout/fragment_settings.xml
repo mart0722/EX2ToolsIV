@@ -231,6 +231,43 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="48dp"
+                android:text="@string/settings_section_car" />
+
+            <com.ex2tools.iv.ui.FlymeSwitchRow
+                android:id="@+id/switchSpeedAutoLock"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/speed_auto_lock_title"
+                android:textColor="@color/flyme_label_level1"
+                android:textSize="22sp"
+                app:rowDescription="@string/speed_auto_lock_note" />
+
+            <com.ex2tools.iv.ui.FlymeSwitchRow
+                android:id="@+id/switchRvcBlack"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/rvc_black_title"
+                android:textColor="@color/flyme_label_level1"
+                android:textSize="22sp"
+                app:rowDescription="@string/rvc_black_note" />
+
+            <com.ex2tools.iv.ui.FlymeSwitchRow
+                android:id="@+id/switchTtl65"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/ttl65_title"
+                android:textColor="@color/flyme_label_level1"
+                android:textSize="22sp"
+                app:rowDescription="@string/ttl65_note" />
+
+            <TextView
+                style="@style/Text.EX2.GroupLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="48dp"
                 android:text="@string/voice_title" />
 
             <com.google.android.material.button.MaterialButton
@@ -248,6 +285,15 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="48dp"
                 android:text="@string/settings_section_misc" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/settingsReboot"
+                style="@style/Widget.EX2.SecondaryButton"
+                android:layout_width="match_parent"
+                android:layout_height="72dp"
+                android:layout_marginTop="24dp"
+                android:text="@string/settings_reboot"
+                android:textSize="22sp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/settingsDefaults"

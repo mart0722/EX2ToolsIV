@@ -41,7 +41,8 @@
                 <ImageView
                     android:layout_width="36dp"
                     android:layout_height="36dp"
-                    android:src="@drawable/ic_widget_vent_face"/>
+                    android:src="@drawable/ic_climate_vent_face"
+                    android:tint="@color/cx_text_primary" />
                 <TextView
                     android:textSize="11sp"
                     android:textStyle="bold"
@@ -50,7 +51,7 @@
                     android:visibility="gone"
                     android:layout_width="wrap_content"
                     android:layout_height="0dp"
-                    android:text="Р›РёС†Рѕ"/>
+                    android:text="Лицо"/>
             </LinearLayout>
             <LinearLayout
                 android:gravity="center"
@@ -65,7 +66,8 @@
                 <ImageView
                     android:layout_width="36dp"
                     android:layout_height="36dp"
-                    android:src="@drawable/ic_widget_vent_floor"/>
+                    android:src="@drawable/ic_climate_vent_floor"
+                    android:tint="@color/cx_text_primary" />
                 <TextView
                     android:textSize="11sp"
                     android:textStyle="bold"
@@ -74,7 +76,7 @@
                     android:visibility="gone"
                     android:layout_width="wrap_content"
                     android:layout_height="0dp"
-                    android:text="РќРѕРіРё"/>
+                    android:text="Ноги"/>
             </LinearLayout>
             <LinearLayout
                 android:gravity="center"
@@ -88,7 +90,8 @@
                 <ImageView
                     android:layout_width="36dp"
                     android:layout_height="36dp"
-                    android:src="@drawable/ic_widget_vent_face_floor"/>
+                    android:src="@drawable/ic_climate_vent_face_floor"
+                    android:tint="@color/cx_text_primary" />
                 <TextView
                     android:textSize="10sp"
                     android:textStyle="bold"
@@ -97,7 +100,7 @@
                     android:visibility="gone"
                     android:layout_width="wrap_content"
                     android:layout_height="0dp"
-                    android:text="Р›РёС†Рѕ+РќРѕРіРё"/>
+                    android:text="Лицо+Ноги"/>
             </LinearLayout>
         </LinearLayout>
         <TextView
@@ -121,7 +124,8 @@
                 <ImageView
                     android:layout_width="36dp"
                     android:layout_height="36dp"
-                    android:src="@drawable/ic_widget_vent_windshield"/>
+                    android:src="@drawable/ic_climate_vent_windshield"
+                    android:tint="@color/cx_text_primary" />
                 <TextView
                     android:textSize="11sp"
                     android:textStyle="bold"
@@ -130,7 +134,7 @@
                     android:visibility="gone"
                     android:layout_width="wrap_content"
                     android:layout_height="0dp"
-                    android:text="РЎС‚РµРєР»Рѕ"/>
+                    android:text="Стекло"/>
             </LinearLayout>
             <LinearLayout
                 android:gravity="center"
@@ -144,7 +148,8 @@
                 <ImageView
                     android:layout_width="36dp"
                     android:layout_height="36dp"
-                    android:src="@drawable/ic_widget_vent_floor_windshield"/>
+                    android:src="@drawable/ic_climate_vent_floor_windshield"
+                    android:tint="@color/cx_text_primary" />
                 <TextView
                     android:textSize="10sp"
                     android:textStyle="bold"
@@ -153,7 +158,7 @@
                     android:visibility="gone"
                     android:layout_width="wrap_content"
                     android:layout_height="0dp"
-                    android:text="РќРѕРіРё+РЎС‚РµРєР»Рѕ"/>
+                    android:text="Ноги+Стекло"/>
             </LinearLayout>
             <LinearLayout
                 android:gravity="center"
@@ -167,7 +172,8 @@
                 <ImageView
                     android:layout_width="36dp"
                     android:layout_height="36dp"
-                    android:src="@drawable/ic_widget_recirc"/>
+                    android:src="@drawable/ic_climate_recirc"
+                    android:tint="@color/cx_text_primary" />
                 <TextView
                     android:textSize="10sp"
                     android:textStyle="bold"
@@ -176,7 +182,7 @@
                     android:visibility="gone"
                     android:layout_width="wrap_content"
                     android:layout_height="0dp"
-                    android:text="Р РµС†РёСЂРєСѓР»СЏС†РёСЏ"/>
+                    android:text="Рециркуляция"/>
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>

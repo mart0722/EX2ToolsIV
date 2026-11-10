@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class WidgetUpdateService extends Service {
 
     private static final long POLL_MS = 3000L;
+    private static final long SPEED_POLL_MS = 1000L;
     private static final long RETRY_MS = 6000L;
     private static final long CACHE_TTL_MS = 60000L;
 
@@ -43,7 +44,8 @@ public final class WidgetUpdateService extends Service {
             HvacDirectionWidgetProvider.class,
             HvacDirectionVerticalWidgetProvider.class,
             HvacDirectionFanWidgetProvider.class,
-            HeatingTestWidgetProvider.class
+            HeatingTestWidgetProvider.class,
+            SpeedWidgetProvider.class
     };
 
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -64,6 +66,26 @@ public final class WidgetUpdateService extends Service {
             }
             requestUpdate();
             handler.postDelayed(this, POLL_MS);
+        }
+    };
+
+    private final Runnable speedTick = new Runnable() {
+        @Override
+        public void run() {
+            if (!hasSpeedWidget(WidgetUpdateService.this)) {
+                handler.postDelayed(this, SPEED_POLL_MS);
+                return;
+            }
+            executor.execute(() -> {
+                float speed = WidgetsCommon.readSpeed(WidgetUpdateService.this);
+                if (!Float.isNaN(speed)) {
+                    Prefs.setSpeedCache(WidgetUpdateService.this, speed);
+                } else {
+                    speed = Prefs.speedCache(WidgetUpdateService.this);
+                }
+                SpeedWidgetProvider.updateCached(WidgetUpdateService.this, speed);
+            });
+            handler.postDelayed(this, SPEED_POLL_MS);
         }
     };
 
@@ -108,6 +130,7 @@ public final class WidgetUpdateService extends Service {
         super.onCreate();
         startForeground(NotificationHelper.ID_WIDGETS, NotificationHelper.widgets(this));
         handler.post(tick);
+        handler.post(speedTick);
     }
 
     @Override
@@ -134,12 +157,6 @@ public final class WidgetUpdateService extends Service {
     }
 
     private void updateAll() {
-        if (!hasAnyWidget(this)) {
-            if (pendingActions.isEmpty()) stopSelf();
-            else scheduleRetry();
-            return;
-        }
-
         CarConnection cc = CarConnection.get();
         boolean carReady = cc.ensure(this);
         if (!pendingActions.isEmpty()) {
@@ -157,6 +174,11 @@ public final class WidgetUpdateService extends Service {
             }
         }
 
+        if (!hasAnyWidget(this)) {
+            stopSelf();
+            return;
+        }
+
         AppWidgetManager awm = AppWidgetManager.getInstance(this);
         int[] driveRegenIds = ids(awm, DriveRegenWidgetProvider.class);
         int[] driveVerticalIds = ids(awm, DriveModeVerticalWidgetProvider.class);
@@ -169,6 +191,7 @@ public final class WidgetUpdateService extends Service {
         int[] ventVerticalIds = ids(awm, HvacDirectionVerticalWidgetProvider.class);
         int[] ventFanIds = ids(awm, HvacDirectionFanWidgetProvider.class);
         int[] heatingIds = ids(awm, HeatingTestWidgetProvider.class);
+        int[] speedIds = ids(awm, SpeedWidgetProvider.class);
 
         boolean needDrive = driveRegenIds.length > 0 || driveVerticalIds.length > 0;
         boolean needRegen = driveRegenIds.length > 0 || regenVerticalIds.length > 0;
@@ -217,6 +240,10 @@ public final class WidgetUpdateService extends Service {
         any |= update(awm, heatingIds,
                 WidgetsRenderer.heating(this, wheel, rear, front, windshield,
                         seatDriver, seatPassenger));
+        if (speedIds.length > 0) {
+            SpeedWidgetProvider.update(this, awm, speedIds);
+            any = true;
+        }
         if (ids(awm, ClockWidgetProvider.class).length > 0) {
             ClockWidgetProvider.refreshAll(this);
             any = true;
@@ -259,6 +286,16 @@ public final class WidgetUpdateService extends Service {
             return ids == null ? new int[0] : ids;
         } catch (Throwable t) {
             return new int[0];
+        }
+    }
+
+    private static boolean hasSpeedWidget(Context c) {
+        try {
+            AppWidgetManager awm = AppWidgetManager.getInstance(c);
+            int[] ids = awm.getAppWidgetIds(new ComponentName(c, SpeedWidgetProvider.class));
+            return ids != null && ids.length > 0;
+        } catch (Throwable ignored) {
+            return false;
         }
     }
 
@@ -385,6 +422,7 @@ public final class WidgetUpdateService extends Service {
 
     @Override
     public void onDestroy() {
+        handler.removeCallbacks(speedTick);
         handler.removeCallbacksAndMessages(null);
         executor.shutdownNow();
         stopForeground(true);

@@ -20,6 +20,9 @@ import androidx.fragment.app.Fragment;
 import com.ex2tools.iv.Prefs;
 import com.ex2tools.iv.R;
 import com.ex2tools.iv.widgets.ClockWidgetProvider;
+import com.ex2tools.iv.widgets.OverlayWidgetService;
+import com.ex2tools.iv.widgets.SpeedWidgetProvider;
+import com.ex2tools.iv.widgets.WidgetModes;
 import com.ex2tools.iv.widgets.WidgetUpdateService;
 import com.ex2tools.iv.widgets.WidgetsCommon;
 
@@ -31,8 +34,7 @@ import java.util.Map;
 
 public final class WidgetsFragment extends Fragment {
 
-    private static final String[] SIZE_KEYS = {
-            WidgetsCommon.SIZE_CLOCK,
+    private static final String[] OVERLAY_KEYS = {
             WidgetsCommon.SIZE_DRIVE_REGEN,
             WidgetsCommon.SIZE_DRIVE_MODE,
             WidgetsCommon.SIZE_REGEN,
@@ -43,8 +45,7 @@ public final class WidgetsFragment extends Fragment {
             WidgetsCommon.SIZE_HEATING
     };
 
-    private static final int[] SIZE_LABELS = {
-            R.string.widgets_size_clock,
+    private static final int[] OVERLAY_LABELS = {
             R.string.widgets_size_drive_regen,
             R.string.widgets_size_drive_mode,
             R.string.widgets_size_regen,
@@ -55,9 +56,6 @@ public final class WidgetsFragment extends Fragment {
             R.string.widgets_size_heating
     };
 
-    private LinearLayout sizeList;
-    private final Map<String, SeekBar> sizeSeeks = new LinkedHashMap<>();
-    private final Map<String, TextView> sizeValues = new LinkedHashMap<>();
     private SeekBar opacity;
     private TextView opacityValue;
     private View opacityPreview;
@@ -66,6 +64,28 @@ public final class WidgetsFragment extends Fragment {
     private FlymeSwitchRow date;
     private TextClock clockPreview;
     private TextView clockDatePreview;
+
+    private FlymeSegmentedGroup modeGroup;
+    private View overlayPanel;
+    private View standardPanel;
+    private LinearLayout overlayList;
+    private FlymeSwitchRow speedEnabled;
+    private FlymeSwitchRow speedPinned;
+    private FlymeSwitchRow speedBackground;
+    private FlymeSegmentedGroup speedModeGroup;
+    private FlymeSegmentedGroup speedColorGroup;
+    private View speedSizeRow;
+    private SeekBar speedSize;
+    private TextView speedSizeValue;
+    private SeekBar speedAlpha;
+    private TextView speedAlphaValue;
+    private View speedAlphaRow;
+    private View speedReset;
+    private final Map<String, FlymeSwitchRow> overlayToggles = new LinkedHashMap<>();
+    private final Map<String, SeekBar> overlaySizeSeeks = new LinkedHashMap<>();
+    private final Map<String, SeekBar> overlayAlphaSeeks = new LinkedHashMap<>();
+    private final Map<String, TextView> overlaySizeValues = new LinkedHashMap<>();
+    private final Map<String, TextView> overlayAlphaValues = new LinkedHashMap<>();
     private boolean binding;
 
     @Nullable
@@ -78,7 +98,6 @@ public final class WidgetsFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         Context c = requireContext();
-        sizeList = view.findViewById(R.id.widgetSizeList);
         opacity = view.findViewById(R.id.widgetOpacitySeek);
         opacityValue = view.findViewById(R.id.widgetOpacityValue);
         opacityPreview = view.findViewById(R.id.widgetOpacityPreview);
@@ -88,8 +107,137 @@ public final class WidgetsFragment extends Fragment {
         clockPreview = view.findViewById(R.id.clockPreview);
         clockDatePreview = view.findViewById(R.id.clockDatePreview);
 
-        buildSizeRows(c);
+        modeGroup = view.findViewById(R.id.widgetModeGroup);
+        overlayPanel = view.findViewById(R.id.widgetOverlayPanel);
+        standardPanel = view.findViewById(R.id.widgetStandardPanel);
+        overlayList = view.findViewById(R.id.widgetOverlayList);
+        speedEnabled = view.findViewById(R.id.widgetSpeedOverlayEnabled);
+        speedPinned = view.findViewById(R.id.widgetSpeedOverlayPinned);
+        speedBackground = view.findViewById(R.id.widgetSpeedBackground);
+        speedModeGroup = view.findViewById(R.id.widgetSpeedModeGroup);
+        speedColorGroup = view.findViewById(R.id.widgetSpeedColorGroup);
+        speedSizeRow = view.findViewById(R.id.widgetSpeedSizeRow);
+        speedSize = view.findViewById(R.id.widgetSpeedSizeSeek);
+        speedSizeValue = view.findViewById(R.id.widgetSpeedSizeValue);
+        speedAlpha = view.findViewById(R.id.widgetSpeedAlphaSeek);
+        speedAlphaValue = view.findViewById(R.id.widgetSpeedAlphaValue);
+        speedAlphaRow = view.findViewById(R.id.widgetSpeedAlphaRow);
+        speedReset = view.findViewById(R.id.widgetSpeedReset);
 
+        buildOverlayRows(c);
+        setupModeControls(c);
+        setupSpeedControls(c);
+        setupStandardControls(c);
+        WidgetModes.refreshAuto(c);
+        updateAll();
+    }
+
+    private void setupModeControls(Context c) {
+        View info = requireView().findViewById(R.id.widgetInfo);
+        if (info != null) {
+            info.setOnClickListener(v -> {
+                Context now = requireContext();
+                String message = getString(R.string.widgets_info_message)
+                        + "\n\n" + getString(R.string.widgets_current_launcher,
+                        WidgetModes.launcherName(now) + " (" + WidgetModes.launcherPackage(now) + ")");
+                FlymeDialog.showMessage(now,
+                        getString(R.string.widgets_info_title),
+                        message,
+                        getString(R.string.ok), null);
+            });
+        }
+
+        modeGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+            if (!isChecked || binding) return;
+            int mode = checkedId == R.id.widgetModeStock
+                    ? Prefs.WIDGET_MODE_STOCK : Prefs.WIDGET_MODE_THIRD_PARTY;
+            int current = WidgetModes.current(requireContext());
+            if (mode == current) return;
+            WidgetModes.set(requireContext(), mode);
+            updateModeUi();
+        });
+    }
+
+    private void setupSpeedControls(Context c) {
+        speedModeGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+            if (!isChecked || binding) return;
+            Prefs.setSpeedMode(requireContext(), checkedId == R.id.widgetSpeedAnalog ? 1 : 0);
+            refreshSpeed();
+        });
+        speedColorGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+            if (!isChecked || binding) return;
+            int color = checkedId == R.id.widgetSpeedColorBlue ? 2
+                    : checkedId == R.id.widgetSpeedColorBlack ? 1 : 0;
+            Prefs.setSpeedColor(requireContext(), color);
+            refreshSpeed();
+        });
+        speedBackground.setOnCheckedChangeListener((b, checked) -> {
+            if (binding) return;
+            Prefs.setSpeedBackground(requireContext(), checked);
+            refreshSpeed();
+        });
+        speedSize.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                int pct = progress + 50;
+                if (speedSizeValue != null) {
+                    speedSizeValue.setText(getString(R.string.widgets_percent_fmt, pct));
+                }
+                if (fromUser) {
+                    Prefs.setWidgetSizePct(requireContext(), WidgetsCommon.SIZE_SPEED, pct);
+                    refreshSpeed();
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                refreshSpeed();
+                OverlayWidgetService.restart(requireContext());
+            }
+        });
+        speedAlpha.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (speedAlphaValue != null) {
+                    speedAlphaValue.setText(getString(R.string.widgets_percent_fmt, progress));
+                }
+                if (fromUser) {
+                    Prefs.setOverlayAlphaPct(requireContext(), WidgetsCommon.SIZE_SPEED, progress);
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                OverlayWidgetService.restart(requireContext());
+            }
+        });
+        speedEnabled.setOnCheckedChangeListener((b, checked) -> {
+            if (binding) return;
+            Prefs.setOverlayEnabled(requireContext(), WidgetsCommon.SIZE_SPEED, checked);
+            OverlayWidgetService.sync(requireContext());
+        });
+        speedPinned.setOnCheckedChangeListener((b, checked) -> {
+            if (binding) return;
+            Prefs.setOverlayPinned(requireContext(), WidgetsCommon.SIZE_SPEED, checked);
+            OverlayWidgetService.sync(requireContext());
+        });
+        if (speedReset != null) {
+            speedReset.setOnClickListener(v -> {
+                Prefs.setOverlayPos(requireContext(), WidgetsCommon.SIZE_SPEED, 40, 160);
+                OverlayWidgetService.restart(requireContext());
+            });
+        }
+    }
+
+    private void setupStandardControls(Context c) {
         opacity.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -110,6 +258,7 @@ public final class WidgetsFragment extends Fragment {
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 WidgetUpdateService.refreshOpacity(requireContext());
+                refreshSpeed();
             }
         });
 
@@ -142,38 +291,47 @@ public final class WidgetsFragment extends Fragment {
             ClockWidgetProvider.refreshAll(requireContext());
             WidgetUpdateService.refreshOpacity(requireContext());
         });
-
-        updateAll();
     }
 
-    private void buildSizeRows(Context c) {
-        if (sizeList == null) return;
-        sizeList.removeAllViews();
-        sizeSeeks.clear();
-        sizeValues.clear();
+    private void buildOverlayRows(Context c) {
+        if (overlayList == null) return;
+        overlayList.removeAllViews();
+        overlayToggles.clear();
+        overlaySizeSeeks.clear();
+        overlayAlphaSeeks.clear();
+        overlaySizeValues.clear();
+        overlayAlphaValues.clear();
         LayoutInflater inflater = LayoutInflater.from(c);
-        for (int i = 0; i < SIZE_KEYS.length; i++) {
-            final String key = SIZE_KEYS[i];
-            View row = inflater.inflate(R.layout.item_widget_size, sizeList, false);
-            TextView name = row.findViewById(R.id.sizeName);
-            TextView value = row.findViewById(R.id.sizeValue);
-            SeekBar seek = row.findViewById(R.id.sizeSeek);
-            int pct = Prefs.widgetSizePct(c, key);
-            name.setText(SIZE_LABELS[i]);
-            value.setText(getString(R.string.widgets_percent_fmt, pct));
-            seek.setProgress(pct - 50);
-            seek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+        for (int i = 0; i < OVERLAY_KEYS.length; i++) {
+            final String key = OVERLAY_KEYS[i];
+            View card = inflater.inflate(R.layout.item_overlay_widget, overlayList, false);
+            FlymeSwitchRow toggle = card.findViewById(R.id.overlayToggle);
+            SeekBar sizeSeek = card.findViewById(R.id.overlaySizeSeek);
+            SeekBar alphaSeek = card.findViewById(R.id.overlayAlphaSeek);
+            TextView sizeValue = card.findViewById(R.id.overlaySizeValue);
+            TextView alphaValue = card.findViewById(R.id.overlayAlphaValue);
+
+            toggle.setText(getString(OVERLAY_LABELS[i]));
+            int size = Prefs.overlaySizePct(c, key);
+            int alpha = Prefs.overlayAlphaPct(c, key);
+            toggle.setChecked(Prefs.overlayEnabled(c, key));
+            sizeSeek.setProgress(size - 50);
+            alphaSeek.setProgress(alpha);
+            sizeValue.setText(getString(R.string.widgets_percent_fmt, size));
+            alphaValue.setText(getString(R.string.widgets_percent_fmt, alpha));
+
+            toggle.setOnCheckedChangeListener((b, checked) -> {
+                if (binding) return;
+                Prefs.setOverlayEnabled(requireContext(), key, checked);
+                OverlayWidgetService.sync(requireContext());
+            });
+            sizeSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
                 @Override
                 public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                    int p = progress + 50;
-                    value.setText(getString(R.string.widgets_percent_fmt, p));
+                    int pct = progress + 50;
+                    sizeValue.setText(getString(R.string.widgets_percent_fmt, pct));
                     if (fromUser) {
-                        Prefs.setWidgetSizePct(requireContext(), key, p);
-                        WidgetUpdateService.refreshOpacity(requireContext());
-                        if (WidgetsCommon.SIZE_CLOCK.equals(key)) {
-                            updatePreviewScale();
-                            ClockWidgetProvider.refreshAll(requireContext());
-                        }
+                        Prefs.setOverlaySizePct(requireContext(), key, pct);
                     }
                 }
 
@@ -183,35 +341,124 @@ public final class WidgetsFragment extends Fragment {
 
                 @Override
                 public void onStopTrackingTouch(SeekBar seekBar) {
+                    OverlayWidgetService.restart(requireContext());
                 }
             });
-            sizeSeeks.put(key, seek);
-            sizeValues.put(key, value);
-            sizeList.addView(row);
+            alphaSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    alphaValue.setText(getString(R.string.widgets_percent_fmt, progress));
+                    if (fromUser) {
+                        Prefs.setOverlayAlphaPct(requireContext(), key, progress);
+                    }
+                }
+
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {
+                }
+
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {
+                    OverlayWidgetService.restart(requireContext());
+                }
+            });
+
+            overlayToggles.put(key, toggle);
+            overlaySizeSeeks.put(key, sizeSeek);
+            overlayAlphaSeeks.put(key, alphaSeek);
+            overlaySizeValues.put(key, sizeValue);
+            overlayAlphaValues.put(key, alphaValue);
+            overlayList.addView(card);
         }
     }
 
     private void updateAll() {
         Context c = requireContext();
-        for (String key : SIZE_KEYS) {
-            int pct = Prefs.widgetSizePct(c, key);
-            SeekBar seek = sizeSeeks.get(key);
-            TextView value = sizeValues.get(key);
-            if (seek != null) seek.setProgress(pct - 50);
-            if (value != null) value.setText(getString(R.string.widgets_percent_fmt, pct));
-        }
         int p = Prefs.widgetBgOpacity(c);
         opacity.setProgress(p);
         updateOpacityText(p);
         if (opacityPreview != null) {
             opacityPreview.setBackgroundResource(WidgetsCommon.bgDrawableResForPct(c));
         }
+
+        int speedPct = Prefs.widgetSizePct(c, WidgetsCommon.SIZE_SPEED);
+        if (speedSize != null) speedSize.setProgress(speedPct - 50);
+        if (speedSizeValue != null) {
+            speedSizeValue.setText(getString(R.string.widgets_percent_fmt, speedPct));
+        }
+        int speedAlphaPct = Prefs.overlayAlphaPct(c, WidgetsCommon.SIZE_SPEED);
+        if (speedAlpha != null) speedAlpha.setProgress(speedAlphaPct);
+        if (speedAlphaValue != null) {
+            speedAlphaValue.setText(getString(R.string.widgets_percent_fmt, speedAlphaPct));
+        }
+
         binding = true;
         fontGroup.check(Prefs.clockFont(c) == 1 ? R.id.clockFontCondensed : R.id.clockFontClassic);
         colorGroup.check(colorButton(Prefs.clockColor(c)));
         date.setChecked(Prefs.clockDate(c));
+        speedModeGroup.check(Prefs.speedMode(c) == 1
+                ? R.id.widgetSpeedAnalog : R.id.widgetSpeedDigital);
+        speedColorGroup.check(Prefs.speedColor(c) == 1 ? R.id.widgetSpeedColorBlack
+                : Prefs.speedColor(c) == 2 ? R.id.widgetSpeedColorBlue : R.id.widgetSpeedColorWhite);
+        speedBackground.setChecked(Prefs.speedBackground(c));
+        speedEnabled.setChecked(Prefs.overlayEnabled(c, WidgetsCommon.SIZE_SPEED));
+        speedPinned.setChecked(Prefs.overlayPinned(c, WidgetsCommon.SIZE_SPEED));
+        for (String key : OVERLAY_KEYS) {
+            FlymeSwitchRow toggle = overlayToggles.get(key);
+            SeekBar sizeSeek = overlaySizeSeeks.get(key);
+            SeekBar alphaSeek = overlayAlphaSeeks.get(key);
+            TextView sizeValue = overlaySizeValues.get(key);
+            TextView alphaValue = overlayAlphaValues.get(key);
+            if (toggle != null) toggle.setChecked(Prefs.overlayEnabled(c, key));
+            int size = Prefs.overlaySizePct(c, key);
+            int alpha = Prefs.overlayAlphaPct(c, key);
+            if (sizeSeek != null) sizeSeek.setProgress(size - 50);
+            if (alphaSeek != null) alphaSeek.setProgress(alpha);
+            if (sizeValue != null) sizeValue.setText(getString(R.string.widgets_percent_fmt, size));
+            if (alphaValue != null) alphaValue.setText(getString(R.string.widgets_percent_fmt, alpha));
+        }
         binding = false;
+
         updateClockPreview();
+        updateModeUi();
+    }
+
+    private void updateModeUi() {
+        if (!isAdded() || modeGroup == null) return;
+        Context c = requireContext();
+        int mode = WidgetModes.current(c);
+        binding = true;
+        modeGroup.check(mode == Prefs.WIDGET_MODE_STOCK
+                ? R.id.widgetModeStock : R.id.widgetModeThird);
+        binding = false;
+
+        boolean stock = mode == Prefs.WIDGET_MODE_STOCK;
+        // Both implementations keep running in both modes. The mode selector
+        // only chooses which settings are shown: overlay settings for the
+        // stock launcher tab, AppWidget settings for the third-party tab.
+        overlayPanel.setVisibility(stock ? View.VISIBLE : View.GONE);
+        standardPanel.setVisibility(stock ? View.GONE : View.VISIBLE);
+        speedEnabled.setVisibility(stock ? View.VISIBLE : View.GONE);
+        speedPinned.setVisibility(stock ? View.VISIBLE : View.GONE);
+        speedReset.setVisibility(stock ? View.VISIBLE : View.GONE);
+        if (speedSizeRow != null) {
+            speedSizeRow.setVisibility(stock ? View.VISIBLE : View.GONE);
+        }
+        if (speedSize != null) {
+            speedSize.setVisibility(stock ? View.VISIBLE : View.GONE);
+        }
+        if (speedAlphaRow != null) {
+            speedAlphaRow.setVisibility(stock ? View.VISIBLE : View.GONE);
+        }
+        if (speedAlpha != null) {
+            speedAlpha.setVisibility(stock ? View.VISIBLE : View.GONE);
+        }
+    }
+
+    private void refreshSpeed() {
+        if (!isAdded()) return;
+        SpeedWidgetProvider.refreshAll(requireContext());
+        OverlayWidgetService.sync(requireContext());
     }
 
     private void updateOpacityText(int progress) {
@@ -251,12 +498,12 @@ public final class WidgetsFragment extends Fragment {
 
     private void updatePreviewScale() {
         if (clockPreview == null) return;
-        float scale = Prefs.widgetSizePct(requireContext(), WidgetsCommon.SIZE_CLOCK) / 100f;
-        clockPreview.setScaleX(scale);
-        clockPreview.setScaleY(scale);
+        // AppWidget size is controlled by the launcher, not by this setting.
+        clockPreview.setScaleX(1f);
+        clockPreview.setScaleY(1f);
         if (clockDatePreview != null) {
-            clockDatePreview.setScaleX(scale);
-            clockDatePreview.setScaleY(scale);
+            clockDatePreview.setScaleX(1f);
+            clockDatePreview.setScaleY(1f);
         }
     }
 
@@ -277,9 +524,18 @@ public final class WidgetsFragment extends Fragment {
         return R.id.clockColorAuto;
     }
 
+    private int dp(int value) {
+        return Math.round(value * getResources().getDisplayMetrics().density);
+    }
+
     @Override
     public void onResume() {
         super.onResume();
+        WidgetModes.refreshAuto(requireContext());
+        OverlayWidgetService.sync(requireContext());
         updateAll();
+        requireView().postDelayed(() -> {
+            if (isAdded()) updateModeUi();
+        }, 800);
     }
 }

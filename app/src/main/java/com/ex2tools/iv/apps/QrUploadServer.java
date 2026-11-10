@@ -4,6 +4,8 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 
+import com.ex2tools.iv.R;
+
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -143,6 +145,15 @@ public final class QrUploadServer {
             if ("GET".equals(method) && (rest.isEmpty() || "/".equals(rest)
                     || "/index.html".equals(rest))) {
                 write(out, 200, "OK", "text/html; charset=utf-8", page());
+                return;
+            }
+            if ("GET".equals(method) && "/favicon.png".equals(rest)) {
+                byte[] icon = iconBytes();
+                if (icon != null) {
+                    writeBytes(out, 200, "OK", "image/png", icon);
+                } else {
+                    write(out, 404, "Not Found", "text/plain; charset=utf-8", "Not found");
+                }
                 return;
             }
             if ("GET".equals(method) && "/status".equals(rest)) {
@@ -319,7 +330,8 @@ public final class QrUploadServer {
                 <head>
                 <meta charset="utf-8">
                 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-                <title>EX2ToolsIV — установка</title>
+                <link rel="icon" type="image/png" href="favicon.png">
+                <title>EX2ToolsIV - установка</title>
                 <style>
                 :root{--bg:#D3DBE5;--card:#FFFFFF;--text:#12161C;--muted:#525A66;--soft:#6B7684;--accent:#1368FB;--line:#E7ECF3}
                 *{box-sizing:border-box}
@@ -327,7 +339,7 @@ public final class QrUploadServer {
                 .wrap{width:100%;max-width:560px}
                 .card{background:var(--card);border-radius:22px;padding:24px;box-shadow:0 14px 42px rgba(18,22,28,.12)}
                 .brand{display:flex;align-items:center;gap:14px;margin-bottom:8px}
-                .logo{width:50px;height:50px;border-radius:15px;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:800;font-size:20px;letter-spacing:-.5px}
+                .logo{width:50px;height:50px;border-radius:15px;background:var(--accent);display:block;object-fit:cover}
                 h1{font-size:23px;line-height:1.15;margin:0;letter-spacing:-.3px}
                 .sub{color:var(--muted);font-size:15px;margin:2px 0 0}
                 .steps{list-style:none;padding:0;margin:22px 0 24px;display:grid;gap:10px}
@@ -355,7 +367,7 @@ public final class QrUploadServer {
                 <div class="wrap">
                   <div class="card">
                     <div class="brand">
-                      <div class="logo">EX</div>
+                      <img class="logo" src="favicon.png" alt="EX2ToolsIV">
                       <div>
                         <h1>EX2ToolsIV</h1>
                         <p class="sub">Установка приложений на головное устройство</p>
@@ -426,7 +438,11 @@ public final class QrUploadServer {
 
     private static void write(OutputStream out, int code, String reason, String type, String body)
             throws IOException {
-        byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
+        writeBytes(out, code, reason, type, body.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private static void writeBytes(OutputStream out, int code, String reason, String type,
+                                   byte[] bytes) throws IOException {
         String head = "HTTP/1.1 " + code + " " + reason + "\r\n"
                 + "Content-Type: " + type + "\r\n"
                 + "Content-Length: " + bytes.length + "\r\n"
@@ -435,6 +451,18 @@ public final class QrUploadServer {
         out.write(head.getBytes(StandardCharsets.ISO_8859_1));
         out.write(bytes);
         out.flush();
+    }
+
+    private byte[] iconBytes() {
+        try (InputStream in = app.getResources().openRawResource(R.drawable.qr_icon);
+             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            byte[] buffer = new byte[8192];
+            int read;
+            while ((read = in.read(buffer)) > 0) out.write(buffer, 0, read);
+            return out.toByteArray();
+        } catch (Throwable t) {
+            return null;
+        }
     }
 
     private static String queryParam(String query, String key) {

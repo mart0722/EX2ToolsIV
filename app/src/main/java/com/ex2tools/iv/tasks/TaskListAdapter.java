@@ -13,16 +13,20 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.ex2tools.iv.R;
+import com.google.android.material.checkbox.MaterialCheckBox;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public final class TaskListAdapter extends RecyclerView.Adapter<TaskListAdapter.VH> {
 
     public interface Listener {
-        void onClose(TaskEntry entry);
+        void onToggleSelected(TaskEntry entry);
 
         void onToggleLock(TaskEntry entry);
+
+        void onSelectionChanged();
     }
 
     private final List<TaskEntry> items = new ArrayList<>();
@@ -42,15 +46,22 @@ public final class TaskListAdapter extends RecyclerView.Adapter<TaskListAdapter.
         return new ArrayList<>(items);
     }
 
-    public void remove(TaskEntry entry) {
-        int index = items.indexOf(entry);
-        if (index >= 0) {
-            items.remove(index);
-            notifyItemRemoved(index);
+    public int selectedCount() {
+        int count = 0;
+        for (TaskEntry entry : items) {
+            if (entry.selected) count++;
         }
+        return count;
     }
 
-    public void toggleLock(TaskEntry entry) {
+    public void toggleSelected(TaskEntry entry) {
+        int index = items.indexOf(entry);
+        if (index < 0) return;
+        entry.selected = !entry.selected;
+        notifyItemChanged(index);
+    }
+
+    public void notifyEntry(TaskEntry entry) {
         int index = items.indexOf(entry);
         if (index >= 0) notifyItemChanged(index);
     }
@@ -68,19 +79,21 @@ public final class TaskListAdapter extends RecyclerView.Adapter<TaskListAdapter.
         TaskEntry entry = items.get(position);
         Context c = holder.itemView.getContext();
         holder.name.setText(entry.label);
-        holder.pkg.setText(entry.packageName);
+        holder.pkg.setText(metadata(entry));
         if (entry.icon != null) holder.icon.setImageDrawable(entry.icon);
         else holder.icon.setImageResource(R.drawable.ic_service);
+
+        holder.check.setOnCheckedChangeListener(null);
+        holder.check.setChecked(entry.selected);
 
         holder.lock.setImageResource(R.drawable.ic_lock);
         holder.lock.setColorFilter(ContextCompat.getColor(c,
                 entry.locked ? R.color.cyan : R.color.text_faint));
         holder.lock.setContentDescription(c.getString(
                 entry.locked ? R.string.task_unlock : R.string.task_lock));
-        holder.close.setAlpha(entry.locked || entry.taskId < 0 ? 0.35f : 1f);
 
+        holder.itemView.setOnClickListener(v -> listener.onToggleSelected(entry));
         holder.lock.setOnClickListener(v -> listener.onToggleLock(entry));
-        holder.close.setOnClickListener(v -> listener.onClose(entry));
     }
 
     @Override
@@ -88,12 +101,18 @@ public final class TaskListAdapter extends RecyclerView.Adapter<TaskListAdapter.
         return items.size();
     }
 
+    private static String metadata(TaskEntry entry) {
+        if (entry.memKb <= 0) return entry.packageName;
+        long mb = Math.max(1L, Math.round(entry.memKb / 1024.0));
+        return entry.packageName + "  ·  " + String.format(Locale.US, "%d МБ", mb);
+    }
+
     static final class VH extends RecyclerView.ViewHolder {
         final ImageView icon;
         final TextView name;
         final TextView pkg;
         final ImageButton lock;
-        final ImageButton close;
+        final MaterialCheckBox check;
 
         VH(@NonNull View itemView) {
             super(itemView);
@@ -101,7 +120,7 @@ public final class TaskListAdapter extends RecyclerView.Adapter<TaskListAdapter.
             name = itemView.findViewById(R.id.taskName);
             pkg = itemView.findViewById(R.id.taskPackage);
             lock = itemView.findViewById(R.id.taskLock);
-            close = itemView.findViewById(R.id.taskClose);
+            check = itemView.findViewById(R.id.taskChecked);
         }
     }
 }

@@ -50,7 +50,6 @@ public final class ClockWidgetProvider extends AppWidgetProvider {
                 views.setTextColor(R.id.clockDate, color);
                 views.setTextViewText(R.id.clockDate, dateText);
             }
-            WidgetsCommon.applyWidgetScale(views, context, WidgetsCommon.SIZE_CLOCK);
             manager.updateAppWidget(id, views);
         }
     }

@@ -9,6 +9,7 @@ The original EX2ToolsIV source code is licensed under the MIT License
 - Material Components for Android — Apache License 2.0
 - ZXing Core — Apache License 2.0
 - Vosk Android — Apache License 2.0
+- Orbitron font — SIL Open Font License 1.1 (`licenses/orbitron-OFL.txt`)
 
 The corresponding license texts are available from the upstream projects and
 from the Gradle dependency artifacts.

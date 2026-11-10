@@ -35,7 +35,8 @@
                 android:layout_width="32dp"
                 android:layout_height="32dp"
                 android:layout_marginBottom="2dp"
-                android:src="@drawable/ic_widget_fan"/>
+                android:src="@drawable/ic_climate_fan"
+                android:tint="@color/cx_text_primary" />
             <TextView
                 android:textSize="24sp"
                 android:textStyle="bold"
@@ -43,7 +44,7 @@
                 android:id="@+id/tv_fan_value"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="вЂ”"/>
+                android:text="—"/>
             <LinearLayout
                 android:orientation="horizontal"
                 android:layout_width="wrap_content"
@@ -106,7 +107,7 @@
                 android:visibility="gone"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Р’РµРЅС‚РёР»СЏС‚РѕСЂ"/>
+                android:text="Вентилятор"/>
         </LinearLayout>
         <TextView
             android:textSize="31sp"
@@ -117,6 +118,6 @@
             android:background="@drawable/btn_circle"
             android:layout_width="62dp"
             android:layout_height="62dp"
-            android:text="вЂ“"/>
+            android:text="−"/>
     </LinearLayout>
 </FrameLayout>

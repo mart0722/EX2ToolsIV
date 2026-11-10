@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/flyme_modal_background"
+    android:orientation="vertical"
+    android:padding="28dp">
+
+    <TextView
+        android:id="@+id/pickerTitle"
+        style="@style/Text.EX2.Title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/apps_picker_title" />
+
+    <TextView
+        android:id="@+id/pickerPath"
+        style="@style/Text.EX2.Caption"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:ellipsize="middle"
+        android:maxLines="1"
+        android:textColor="@color/flyme_label_level2" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="14dp"
+        android:layout_weight="1">
+
+        <ListView
+            android:id="@+id/pickerList"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:divider="@null"
+            android:dividerHeight="0dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
+            android:scrollbars="none" />
+
+        <TextView
+            android:id="@+id/pickerEmpty"
+            style="@style/Text.EX2.Body"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:text="@string/apps_picker_empty"
+            android:textColor="@color/flyme_label_level3"
+            android:visibility="gone" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/pickerInternal"
+            style="@style/Widget.EX2.FlymeButton.Secondary"
+            android:layout_width="0dp"
+            android:layout_height="58dp"
+            android:layout_weight="1"
+            android:text="@string/apps_picker_internal"
+            android:textSize="17sp" />
+
+        <TextView
+            android:id="@+id/pickerUsb"
+            style="@style/Widget.EX2.FlymeButton.Secondary"
+            android:layout_width="0dp"
+            android:layout_height="58dp"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:text="@string/apps_picker_usb"
+            android:textSize="17sp" />
+
+        <TextView
+            android:id="@+id/pickerUp"
+            style="@style/Widget.EX2.FlymeButton.Secondary"
+            android:layout_width="0dp"
+            android:layout_height="58dp"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:text="@string/apps_picker_up"
+            android:textSize="17sp" />
+
+        <TextView
+            android:id="@+id/pickerCancel"
+            style="@style/Widget.EX2.FlymeButton.Secondary"
+            android:layout_width="0dp"
+            android:layout_height="58dp"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:text="@string/apps_picker_cancel"
+            android:textSize="17sp" />
+    </LinearLayout>
+</LinearLayout>

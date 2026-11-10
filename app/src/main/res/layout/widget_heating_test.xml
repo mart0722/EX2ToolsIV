@@ -22,7 +22,7 @@
             android:visibility="gone"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:text="РћР‘РћР“Р Р•Р’Р«"
+            android:text="ОБОГРЕВЫ"
             android:letterSpacing="0.06"/>
         <LinearLayout
             android:orientation="horizontal"
@@ -41,7 +41,8 @@
                 <ImageView
                     android:layout_width="36dp"
                     android:layout_height="36dp"
-                    android:src="@drawable/ic_widget_steering_wheel"/>
+                    android:src="@drawable/ic_climate_wheel_heat"
+                    android:tint="@color/cx_text_primary" />
                 <TextView
                     android:textSize="11sp"
                     android:textStyle="bold"
@@ -50,7 +51,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="3dp"
-                    android:text="Р СѓР»СЊ"/>
+                    android:text="Руль"/>
             </LinearLayout>
             <LinearLayout
                 android:gravity="center"
@@ -65,7 +66,8 @@
                 <ImageView
                     android:layout_width="36dp"
                     android:layout_height="36dp"
-                    android:src="@drawable/ic_widget_defrost_rear"/>
+                    android:src="@drawable/ic_climate_rear_defrost"
+                    android:tint="@color/cx_text_primary" />
                 <TextView
                     android:textSize="11sp"
                     android:textStyle="bold"
@@ -74,7 +76,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="3dp"
-                    android:text="Р—Р°РґРЅРµРµ"/>
+                    android:text="Заднее"/>
             </LinearLayout>
             <LinearLayout
                 android:gravity="center"
@@ -88,7 +90,8 @@
                 <ImageView
                     android:layout_width="36dp"
                     android:layout_height="36dp"
-                    android:src="@drawable/ic_widget_defrost_front"/>
+                    android:src="@drawable/ic_climate_front_defrost"
+                    android:tint="@color/cx_text_primary" />
                 <TextView
                     android:textSize="11sp"
                     android:textStyle="bold"
@@ -97,7 +100,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="3dp"
-                    android:text="РЎС‚РµРєР»Рѕ РјР°РєСЃ"/>
+                    android:text="Стекло макс"/>
             </LinearLayout>
         </LinearLayout>
         <TextView
@@ -121,7 +124,8 @@
                 <ImageView
                     android:layout_width="36dp"
                     android:layout_height="36dp"
-                    android:src="@drawable/ic_widget_defrost_front"/>
+                    android:src="@drawable/ic_climate_front_defrost"
+                    android:tint="@color/cx_text_primary" />
                 <TextView
                     android:textSize="11sp"
                     android:textStyle="bold"
@@ -130,7 +134,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="3dp"
-                    android:text="Р›РѕР±РѕРІРѕРµ"/>
+                    android:text="Лобовое"/>
             </LinearLayout>
             <LinearLayout
                 android:gravity="center"
@@ -145,7 +149,8 @@
                 <ImageView
                     android:layout_width="36dp"
                     android:layout_height="36dp"
-                    android:src="@drawable/ic_widget_seat"/>
+                    android:src="@drawable/ic_climate_seat_heat"
+                    android:tint="@color/cx_text_primary" />
                 <TextView
                     android:textSize="11sp"
                     android:textStyle="bold"
@@ -154,7 +159,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="3dp"
-                    android:text="РЎРёРґ. РІРѕРґ."/>
+                    android:text="Сид. вод."/>
             </LinearLayout>
             <LinearLayout
                 android:gravity="center"
@@ -168,7 +173,8 @@
                 <ImageView
                     android:layout_width="36dp"
                     android:layout_height="36dp"
-                    android:src="@drawable/ic_widget_seat"/>
+                    android:src="@drawable/ic_climate_seat_heat"
+                    android:tint="@color/cx_text_primary" />
                 <TextView
                     android:textSize="11sp"
                     android:textStyle="bold"
@@ -177,7 +183,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="3dp"
-                    android:text="РЎРёРґ. РїР°СЃСЃ."/>
+                    android:text="Сид. пасс."/>
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>

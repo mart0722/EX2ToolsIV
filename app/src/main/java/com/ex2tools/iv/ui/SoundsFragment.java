@@ -1,10 +1,12 @@
 package com.ex2tools.iv.ui;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Typeface;
 import android.media.AudioAttributes;
@@ -28,10 +30,12 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.ex2tools.iv.LogStore;
 import com.ex2tools.iv.R;
+import com.ex2tools.iv.apps.ApkPickerDialog;
 import com.ex2tools.iv.car.CarProps;
 import com.ex2tools.iv.car.Telemetry;
 
@@ -55,7 +59,7 @@ public final class SoundsFragment extends Fragment {
     private static final String SETTING_CHECK = "lock_car_audio_enable_check";
     private static final String FACTORY_DEFAULT = "/vendor/etc/carlock/yuedongyinghe.wav";
     private static final String ASSET_DIR = "lock_sounds";
-    private static final int REQ_PICK_WAV = 4101;
+    private static final int REQ_STORAGE = 4101;
     private static final long MAX_BYTES = 1024L * 1024L;
     private static final double MAX_SECONDS = 10.0;
 
@@ -492,26 +496,33 @@ public final class SoundsFragment extends Fragment {
     }
 
     private void pickWav() {
-        Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-        i.addCategory(Intent.CATEGORY_OPENABLE);
-        i.setType("audio/*");
-        i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        try {
-            startActivityForResult(i, REQ_PICK_WAV);
-        } catch (Throwable t) {
-            Toast.makeText(requireContext(), R.string.sounds_add_failed, Toast.LENGTH_LONG).show();
+        if (ContextCompat.checkSelfPermission(requireContext(),
+                Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, REQ_STORAGE);
+            return;
         }
+        ApkPickerDialog.showWav(requireContext(), this::importPickedWav);
     }
 
     @Override
-    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode != REQ_PICK_WAV || resultCode != Activity.RESULT_OK
-                || data == null || data.getData() == null) return;
-        Uri uri = data.getData();
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQ_STORAGE && isAdded()) {
+            if (grantResults.length > 0
+                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                ApkPickerDialog.showWav(requireContext(), this::importPickedWav);
+            } else {
+                Toast.makeText(requireContext(), R.string.apps_picker_no_access,
+                        Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    private void importPickedWav(File source) {
         Context c = requireContext();
         new Thread(() -> {
-            File added = importWav(c, uri);
+            File added = importWav(c, source);
             handler.post(() -> {
                 if (!isAdded()) return;
                 if (added != null) {
@@ -524,16 +535,17 @@ public final class SoundsFragment extends Fragment {
         }, "lock-sound-import").start();
     }
 
-    private File importWav(Context c, Uri uri) {
+    private File importWav(Context c, File source) {
+        if (source == null || !source.isFile()) return null;
         File dir = soundsDir(c);
         if (!dir.exists() && !dir.mkdirs()) return null;
-        String name = displayName(c, uri);
+        String name = source.getName();
         if (name == null || name.trim().isEmpty()) name = "sound.wav";
         name = sanitize(name);
         if (!name.toLowerCase(Locale.US).endsWith(".wav")) name = name + ".wav";
         File target = uniqueFile(dir, name);
         File temp = new File(dir, target.getName() + ".part");
-        try (InputStream in = c.getContentResolver().openInputStream(uri);
+        try (InputStream in = new FileInputStream(source);
              OutputStream out = new FileOutputStream(temp)) {
             if (in == null) return null;
             byte[] buffer = new byte[8192];
