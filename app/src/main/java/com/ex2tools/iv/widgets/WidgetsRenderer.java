@@ -7,6 +7,7 @@ import android.widget.RemoteViews;
 
 import com.ex2tools.iv.R;
 import com.ex2tools.iv.car.CarProps;
+import com.ex2tools.iv.lock.LockActivity;
 
 public final class WidgetsRenderer {
 
@@ -214,6 +215,38 @@ public final class WidgetsRenderer {
         click(v, c, R.id.chip_windshield_heat, WidgetsCommon.WINDSHIELD_HEAT_TOGGLE);
         click(v, c, R.id.chip_seat_heat_driver, WidgetsCommon.SEAT_DRIVER_CYCLE);
         click(v, c, R.id.chip_seat_heat_passenger, WidgetsCommon.SEAT_PASSENGER_CYCLE);
+        return v;
+    }
+
+    public static RemoteViews batteryRange(Context c, Integer soc, Float range) {
+        RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_battery_range);
+        bg(v, c);
+        // Resolve colors with the app's own day/night choice. AppWidget hosts inflate
+        // the layout with their own configuration, so XML colors can ignore our theme.
+        Context tc = OverlayWidgetViews.themeContext(c);
+        int primary = tc.getColor(R.color.cx_text_primary);
+        int secondary = tc.getColor(R.color.cx_text_secondary);
+        v.setTextColor(R.id.tv_battery_range_percent, primary);
+        v.setTextColor(R.id.tv_battery_range_km, secondary);
+        v.setInt(R.id.img_battery_range, "setColorFilter", primary);
+        v.setTextViewText(R.id.tv_battery_range_percent,
+                soc == null ? "—" : c.getString(R.string.widget_battery_range_percent, soc));
+        v.setTextViewText(R.id.tv_battery_range_km,
+                range == null ? "—" : c.getString(R.string.widget_battery_range_km,
+                        Math.round(range)));
+        return v;
+    }
+
+    public static RemoteViews lock(Context c) {
+        RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_lock);
+        bg(v, c);
+        Context tc = OverlayWidgetViews.themeContext(c);
+        v.setInt(R.id.img_lock, "setColorFilter", tc.getColor(R.color.cx_text_primary));
+        Intent intent = new Intent(c, LockActivity.class)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        PendingIntent pending = PendingIntent.getActivity(c, 0x4c4f434b, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        v.setOnClickPendingIntent(R.id.lock_body, pending);
         return v;
     }
 

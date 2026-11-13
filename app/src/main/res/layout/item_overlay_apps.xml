@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/Widget.EX2.Block"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="12dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="@dimen/card_padding">
+
+        <com.ex2tools.iv.ui.FlymeSwitchRow
+            android:id="@+id/overlayToggle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <TextView
+            android:id="@+id/appsCount"
+            style="@style/Text.EX2.ListMeta"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp" />
+
+        <com.ex2tools.iv.ui.FlymeSegmentedGroup
+            android:id="@+id/appsModeGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/appsModeRow"
+                style="@style/Widget.EX2.Toggle"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:minWidth="0dp"
+                android:text="@string/widgets_apps_mode_row" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/appsModeGrid"
+                style="@style/Widget.EX2.Toggle"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:minWidth="0dp"
+                android:text="@string/widgets_apps_mode_grid" />
+        </com.ex2tools.iv.ui.FlymeSegmentedGroup>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/appsSelect"
+            style="@style/Widget.EX2.SecondaryButton"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:layout_marginTop="12dp"
+            android:text="@string/widgets_apps_select" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                style="@style/Text.EX2.ListMeta"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/widgets_overlay_size" />
+
+            <TextView
+                android:id="@+id/overlaySizeValue"
+                style="@style/Text.EX2.Caption"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <SeekBar
+            android:id="@+id/overlaySizeSeek"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="150"
+            android:progressTint="@color/flyme_blue"
+            android:thumbTint="@color/flyme_blue" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                style="@style/Text.EX2.ListMeta"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/widgets_overlay_alpha" />
+
+            <TextView
+                android:id="@+id/overlayAlphaValue"
+                style="@style/Text.EX2.Caption"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <SeekBar
+            android:id="@+id/overlayAlphaSeek"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="100"
+            android:progressTint="@color/flyme_blue"
+            android:thumbTint="@color/flyme_blue" />
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

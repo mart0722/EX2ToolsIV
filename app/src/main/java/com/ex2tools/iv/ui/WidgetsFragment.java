@@ -42,7 +42,10 @@ public final class WidgetsFragment extends Fragment {
             WidgetsCommon.SIZE_TEMP,
             WidgetsCommon.SIZE_VENT,
             WidgetsCommon.SIZE_VENT_FAN,
-            WidgetsCommon.SIZE_HEATING
+            WidgetsCommon.SIZE_HEATING,
+            WidgetsCommon.SIZE_BATTERY_RANGE,
+            WidgetsCommon.SIZE_LOCK,
+            WidgetsCommon.SIZE_APPS
     };
 
     private static final int[] OVERLAY_LABELS = {
@@ -53,7 +56,10 @@ public final class WidgetsFragment extends Fragment {
             R.string.widgets_size_temp,
             R.string.widgets_size_vent,
             R.string.widgets_size_vent_fan,
-            R.string.widgets_size_heating
+            R.string.widgets_size_heating,
+            R.string.widgets_size_battery_range,
+            R.string.widgets_size_lock,
+            R.string.widgets_size_apps
     };
 
     private SeekBar opacity;
@@ -86,6 +92,9 @@ public final class WidgetsFragment extends Fragment {
     private final Map<String, SeekBar> overlayAlphaSeeks = new LinkedHashMap<>();
     private final Map<String, TextView> overlaySizeValues = new LinkedHashMap<>();
     private final Map<String, TextView> overlayAlphaValues = new LinkedHashMap<>();
+    private FlymeSegmentedGroup appsModeGroup;
+    private TextView appsCount;
+    private TextView appsSelect;
     private boolean binding;
 
     @Nullable
@@ -304,7 +313,10 @@ public final class WidgetsFragment extends Fragment {
         LayoutInflater inflater = LayoutInflater.from(c);
         for (int i = 0; i < OVERLAY_KEYS.length; i++) {
             final String key = OVERLAY_KEYS[i];
-            View card = inflater.inflate(R.layout.item_overlay_widget, overlayList, false);
+            boolean apps = WidgetsCommon.SIZE_APPS.equals(key);
+            View card = inflater.inflate(apps
+                    ? R.layout.item_overlay_apps
+                    : R.layout.item_overlay_widget, overlayList, false);
             FlymeSwitchRow toggle = card.findViewById(R.id.overlayToggle);
             SeekBar sizeSeek = card.findViewById(R.id.overlaySizeSeek);
             SeekBar alphaSeek = card.findViewById(R.id.overlayAlphaSeek);
@@ -324,7 +336,27 @@ public final class WidgetsFragment extends Fragment {
                 if (binding) return;
                 Prefs.setOverlayEnabled(requireContext(), key, checked);
                 OverlayWidgetService.sync(requireContext());
+                if (apps && checked && Prefs.overlayApps(requireContext()).isEmpty()) {
+                    b.post(this::openAppsPicker);
+                }
             });
+
+            if (apps) {
+                appsModeGroup = card.findViewById(R.id.appsModeGroup);
+                appsCount = card.findViewById(R.id.appsCount);
+                appsSelect = card.findViewById(R.id.appsSelect);
+                binding = true;
+                appsModeGroup.check(Prefs.overlayAppsLayout(c) == 1
+                        ? R.id.appsModeGrid : R.id.appsModeRow);
+                binding = false;
+                appsModeGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+                    if (!isChecked || binding) return;
+                    Prefs.setOverlayAppsLayout(requireContext(),
+                            checkedId == R.id.appsModeGrid ? 1 : 0);
+                    OverlayWidgetService.restart(requireContext());
+                });
+                appsSelect.setOnClickListener(v -> openAppsPicker());
+            }
             sizeSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
                 @Override
                 public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -403,6 +435,10 @@ public final class WidgetsFragment extends Fragment {
         speedBackground.setChecked(Prefs.speedBackground(c));
         speedEnabled.setChecked(Prefs.overlayEnabled(c, WidgetsCommon.SIZE_SPEED));
         speedPinned.setChecked(Prefs.overlayPinned(c, WidgetsCommon.SIZE_SPEED));
+        if (appsModeGroup != null) {
+            appsModeGroup.check(Prefs.overlayAppsLayout(c) == 1
+                    ? R.id.appsModeGrid : R.id.appsModeRow);
+        }
         for (String key : OVERLAY_KEYS) {
             FlymeSwitchRow toggle = overlayToggles.get(key);
             SeekBar sizeSeek = overlaySizeSeeks.get(key);
@@ -421,6 +457,7 @@ public final class WidgetsFragment extends Fragment {
 
         updateClockPreview();
         updateModeUi();
+        updateAppsUi();
     }
 
     private void updateModeUi() {
@@ -453,6 +490,26 @@ public final class WidgetsFragment extends Fragment {
         if (speedAlpha != null) {
             speedAlpha.setVisibility(stock ? View.VISIBLE : View.GONE);
         }
+    }
+
+    private void updateAppsUi() {
+        if (!isAdded() || appsCount == null || appsSelect == null) return;
+        Context c = requireContext();
+        int count = Prefs.overlayApps(c).size();
+        appsCount.setText(getResources().getQuantityString(
+                R.plurals.widgets_apps_selected, count, count));
+        appsSelect.setText(count == 0
+                ? R.string.widgets_apps_select : R.string.widgets_apps_edit);
+    }
+
+    private void openAppsPicker() {
+        if (!isAdded()) return;
+        Context c = requireContext();
+        AppsPickerDialog.show(c, () -> {
+            if (!isAdded()) return;
+            updateAppsUi();
+            OverlayWidgetService.restart(requireContext());
+        });
     }
 
     private void refreshSpeed() {

@@ -8,6 +8,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.content.pm.Signature;
 import android.graphics.drawable.Drawable;
 
@@ -22,8 +23,10 @@ import java.io.OutputStream;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class AppsRepository {
@@ -71,8 +74,63 @@ public final class AppsRepository {
         return out;
     }
 
-    public static ApkInfo inspect(Context context, File apk) throws Exception {
+    /**
+     * Lightweight list of applications which actually have a launcher entry.
+     * Used by the app-icon overlay and its picker. Signatures and version
+     * details are not needed there, so they are skipped.
+     */
+    public static List<InstalledApp> loadLaunchable(Context context) {
         Context c = context.getApplicationContext();
+        PackageManager pm = c.getPackageManager();
+        List<InstalledApp> out = new ArrayList<>();
+        List<ResolveInfo> resolved;
+        try {
+            Intent main = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER);
+            resolved = pm.queryIntentActivities(main, 0);
+        } catch (Throwable t) {
+            LogStore.add(c, "launchable apps list failed: " + t);
+            return out;
+        }
+        Map<String, ResolveInfo> byPackage = new LinkedHashMap<>();
+        for (ResolveInfo ri : resolved) {
+            if (ri == null || ri.activityInfo == null) continue;
+            String pkg = ri.activityInfo.packageName;
+            if (pkg == null || pkg.isEmpty()) continue;
+            if (!byPackage.containsKey(pkg)) byPackage.put(pkg, ri);
+        }
+        for (Map.Entry<String, ResolveInfo> entry : byPackage.entrySet()) {
+            String pkg = entry.getKey();
+            ApplicationInfo ai = entry.getValue().activityInfo.applicationInfo;
+            if (ai == null) {
+                try {
+                    ai = pm.getApplicationInfo(pkg, 0);
+                } catch (Throwable ignored) {
+                }
+            }
+            if (ai == null) continue;
+            String label;
+            try {
+                label = pm.getApplicationLabel(ai).toString();
+            } catch (Throwable t) {
+                label = pkg;
+            }
+            Drawable icon = null;
+            try {
+                icon = pm.getApplicationIcon(ai);
+            } catch (Throwable ignored) {
+            }
+            boolean system = (ai.flags & (ApplicationInfo.FLAG_SYSTEM
+                    | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0;
+            out.add(new InstalledApp(pkg, label, "", 0L, system, "—", icon));
+        }
+        Collections.sort(out, (a, b) -> {
+            if (a.system != b.system) return a.system ? 1 : -1;
+            return String.CASE_INSENSITIVE_ORDER.compare(a.label, b.label);
+        });
+        return out;
+    }
+
+    public static ApkInfo inspect(Context context, File apk) throws Exception {        Context c = context.getApplicationContext();
         PackageManager pm = c.getPackageManager();
         int flags = PackageManager.GET_ACTIVITIES
                 | PackageManager.GET_META_DATA

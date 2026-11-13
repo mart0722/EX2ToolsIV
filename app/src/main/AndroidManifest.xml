@@ -68,6 +68,14 @@
         </activity>
 
         <activity
+            android:name=".lock.LockActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:screenOrientation="landscape"
+            android:theme="@style/Theme.EX2ToolsIV.Lock" />
+
+        <activity
             android:name=".status.TripResetActivity"
             android:excludeFromRecents="true"
             android:exported="false"
@@ -255,6 +263,18 @@
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_info_speed" />
+        </receiver>
+        <receiver android:name=".widgets.BatteryRangeWidgetProvider" android:exported="true" android:label="@string/widget_name_battery_range">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_info_battery_range" />
+        </receiver>
+        <receiver android:name=".widgets.LockWidgetProvider" android:exported="true" android:label="@string/widget_name_lock">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_info_lock" />
         </receiver>
 
 

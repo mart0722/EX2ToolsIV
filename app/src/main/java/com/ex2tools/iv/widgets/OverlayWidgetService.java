@@ -77,6 +77,10 @@ public final class OverlayWidgetService extends Service {
                 anyEnabled |= enabled;
                 boolean pinned = Prefs.overlayPinned(OverlayWidgetService.this, spec.key);
                 boolean show = enabled && !state.appList && (pinned || state.launcher);
+                if (show && WidgetsCommon.SIZE_APPS.equals(spec.key)
+                        && !AppsOverlay.hasVisible(OverlayWidgetService.this)) {
+                    show = false;
+                }
                 if (show) {
                     ensure(spec);
                     update(spec);
@@ -224,8 +228,19 @@ public final class OverlayWidgetService extends Service {
             int size = WidgetsCommon.SIZE_SPEED.equals(spec.key)
                     ? Prefs.widgetSizePct(this, spec.key)
                     : Prefs.overlaySizePct(this, spec.key);
-            int width = Math.max(1, Math.round(spec.widthDp * density() * size / 100f));
-            int height = Math.max(1, Math.round(spec.heightDp * density() * size / 100f));
+            int baseWidthDp = spec.widthDp;
+            int baseHeightDp = spec.heightDp;
+            if (WidgetsCommon.SIZE_APPS.equals(spec.key)) {
+                int[] dims = AppsOverlay.sizeDp(this);
+                baseWidthDp = dims[0];
+                baseHeightDp = dims[1];
+            }
+            int width = Math.max(1, Math.round(baseWidthDp * density() * size / 100f));
+            int height = Math.max(1, Math.round(baseHeightDp * density() * size / 100f));
+            width = Math.min(width, Math.max(1,
+                    getResources().getDisplayMetrics().widthPixels - dp(16)));
+            height = Math.min(height, Math.max(1,
+                    getResources().getDisplayMetrics().heightPixels - dp(16)));
             WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
                     width, height,
                     WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
@@ -318,6 +333,14 @@ public final class OverlayWidgetService extends Service {
                         WidgetsCommon.readSeatHeat(1),
                         WidgetsCommon.readSeatHeat(4));
                 break;
+            case WidgetsCommon.SIZE_BATTERY_RANGE:
+                views = WidgetsRenderer.batteryRange(this,
+                        Telemetry.soc(this) < 0 ? null : Telemetry.soc(this),
+                        Float.isNaN(Telemetry.rangeKm(this)) ? null : Telemetry.rangeKm(this));
+                break;
+            case WidgetsCommon.SIZE_LOCK:
+                views = WidgetsRenderer.lock(this);
+                break;
             default:
                 views = new RemoteViews(getPackageName(), R.layout.widget_speed);
                 break;
@@ -331,7 +354,7 @@ public final class OverlayWidgetService extends Service {
                           WindowManager.LayoutParams lp) {
         View drag = content.findViewById(R.id.widget_bg_layer);
         if (drag == null || drag.getVisibility() != View.VISIBLE) drag = content;
-        drag.setOnTouchListener(new View.OnTouchListener() {
+        View.OnTouchListener listener = new View.OnTouchListener() {
             private float downX;
             private float downY;
             private int startX;
@@ -372,7 +395,14 @@ public final class OverlayWidgetService extends Service {
                         return false;
                 }
             }
-        });
+        };
+        drag.setOnTouchListener(listener);
+        // The app-icon widget has a lot of empty space between rounded tiles;
+        // let that area drag the window too, while icons keep working as clicks.
+        if (WidgetsCommon.SIZE_APPS.equals(spec.key)) {
+            View iconArea = content.findViewById(R.id.apps_container);
+            if (iconArea != null && iconArea != drag) iconArea.setOnTouchListener(listener);
+        }
     }
 
     private int themeSignature() {
@@ -474,6 +504,15 @@ public final class OverlayWidgetService extends Service {
                 case WidgetsCommon.SIZE_HEATING:
                     widthDp = 420; heightDp = 260; defaultX = 480; defaultY = 520;
                     break;
+                case WidgetsCommon.SIZE_BATTERY_RANGE:
+                    widthDp = 230; heightDp = 90; defaultX = 40; defaultY = 700;
+                    break;
+                case WidgetsCommon.SIZE_LOCK:
+                    widthDp = 160; heightDp = 160; defaultX = 360; defaultY = 700;
+                    break;
+                case WidgetsCommon.SIZE_APPS:
+                    widthDp = 84; heightDp = 84; defaultX = 560; defaultY = 700;
+                    break;
                 default:
                     widthDp = 220; heightDp = 220; defaultX = 40; defaultY = 40;
                     break;
@@ -490,7 +529,10 @@ public final class OverlayWidgetService extends Service {
                     WidgetsCommon.SIZE_TEMP,
                     WidgetsCommon.SIZE_VENT,
                     WidgetsCommon.SIZE_VENT_FAN,
-                    WidgetsCommon.SIZE_HEATING
+                    WidgetsCommon.SIZE_HEATING,
+                    WidgetsCommon.SIZE_BATTERY_RANGE,
+                    WidgetsCommon.SIZE_LOCK,
+                    WidgetsCommon.SIZE_APPS
             };
         }
     }

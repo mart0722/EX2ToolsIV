@@ -41,8 +41,8 @@ public final class CarProps {
     public static final int ODOMETER = 291504644;
     public static final float CAPACITY_KWH = 39.0f;
     public static final int AC_AMBIENT_TEMP = 557884279;
-    public static final int OUTSIDE_TEMP = 658548345;
-    public static final int OUTSIDE_TEMP_AOSP = 289408771;
+    public static final int ENV_OUTSIDE_TEMPERATURE = 291505923;
+    public static final int DRIVE_MILEAGE = 658548345;
 
     public static final int SPEED_AUTO_LOCK = 557850645;   // 0x21402015, as in Sapo
     public static final int WINDOW_POSITION = 322964416;

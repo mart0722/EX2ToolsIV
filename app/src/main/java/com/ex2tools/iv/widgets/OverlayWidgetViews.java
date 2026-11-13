@@ -3,9 +3,14 @@ package com.ex2tools.iv.widgets;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.core.content.ContextCompat;
@@ -15,6 +20,9 @@ import com.ex2tools.iv.Prefs;
 import com.ex2tools.iv.R;
 import com.ex2tools.iv.car.CarProps;
 import com.ex2tools.iv.car.Telemetry;
+import com.ex2tools.iv.lock.LockActivity;
+
+import java.util.List;
 
 /**
  * Normal views for the floating widgets. They intentionally mirror the
@@ -67,6 +75,12 @@ final class OverlayWidgetViews {
             case WidgetsCommon.SIZE_HEATING:
                 updateHeating(c, root);
                 break;
+            case WidgetsCommon.SIZE_BATTERY_RANGE:
+                updateBatteryRange(c, root);
+                break;
+            case WidgetsCommon.SIZE_APPS:
+                // Built once in create(); the selection only changes on restart.
+                break;
             default:
                 break;
         }
@@ -109,6 +123,12 @@ final class OverlayWidgetViews {
                 return R.layout.widget_hvac_direction_fan;
             case WidgetsCommon.SIZE_HEATING:
                 return R.layout.widget_heating_test;
+            case WidgetsCommon.SIZE_BATTERY_RANGE:
+                return R.layout.widget_battery_range;
+            case WidgetsCommon.SIZE_LOCK:
+                return R.layout.widget_lock;
+            case WidgetsCommon.SIZE_APPS:
+                return R.layout.widget_apps;
             default:
                 return R.layout.widget_drive_regen;
         }
@@ -167,9 +187,81 @@ final class OverlayWidgetViews {
                 click(c, root, R.id.chip_seat_heat_driver, WidgetsCommon.SEAT_DRIVER_CYCLE);
                 click(c, root, R.id.chip_seat_heat_passenger, WidgetsCommon.SEAT_PASSENGER_CYCLE);
                 break;
+            case WidgetsCommon.SIZE_LOCK:
+                View lock = root.findViewById(R.id.lock_body);
+                if (lock == null) lock = root;
+                lock.setOnClickListener(v -> openLock(c));
+                break;
+            case WidgetsCommon.SIZE_APPS:
+                bindApps(c, root);
+                break;
             default:
                 break;
         }
+    }
+
+    private static void bindApps(Context base, View root) {
+        Context c = themeContext(base);
+        View containerView = root.findViewById(R.id.apps_container);
+        if (!(containerView instanceof LinearLayout)) return;
+        LinearLayout container = (LinearLayout) containerView;
+        container.removeAllViews();
+        List<String> packages = AppsOverlay.validSelected(c);
+        if (packages.isEmpty()) return;
+
+        int count = packages.size();
+        int columns = AppsOverlay.columns(c, count);
+        float scale = Prefs.overlaySizePct(c, WidgetsCommon.SIZE_APPS) / 100f;
+        int padding = dp(c, Math.round(AppsOverlay.PADDING_DP * scale));
+        int gap = dp(c, Math.round(AppsOverlay.GAP_DP * scale));
+        int cell = dp(c, Math.round(AppsOverlay.CELL_DP * scale));
+        int iconSize = dp(c, Math.round(AppsOverlay.ICON_DP * scale));
+        int corner = dp(c, Math.round(AppsOverlay.CORNER_DP * scale));
+        container.setPadding(padding, padding, padding, padding);
+        LinearLayout row = null;
+        for (int i = 0; i < count; i++) {
+            if (i % columns == 0) {
+                row = new LinearLayout(c);
+                row.setOrientation(LinearLayout.HORIZONTAL);
+                row.setGravity(Gravity.CENTER);
+                LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT);
+                if (i > 0) rowParams.topMargin = gap;
+                container.addView(row, rowParams);
+            }
+            ImageView icon = appIcon(c, packages.get(i), cell, iconSize, corner);
+            LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(cell, cell);
+            if (i % columns != 0) iconParams.setMarginStart(gap);
+            if (row != null) row.addView(icon, iconParams);
+        }
+    }
+
+    private static ImageView appIcon(Context c, String pkg, int cellPx, int iconPx, int cornerPx) {
+        ImageView icon = new ImageView(c);
+        Drawable drawable = AppsOverlay.icon(c, pkg);
+        if (drawable != null) {
+            icon.setImageDrawable(drawable);
+        } else {
+            icon.setImageResource(R.drawable.ic_apps);
+        }
+        icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        icon.setContentDescription(AppsOverlay.label(c, pkg));
+        int inset = Math.max(0, (cellPx - iconPx) / 2);
+        icon.setPadding(inset, inset, inset, inset);
+
+        GradientDrawable shape = new GradientDrawable();
+        shape.setShape(GradientDrawable.RECTANGLE);
+        shape.setCornerRadius(cornerPx);
+        shape.setColor(Color.TRANSPARENT);
+        icon.setBackground(shape);
+        icon.setClipToOutline(true);
+        icon.setOnClickListener(v -> AppsOverlay.launch(c, pkg));
+        return icon;
+    }
+
+    private static int dp(Context c, int value) {
+        return Math.round(value * c.getResources().getDisplayMetrics().density);
     }
 
     private static void updateDriveRegen(Context c, View root) {
@@ -297,6 +389,26 @@ final class OverlayWidgetViews {
         if (fanValue instanceof TextView) {
             ((TextView) fanValue).setTextColor(c.getColor(Boolean.TRUE.equals(ac)
                     ? R.color.cx_on_accent : R.color.cx_text_primary));
+        }
+    }
+
+    private static void updateBatteryRange(Context c, View root) {
+        int soc = Telemetry.soc(c);
+        float range = Telemetry.rangeKm(c);
+        text(root, R.id.tv_battery_range_percent,
+                soc < 0 ? "—" : c.getString(R.string.widget_battery_range_percent, soc));
+        text(root, R.id.tv_battery_range_km,
+                Float.isNaN(range) ? "—"
+                        : c.getString(R.string.widget_battery_range_km, Math.round(range)));
+    }
+
+    private static void openLock(Context c) {
+        try {
+            Intent intent = new Intent(c, LockActivity.class)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            c.startActivity(intent);
+        } catch (Throwable t) {
+            LogStore.add(c, "lock overlay open failed: " + t);
         }
     }
 

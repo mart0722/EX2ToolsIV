@@ -41,31 +41,27 @@ public final class Telemetry {
         if (!cc.ensure(c)) return Float.NaN;
 
         int amb = cc.readInt(CarProps.AC_AMBIENT_TEMP, 0);
-        float v = cc.readFloat(CarProps.OUTSIDE_TEMP, 0);
-        float a = cc.readFloat(CarProps.OUTSIDE_TEMP_AOSP, 0);
-        int ai = cc.readInt(CarProps.OUTSIDE_TEMP_AOSP, 0);
+        float env = cc.readFloat(CarProps.ENV_OUTSIDE_TEMPERATURE, 0);
+        if (Float.isNaN(env)) {
+            int value = cc.readInt(CarProps.ENV_OUTSIDE_TEMPERATURE, 0);
+            if (value != Integer.MIN_VALUE) env = value;
+        }
         float result = Float.NaN;
 
         if (amb != Integer.MIN_VALUE && amb != 0) {
             float t = (amb - 80) / 2.0f;
             if (t > -50f && t < 70f) result = t;
         }
-        if (Float.isNaN(result) && !Float.isNaN(v) && v != 0f) {
-            float t = v / 10f;
-            if (t > -60f && t < 90f) result = t;
-        }
-        if (Float.isNaN(result) && !Float.isNaN(a) && a != 0f && a > -60f && a < 90f) {
-            result = a;
-        }
-        if (Float.isNaN(result) && ai != Integer.MIN_VALUE && ai != 0) {
-            float t = ai / 10f;
+        if (Float.isNaN(result) && !Float.isNaN(env) && env != 0f) {
+            // EX2 returns ENV_OUTSIDE_TEMPERATURE in tenths of a degree.
+            float t = env / 10f;
             if (t > -60f && t < 90f) result = t;
         }
         if ((Float.isNaN(result) || result == 0f)
                 && System.currentTimeMillis() - lastTempDiag > 60000L) {
             lastTempDiag = System.currentTimeMillis();
-            com.ex2tools.iv.LogStore.add(c, "temp raw amb=" + amb + " v=" + v
-                    + " aosp=" + a + " ai=" + ai + " -> " + result);
+            com.ex2tools.iv.LogStore.add(c, "temp raw amb=" + amb + " env=" + env
+                    + " -> " + result);
         }
         return result;
     }

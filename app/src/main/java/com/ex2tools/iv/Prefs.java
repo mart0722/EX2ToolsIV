@@ -460,6 +460,22 @@ public final class Prefs {
                 .apply();
     }
 
+    public static List<String> overlayApps(Context c) {
+        return readList(get(c).getString("overlay_apps_list", "[]"));
+    }
+
+    public static void setOverlayApps(Context c, List<String> value) {
+        get(c).edit().putString("overlay_apps_list", writeList(value)).apply();
+    }
+
+    public static int overlayAppsLayout(Context c) {
+        return get(c).getInt("overlay_apps_layout", 0) == 1 ? 1 : 0;
+    }
+
+    public static void setOverlayAppsLayout(Context c, int value) {
+        get(c).edit().putInt("overlay_apps_layout", value == 1 ? 1 : 0).apply();
+    }
+
     public static int overlaySizePct(Context c, String key) {
         return Math.max(50, Math.min(200,
                 get(c).getInt("overlay_" + key + "_size_pct", 100)));

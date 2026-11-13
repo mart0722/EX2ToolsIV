@@ -34,6 +34,7 @@ import com.ex2tools.iv.R;
 import com.ex2tools.iv.car.Telemetry;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -218,12 +219,13 @@ public final class StatusIconService extends Service {
     private void postTemp() {
         float value = Telemetry.outsideTemp(this);
         boolean valid = !Float.isNaN(value);
-        String main = valid ? String.valueOf(Math.round(value)) : "?";
+        String formatted = String.format(Locale.US, "%.1f", value);
+        String main = valid ? formatted : "?";
         String unit = valid ? "°C" : "";
         int color = -1;
         Icon icon = textIcon(main, unit, color, 10, true, false);
         String text = valid
-                ? getString(R.string.status_temp_text, Math.round(value))
+                ? getString(R.string.status_temp_text, formatted)
                 : getString(R.string.status_unavailable);
         postStatusIcon(NOTIF_TEMP, ICON_TEMP, RANK_TEMP,
                 "StatusIcon_OutsideTemperature", CHANNEL_TEMP,

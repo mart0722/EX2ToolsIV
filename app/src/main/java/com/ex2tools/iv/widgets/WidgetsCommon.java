@@ -55,6 +55,9 @@ public final class WidgetsCommon {
     public static final String SIZE_VENT_FAN = "vent_fan";
     public static final String SIZE_HEATING = "heating";
     public static final String SIZE_SPEED = "speed";
+    public static final String SIZE_BATTERY_RANGE = "battery_range";
+    public static final String SIZE_LOCK = "lock";
+    public static final String SIZE_APPS = "apps";
 
     private static final int[] DRIVE_ORDER = {CarProps.DRIVE_ECO, CarProps.DRIVE_COMFORT, CarProps.DRIVE_SPORT};
     private static final int[] REGEN_ORDER = {CarProps.REGEN_WEAK, CarProps.REGEN_MEDIUM, CarProps.REGEN_STRONG};

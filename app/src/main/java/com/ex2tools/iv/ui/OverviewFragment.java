@@ -215,7 +215,7 @@ public final class OverviewFragment extends Fragment {
 
         setMetric(temp, Float.isNaN(d.temp)
                 ? null
-                : String.valueOf(Math.round(d.temp)), getString(R.string.unit_celsius));
+                : String.format(Locale.US, "%.1f", d.temp), getString(R.string.unit_celsius));
 
         setMetric(climateTarget, Float.isNaN(d.target)
                 ? null

@@ -45,7 +45,9 @@ public final class WidgetUpdateService extends Service {
             HvacDirectionVerticalWidgetProvider.class,
             HvacDirectionFanWidgetProvider.class,
             HeatingTestWidgetProvider.class,
-            SpeedWidgetProvider.class
+            SpeedWidgetProvider.class,
+            BatteryRangeWidgetProvider.class,
+            LockWidgetProvider.class
     };
 
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -192,6 +194,8 @@ public final class WidgetUpdateService extends Service {
         int[] ventFanIds = ids(awm, HvacDirectionFanWidgetProvider.class);
         int[] heatingIds = ids(awm, HeatingTestWidgetProvider.class);
         int[] speedIds = ids(awm, SpeedWidgetProvider.class);
+        int[] batteryRangeIds = ids(awm, BatteryRangeWidgetProvider.class);
+        int[] lockIds = ids(awm, LockWidgetProvider.class);
 
         boolean needDrive = driveRegenIds.length > 0 || driveVerticalIds.length > 0;
         boolean needRegen = driveRegenIds.length > 0 || regenVerticalIds.length > 0;
@@ -200,6 +204,7 @@ public final class WidgetUpdateService extends Service {
         boolean needVent = ventIds.length > 0 || ventVerticalIds.length > 0 || ventFanIds.length > 0;
         boolean needAc = ventFanIds.length > 0;
         boolean needHeating = heatingIds.length > 0;
+        boolean needBatteryRange = batteryRangeIds.length > 0;
 
         Integer drive = needDrive ? intOrNull(Telemetry.driveNow(this)) : null;
         Integer regen = needRegen ? intOrNull(Telemetry.regenNow(this)) : null;
@@ -208,6 +213,9 @@ public final class WidgetUpdateService extends Service {
         Integer vent = needVent ? WidgetsCommon.readVent() : null;
         Boolean recirc = needVent ? WidgetsCommon.readRecirc() : null;
         Boolean ac = needAc ? WidgetsCommon.readAc() : null;
+        Integer batteryPercent = needBatteryRange ? Telemetry.soc(this) : null;
+        if (batteryPercent != null && batteryPercent < 0) batteryPercent = null;
+        float rangeKm = needBatteryRange ? Telemetry.rangeKm(this) : Float.NaN;
 
         Boolean rear = null;
         Boolean front = null;
@@ -244,6 +252,10 @@ public final class WidgetUpdateService extends Service {
             SpeedWidgetProvider.update(this, awm, speedIds);
             any = true;
         }
+        any |= update(awm, batteryRangeIds,
+                WidgetsRenderer.batteryRange(this, batteryPercent,
+                        Float.isNaN(rangeKm) ? null : rangeKm));
+        any |= update(awm, lockIds, WidgetsRenderer.lock(this));
         if (ids(awm, ClockWidgetProvider.class).length > 0) {
             ClockWidgetProvider.refreshAll(this);
             any = true;
