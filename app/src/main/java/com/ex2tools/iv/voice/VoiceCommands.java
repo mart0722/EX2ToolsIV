@@ -242,6 +242,8 @@ public final class VoiceCommands {
     }
 
     private static Result climateBoost(Context c, String t) {
+        // Targeted heaters must not trigger the cabin-wide climate boost.
+        if (VoiceText.has(t, "рул", "сиден", "сидуш", "крес", "водител", "пассаж")) return null;
         boolean fast = VoiceText.has(t, "быстр", "максимальн", "макс");
         boolean cool = VoiceText.has(t, "охлажд", "охлади", "выстуд", "остуди");
         boolean heat = VoiceText.has(t, "обогрев", "обогрей", "отопл", "нагрев", "нагрей", "прогре");
@@ -484,10 +486,9 @@ public final class VoiceCommands {
     private static Result wheel(Context c, String t) {
         if (!VoiceText.has(t, "рул")) return null;
         if (!VoiceText.has(t, "обогрев", "подогрев", "нагрев", "греть", "грей")) return null;
-        Integer current = WidgetsCommon.readWheelHeatLevel();
-        int level = level(t, current == null ? 0 : current);
+        int level = level(t, 0) == 0 ? 0 : 1;
         WidgetsCommon.setWheelHeatLevel(c, level);
-        return ok(level == 0 ? "Обогрев руля выключен" : "Обогрев руля " + level);
+        return ok(level == 0 ? "Обогрев руля выключен" : "Обогрев руля включён");
     }
 
     private static Result seat(Context c, String t) {
