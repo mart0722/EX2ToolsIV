@@ -25,6 +25,7 @@ public final class NotificationHelper {
     public static final int ID_TRIP_RESET = 2111;
     public static final int ID_VOICE = 2112;
     public static final int ID_OVERLAY = 2113;
+    public static final int ID_AUTOLOCK = 2114;
 
     private NotificationHelper() {
     }
@@ -148,14 +149,24 @@ public final class NotificationHelper {
     }
 
     public static Notification driveWatch(Context c) {
+        String text = c.getString(R.string.drive_watch_text) + ": "
+                + com.ex2tools.iv.car.CarProps.driveLabel(c, com.ex2tools.iv.Prefs.drive(c))
+                + " / "
+                + com.ex2tools.iv.car.CarProps.regenLabel(c, com.ex2tools.iv.Prefs.regen(c));
         return base(c, App.CH_DRIVE, R.drawable.ic_car,
-                c.getString(R.string.drive_watch_title),
-                c.getString(R.string.drive_watch_text))
+                c.getString(R.string.drive_watch_title), text)
                 .setOngoing(true)
                 .setContentIntent(openApp(c))
                 .build();
     }
 
+    public static Notification autoLock(Context c) {
+        return base(c, App.CH_SERVICE, R.drawable.ic_lock,
+                c.getString(R.string.autolock_notification_title),
+                c.getString(R.string.autolock_notification_text))
+                .setOngoing(true)
+                .build();
+    }
     public static Notification bottom(Context c) {
         return base(c, App.CH_BOTTOM, R.drawable.ic_battery,
                 c.getString(R.string.bottom_notification_title),

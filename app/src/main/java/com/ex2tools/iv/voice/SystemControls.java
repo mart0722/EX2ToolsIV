@@ -4,6 +4,7 @@ import android.content.Context;
 import android.media.AudioManager;
 import android.provider.Settings;
 
+import com.ex2tools.iv.body.BodyController;
 import com.ex2tools.iv.car.CarConnection;
 import com.ex2tools.iv.car.CarProps;
 
@@ -68,11 +69,9 @@ public final class SystemControls {
     }
 
     public static boolean setDayNight(Context c, boolean night) {
-        CarConnection cc = CarConnection.get();
-        if (cc.ensure(c)) {
-            int value = night ? CarProps.DAY_NIGHT_NIGHT : CarProps.DAY_NIGHT_DAY;
-            if (cc.writeInt(CarProps.DAY_NIGHT_SETTING, 0, value)) return true;
-        }
+        com.ex2tools.iv.vehicle.CommandDispatcher.Result result =
+                BodyController.get().setDayNight(night);
+        if (result != null && result.ok()) return true;
         try {
             return Settings.System.putString(c.getContentResolver(), "day_night",
                     night ? "night" : "day");

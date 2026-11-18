@@ -263,6 +263,50 @@
                 android:textSize="22sp"
                 app:rowDescription="@string/ttl65_note" />
 
+            <com.ex2tools.iv.ui.FlymeSwitchRow
+                android:id="@+id/switchAutoLock"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/settings_auto_lock"
+                android:textColor="@color/flyme_label_level1"
+                android:textSize="22sp"
+                app:rowDescription="@string/settings_auto_lock_note" />
+
+            <com.ex2tools.iv.ui.FlymeSegmentedGroup
+                android:id="@+id/autoLockTimeGroup"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/autoLock30"
+                    style="@style/Widget.EX2.Toggle"
+                    android:layout_width="0dp"
+                    android:layout_height="56dp"
+                    android:layout_weight="1"
+                    android:minWidth="0dp"
+                    android:text="@string/settings_auto_lock_30s" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/autoLock60"
+                    style="@style/Widget.EX2.Toggle"
+                    android:layout_width="0dp"
+                    android:layout_height="56dp"
+                    android:layout_weight="1"
+                    android:minWidth="0dp"
+                    android:text="@string/settings_auto_lock_1m" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/autoLock300"
+                    style="@style/Widget.EX2.Toggle"
+                    android:layout_width="0dp"
+                    android:layout_height="56dp"
+                    android:layout_weight="1"
+                    android:minWidth="0dp"
+                    android:text="@string/settings_auto_lock_5m" />
+            </com.ex2tools.iv.ui.FlymeSegmentedGroup>
+
             <TextView
                 style="@style/Text.EX2.GroupLabel"
                 android:layout_width="match_parent"

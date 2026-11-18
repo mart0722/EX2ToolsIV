@@ -39,7 +39,7 @@ public final class CarProps {
     public static final int SEAT_HEAT = 356517131;
     public static final int ODOMETER_VENDOR = 289407492;
     public static final int ODOMETER = 291504644;
-    public static final float CAPACITY_KWH = 39.0f;
+    public static final float CAPACITY_KWH = 39.4f;
     public static final int AC_AMBIENT_TEMP = 557884279;
     public static final int ENV_OUTSIDE_TEMPERATURE = 291505923;
     public static final int DRIVE_MILEAGE = 658548345;
@@ -52,6 +52,11 @@ public final class CarProps {
     public static final int DAY_NIGHT_AUTO = 538247427;
 
     public static final int[] AREAS = new int[]{0, 1};
+    // Drive mode живёт ещё и в третьей зоне 0x01000000 (16777216) — так делает
+    // Sapo. Зоны 0 и 1 на этой машине принимают запись молча, но не применяют
+    // режим на ходу; рабочая — 16777216.
+    public static final int[] DRIVE_AREAS = new int[]{0, 1, 16777216};
+    public static final int[] REGEN_AREAS = new int[]{0, 1};
     public static final int[] CABIN_AREAS = new int[]{1, 4, 0, 7};
     public static final int[] HVAC_AREAS = new int[]{1, 4, 0};
     public static final int[] FAN_AREAS = new int[]{1, 49, 5, 0};
@@ -60,6 +65,7 @@ public final class CarProps {
     public static final int[] SEAT_AREAS = new int[]{1, 4};
     public static final int[] WHEEL_HEAT_AREAS = new int[]{0, 1};
     public static final int GEAR_PARK = 4;
+    public static final int GEAR_DRIVE = 8;
 
     private CarProps() {
     }

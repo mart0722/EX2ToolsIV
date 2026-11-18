@@ -3,6 +3,7 @@ package com.ex2tools.iv.car;
 import android.content.Context;
 
 import com.ex2tools.iv.LogStore;
+import com.ex2tools.iv.ReadOnly;
 
 import java.io.BufferedReader;
 import java.io.File;

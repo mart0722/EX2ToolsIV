@@ -1,125 +1,125 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout
-    android:id="@+id/widget_root" xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
+
     <TextView
         android:id="@+id/widget_bg_layer"
-        android:background="@drawable/widget_card_bg_100"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:text=""/>
+        android:background="@drawable/bg_wg_card_100" />
+
     <LinearLayout
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:padding="10dp"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
-        <TextView
-            android:textSize="34sp"
-            android:textStyle="bold"
-            android:textColor="@color/cx_text_primary"
-            android:gravity="center"
-            android:id="@+id/btn_fan_minus"
-            android:background="@drawable/btn_circle"
-            android:layout_width="67dp"
-            android:layout_height="67dp"
-            android:text="−"/>
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="14dp">
+
         <LinearLayout
-            android:gravity="center"
-            android:orientation="vertical"
-            android:id="@+id/fan_mid_col"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1">
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
             <ImageView
-                android:id="@+id/fan_icon"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:layout_marginBottom="2dp"
-                android:src="@drawable/ic_climate_fan"
-                android:tint="@color/cx_text_primary" />
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/wg_ic_fan"
+                android:tint="@color/wg_text" />
+
             <TextView
-                android:textSize="26sp"
-                android:textStyle="bold"
-                android:textColor="@color/cx_text_primary"
-                android:id="@+id/tv_fan_value"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="—"/>
-            <LinearLayout
-                android:orientation="horizontal"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
-                android:layout_marginBottom="3dp">
-                <TextView
-                    android:id="@+id/dot_fan_1"
-                    android:background="@drawable/widget_dot_off"
-                    android:layout_width="6dp"
-                    android:layout_height="6dp"
-                    android:text=""
-                    android:layout_marginEnd="3dp"/>
-                <TextView
-                    android:id="@+id/dot_fan_2"
-                    android:background="@drawable/widget_dot_off"
-                    android:layout_width="6dp"
-                    android:layout_height="6dp"
-                    android:text=""
-                    android:layout_marginEnd="3dp"/>
-                <TextView
-                    android:id="@+id/dot_fan_3"
-                    android:background="@drawable/widget_dot_off"
-                    android:layout_width="6dp"
-                    android:layout_height="6dp"
-                    android:text=""
-                    android:layout_marginEnd="3dp"/>
-                <TextView
-                    android:id="@+id/dot_fan_4"
-                    android:background="@drawable/widget_dot_off"
-                    android:layout_width="6dp"
-                    android:layout_height="6dp"
-                    android:text=""
-                    android:layout_marginEnd="3dp"/>
-                <TextView
-                    android:id="@+id/dot_fan_5"
-                    android:background="@drawable/widget_dot_off"
-                    android:layout_width="6dp"
-                    android:layout_height="6dp"
-                    android:text=""
-                    android:layout_marginEnd="3dp"/>
-                <TextView
-                    android:id="@+id/dot_fan_6"
-                    android:background="@drawable/widget_dot_off"
-                    android:layout_width="6dp"
-                    android:layout_height="6dp"
-                    android:text=""
-                    android:layout_marginEnd="3dp"/>
-                <TextView
-                    android:id="@+id/dot_fan_7"
-                    android:background="@drawable/widget_dot_off"
-                    android:layout_width="6dp"
-                    android:layout_height="6dp"
-                    android:text=""/>
-            </LinearLayout>
-            <TextView
-                android:textSize="11sp"
-                android:textColor="@color/cx_text_secondary"
                 android:id="@+id/tv_fan_label"
-                android:visibility="gone"
-                android:layout_width="wrap_content"
+                style="@style/WgTitle"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="Вентилятор"/>
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:text="Вентилятор" />
         </LinearLayout>
-        <TextView
-            android:textSize="31sp"
-            android:textStyle="bold"
-            android:textColor="@color/cx_text_primary"
-            android:gravity="center"
-            android:id="@+id/btn_fan_plus"
-            android:background="@drawable/btn_circle"
-            android:layout_width="67dp"
-            android:layout_height="67dp"
-            android:text="+"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="6dp"
+            android:layout_weight="1"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/btn_fan_minus"
+                style="@style/WgRoundButton"
+                android:text="−" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tv_fan_value"
+                    style="@style/WgValue"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="—" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:gravity="bottom"
+                    android:orientation="horizontal">
+                    <TextView
+                        android:id="@+id/dot_fan_1"
+                        android:layout_width="10dp"
+                        android:layout_height="10dp"
+                        android:layout_marginEnd="4dp"
+                        android:background="@drawable/bg_wg_dot_off" />
+                    <TextView
+                        android:id="@+id/dot_fan_2"
+                        android:layout_width="10dp"
+                        android:layout_height="10dp"
+                        android:layout_marginEnd="4dp"
+                        android:background="@drawable/bg_wg_dot_off" />
+                    <TextView
+                        android:id="@+id/dot_fan_3"
+                        android:layout_width="10dp"
+                        android:layout_height="10dp"
+                        android:layout_marginEnd="4dp"
+                        android:background="@drawable/bg_wg_dot_off" />
+                    <TextView
+                        android:id="@+id/dot_fan_4"
+                        android:layout_width="10dp"
+                        android:layout_height="10dp"
+                        android:layout_marginEnd="4dp"
+                        android:background="@drawable/bg_wg_dot_off" />
+                    <TextView
+                        android:id="@+id/dot_fan_5"
+                        android:layout_width="10dp"
+                        android:layout_height="10dp"
+                        android:layout_marginEnd="4dp"
+                        android:background="@drawable/bg_wg_dot_off" />
+                    <TextView
+                        android:id="@+id/dot_fan_6"
+                        android:layout_width="10dp"
+                        android:layout_height="10dp"
+                        android:layout_marginEnd="4dp"
+                        android:background="@drawable/bg_wg_dot_off" />
+                    <TextView
+                        android:id="@+id/dot_fan_7"
+                        android:layout_width="10dp"
+                        android:layout_height="10dp"
+                        android:background="@drawable/bg_wg_dot_off" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/btn_fan_plus"
+                style="@style/WgRoundButton"
+                android:text="+" />
+        </LinearLayout>
     </LinearLayout>
 </FrameLayout>

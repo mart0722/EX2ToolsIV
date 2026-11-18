@@ -1,0 +1,399 @@
+package com.ex2tools.iv.climate;
+
+import com.ex2tools.iv.car.CarProps;
+import com.ex2tools.iv.state.VehicleState;
+import com.ex2tools.iv.vehicle.CapabilityRegistry;
+import com.ex2tools.iv.vehicle.CommandDispatcher;
+import com.ex2tools.iv.vehicle.PropertySpec;
+import com.ex2tools.iv.vehicle.VhalGateway;
+
+/**
+ * Климат по новой схеме: читает через VhalGateway, команды отдаёт
+ * в CommandDispatcher. В dry-run ничего не пишет.
+ */
+public final class ClimateController {
+
+    /** false — климат пишет реальные команды через CommandDispatcher. */
+    public static final boolean DRY_RUN = false;
+
+    private static final int[] VENT_ORDER = {1, 2, 3, 4, 6};
+    private static final int[] TEMP_AREAS = {1, 4};
+    private static final int[] VENT_AREAS = {1, 4};
+
+    private static volatile ClimateController instance;
+
+    private final VhalGateway gateway = VhalGateway.get();
+    private final CommandDispatcher dispatcher =
+            new CommandDispatcher(gateway, DRY_RUN);
+
+    public static ClimateController get() {
+        ClimateController local = instance;
+        if (local == null) {
+            synchronized (ClimateController.class) {
+                local = instance;
+                if (local == null) {
+                    local = new ClimateController();
+                    instance = local;
+                }
+            }
+        }
+        return local;
+    }
+
+    private ClimateController() {
+    }
+
+    // --- fan ---
+
+    public CommandDispatcher.Result setFan(int level) {
+        return submitIntAny(CarProps.HVAC_FAN_SPEED, CarProps.FAN_AREAS,
+                Math.max(0, Math.min(7, level)));
+    }
+
+    public CommandDispatcher.Result adjustFan(int delta) {
+        Integer current = readIntAny(CarProps.HVAC_FAN_SPEED, CarProps.FAN_AREAS);
+        int value = current == null ? 3 : current;
+        return setFan(value + delta);
+    }
+
+    // --- temperature ---
+
+    public CommandDispatcher.Result setTemp(float value) {
+        int celsius = Math.max(17, Math.min(32, Math.round(value)));
+        pendingTemp = celsius;
+        pendingTempAt = android.os.SystemClock.elapsedRealtime();
+        android.content.Context context = gateway.appContext();
+        if (context != null) com.ex2tools.iv.Prefs.setLastTempSet(context, celsius);
+        CommandDispatcher.Result last = null;
+        for (int area : TEMP_AREAS) {
+            // Основной setpoint, который использует штатный климат.
+            CommandDispatcher.Result set = dispatcher.submit(new CommandDispatcher.Command(
+                    CarProps.HVAC_TEMP_SET, area, PropertySpec.Type.INT, celsius));
+            // И adjust — его показывает штатный слайдер.
+            dispatcher.submit(new CommandDispatcher.Command(
+                    CarProps.HVAC_TEMP_ADJUST, area, PropertySpec.Type.INT, celsius));
+            last = set;
+        }
+        logTempState("write " + celsius);
+        return last;
+    }
+
+    public CommandDispatcher.Result adjustTemp(float delta) {
+        Float current = pendingTemp();
+        if (current == null) current = readTargetTemp();
+        float base = current == null ? 22f : Math.round(current);
+        logTempState("base " + base);
+        return setTemp(base + delta);
+    }
+
+    /**
+     * Значение, которое пользователь выставил только что. ECU применяет
+     * уставку с задержкой, поэтому несколько секунд показываем свою цифру.
+     */
+    public static Float pendingTemp() {
+        if (Float.isNaN(pendingTemp)) return null;
+        if (android.os.SystemClock.elapsedRealtime() - pendingTempAt > 15_000L) {
+            return null;
+        }
+        return pendingTemp;
+    }
+
+    private static volatile float pendingTemp = Float.NaN;
+    private static volatile long pendingTempAt;
+
+    /** Уставка, которую ECU выставляет при пробуждении, пока HMI не вернёт своё. */
+    public static final int DEFAULT_TEMP = 20;
+
+    private static final long FIRST_READ_AT = android.os.SystemClock.elapsedRealtime();
+    private static volatile boolean observedRealTemp;
+
+    /**
+     * Пока HMI не восстановил сохранённую уставку, VHAL отдаёт 20.
+     * В это короткое окно показываем нашу последнюю известную уставку.
+     */
+    public static boolean shouldUseCachedTemp() {
+        if (observedRealTemp) return false;
+        return android.os.SystemClock.elapsedRealtime() - FIRST_READ_AT < 12_000L;
+    }
+
+    public static void noteObservedTemp(float value) {
+        if (Math.round(value) != DEFAULT_TEMP) observedRealTemp = true;
+    }
+
+    /** Диагностика: что реально лежит в свойствах температуры после записи. */
+    private void logTempState(String why) {
+        android.content.Context context = gateway.appContext();
+        if (context == null) return;
+        int[] ids = {CarProps.HVAC_TEMP_ADJUST, CarProps.HVAC_TEMP_AOSP,
+                CarProps.HVAC_TEMP_SET, CarProps.HVAC_TEMP_SET_AOSP};
+        String[] names = {"adjust", "aosp", "set", "set_aosp"};
+        StringBuilder sb = new StringBuilder("temp diag ").append(why);
+        for (int i = 0; i < ids.length; i++) {
+            for (int area : new int[]{1, 4}) {
+                float value = gateway.readFloat(ids[i], area);
+                sb.append(' ').append(names[i]).append('[').append(area).append("]=")
+                        .append(Float.isNaN(value) ? "—" : String.valueOf(value));
+            }
+        }
+        com.ex2tools.iv.LogStore.add(context, sb.toString());
+    }
+
+    // --- vent ---
+
+    public CommandDispatcher.Result setVent(int value) {
+        int mode = validVent(value) ? value : 1;
+        CommandDispatcher.Result last = null;
+        for (int area : VENT_AREAS) {
+            last = dispatcher.submit(new CommandDispatcher.Command(
+                    CarProps.HVAC_FAN_DIRECTION, area, PropertySpec.Type.INT, mode));
+        }
+        return last;
+    }
+
+    public CommandDispatcher.Result stepVent(int direction) {
+        Integer current = readIntAny(CarProps.HVAC_FAN_DIRECTION,
+                CarProps.FAN_DIRECTION_AREAS);
+        int base = current == null ? 1 : current;
+        int index = indexOf(VENT_ORDER, base);
+        if (index < 0) index = 0;
+        int next = VENT_ORDER[Math.max(0, Math.min(VENT_ORDER.length - 1, index + direction))];
+        return setVent(next);
+    }
+
+    private static boolean validVent(int value) {
+        for (int mode : VENT_ORDER) {
+            if (mode == value) return true;
+        }
+        return false;
+    }
+
+    // --- ac / recirc ---
+
+    public CommandDispatcher.Result setAc(boolean value) {
+        int type = capabilityType(CarProps.HVAC_AC_ON);
+        boolean useBool = type == 0 || (type & 0x00F00000) == 0x00200000;
+        CommandDispatcher.Result last = tryAc(value, useBool);
+        if (!DRY_RUN && last != null
+                && (last.status == CommandDispatcher.Status.REJECTED
+                || last.status == CommandDispatcher.Status.UNSUPPORTED)) {
+            CommandDispatcher.Result alt = tryAc(value, !useBool);
+            if (alt != null) last = alt;
+        }
+        return last;
+    }
+
+    private CommandDispatcher.Result tryAc(boolean value, boolean asBool) {
+        CommandDispatcher.Result last = null;
+        for (int area : CarProps.AC_AREAS) {
+            last = asBool
+                    ? dispatcher.submit(new CommandDispatcher.Command(
+                            CarProps.HVAC_AC_ON, area, PropertySpec.Type.BOOLEAN, value))
+                    : dispatcher.submit(new CommandDispatcher.Command(
+                            CarProps.HVAC_AC_ON, area, PropertySpec.Type.INT, value ? 1 : 0));
+            if (DRY_RUN
+                    || last.status == CommandDispatcher.Status.APPLIED
+                    || last.status == CommandDispatcher.Status.SENT) break;
+        }
+        return last;
+    }
+
+    public CommandDispatcher.Result toggleAc() {
+        Boolean current = readAc();
+        return setAc(current == null || !current);
+    }
+
+    public CommandDispatcher.Result setRecirc(boolean value) {
+        return submitBoolAny(CarProps.HVAC_RECIRC_ON, new int[]{117}, value);
+    }
+
+    public CommandDispatcher.Result toggleRecirc() {
+        Boolean current = readRecirc();
+        return setRecirc(current == null || !current);
+    }
+
+    // --- defrost / heat ---
+
+    public CommandDispatcher.Result setRearDefrost(boolean value) {
+        return submitBoolAny(CarProps.HVAC_REAR_DEFROSTER_ON, new int[]{2}, value);
+    }
+
+    public CommandDispatcher.Result toggleRearDefrost() {
+        Boolean current = readRearDefrost();
+        return setRearDefrost(current == null || !current);
+    }
+
+    public CommandDispatcher.Result setFrontMaxDefrost(boolean value) {
+        return submitBoolAny(CarProps.HVAC_FRONT_MAX_DEFROST_ON, new int[]{1}, value);
+    }
+
+    public CommandDispatcher.Result toggleFrontMaxDefrost() {
+        Boolean current = readFrontMaxDefrost();
+        return setFrontMaxDefrost(current == null || !current);
+    }
+
+    public CommandDispatcher.Result setWindshieldHeat(boolean value) {
+        return submitBoolAny(CarProps.HVAC_WINDSHIELD_HEAT, new int[]{117}, value);
+    }
+
+    public CommandDispatcher.Result toggleWindshieldHeat() {
+        Boolean current = readWindshieldHeat();
+        return setWindshieldHeat(current == null || !current);
+    }
+
+    // --- comfort ---
+
+    public CommandDispatcher.Result setWheelHeatLevel(int level) {
+        return submitIntAny(CarProps.STEERING_WHEEL_HEAT, CarProps.WHEEL_HEAT_AREAS,
+                Math.max(0, Math.min(3, level)));
+    }
+
+    public CommandDispatcher.Result setWheelHeat(boolean value) {
+        return setWheelHeatLevel(value ? 1 : 0);
+    }
+
+    public CommandDispatcher.Result toggleWheelHeat() {
+        Integer current = readIntAny(CarProps.STEERING_WHEEL_HEAT,
+                CarProps.WHEEL_HEAT_AREAS);
+        return setWheelHeat(current == null || current == 0);
+    }
+
+    public CommandDispatcher.Result setSeatHeat(int area, int level) {
+        return dispatcher.submit(new CommandDispatcher.Command(
+                CarProps.SEAT_HEAT, area, PropertySpec.Type.INT,
+                Math.max(0, Math.min(3, level))));
+    }
+
+    public CommandDispatcher.Result cycleSeat(int area) {
+        // Читаем именно эту зону, иначе уровень водителя «переезжает» на пассажира.
+        Integer current = readSeatExact(area);
+        int value = current == null ? 0 : Math.max(0, Math.min(3, current));
+        return setSeatHeat(area, (value + 1) % 4);
+    }
+
+    private Integer readSeatExact(int area) {
+        VehicleState vs = state();
+        Integer cached = vs.intValue(CarProps.SEAT_HEAT, area);
+        if (cached != null) return cached;
+        int raw = gateway.readInt(CarProps.SEAT_HEAT, area);
+        return raw == Integer.MIN_VALUE ? null : raw;
+    }
+
+    // --- helpers ---
+
+    private CommandDispatcher.Result submitBool(int id, int area, boolean value) {
+        return dispatcher.submit(new CommandDispatcher.Command(
+                id, area, PropertySpec.Type.BOOLEAN, value));
+    }
+
+    /**
+     * Пробует зоны из реестра по порядку, затем запасную зону.
+     * Нужен там, где старая зона (117) не совпадает с реальной (max defrost).
+     */
+    private CommandDispatcher.Result submitBoolAny(int id, int[] fallback, boolean value) {
+        int[] areas = state().areas(id, fallback);
+        CommandDispatcher.Result last = null;
+        for (int area : areas) {
+            last = submitBool(id, area, value);
+            if (DRY_RUN
+                    || last.status == CommandDispatcher.Status.APPLIED
+                    || last.status == CommandDispatcher.Status.SENT) return last;
+        }
+        if (fallback.length > 0 && !contains(areas, fallback[0])) {
+            last = submitBool(id, fallback[0], value);
+        }
+        return last;
+    }
+
+    private static boolean contains(int[] values, int target) {
+        for (int value : values) {
+            if (value == target) return true;
+        }
+        return false;
+    }
+
+    private CommandDispatcher.Result submitIntAny(int id, int[] areas, int value) {
+        CommandDispatcher.Result last = null;
+        for (int area : areas) {
+            last = dispatcher.submit(new CommandDispatcher.Command(
+                    id, area, PropertySpec.Type.INT, value));
+            if (DRY_RUN
+                    || last.status == CommandDispatcher.Status.APPLIED
+                    || last.status == CommandDispatcher.Status.SENT) return last;
+        }
+        return last;
+    }
+
+    private Integer readIntAny(int id, int[] fallback) {
+        VehicleState vs = state();
+        return vs.intAny(id, vs.areas(id, fallback));
+    }
+
+    private Boolean readBoolAny(int id, int[] fallback) {
+        VehicleState vs = state();
+        return vs.boolAny(id, vs.areas(id, fallback));
+    }
+
+    private VehicleState state() {
+        VehicleState state = VehicleState.get();
+        if (!state.isReady()) {
+            android.content.Context context = gateway.appContext();
+            if (context != null) state.ensure(context);
+        }
+        return state;
+    }
+
+    private Boolean readAc() {
+        Boolean value = readBoolAny(CarProps.HVAC_AC_ON, CarProps.AC_AREAS);
+        if (value != null) return value;
+        Integer raw = readIntAny(CarProps.HVAC_AC_ON, CarProps.AC_AREAS);
+        return raw == null ? null : raw != 0;
+    }
+
+    private Boolean readRecirc() {
+        return readBoolAny(CarProps.HVAC_RECIRC_ON, new int[]{117});
+    }
+
+    private Boolean readRearDefrost() {
+        return readBoolAny(CarProps.HVAC_REAR_DEFROSTER_ON, new int[]{2});
+    }
+
+    private Boolean readFrontMaxDefrost() {
+        return readBoolAny(CarProps.HVAC_FRONT_MAX_DEFROST_ON, new int[]{1});
+    }
+
+    private Boolean readWindshieldHeat() {
+        return readBoolAny(CarProps.HVAC_WINDSHIELD_HEAT, new int[]{117});
+    }
+
+    private Float readTargetTemp() {
+        VehicleState vs = state();
+        int[] properties = {
+                CarProps.HVAC_TEMP_SET,
+                CarProps.HVAC_TEMP_SET_AOSP,
+                CarProps.HVAC_TEMP_ADJUST,
+                CarProps.HVAC_TEMP_AOSP
+        };
+        for (int id : properties) {
+            Float raw = vs.floatAny(id, vs.areas(id, CarProps.HVAC_AREAS));
+            if (raw == null) continue;
+            float value = raw;
+            if (value > 60f && value <= 400f) value = value / 10f;
+            if (value >= 5f && value <= 40f) return value;
+        }
+        return null;
+    }
+
+    private int capabilityType(int id) {
+        CapabilityRegistry caps = gateway.capabilities();
+        if (caps == null) return 0;
+        CapabilityRegistry.Config config = caps.get(id);
+        return config == null ? 0 : config.type;
+    }
+
+    private static int indexOf(int[] values, int target) {
+        for (int i = 0; i < values.length; i++) {
+            if (values[i] == target) return i;
+        }
+        return -1;
+    }
+}

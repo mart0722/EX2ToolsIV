@@ -22,6 +22,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -31,7 +32,9 @@ import com.ex2tools.iv.LogStore;
 import com.ex2tools.iv.NotificationHelper;
 import com.ex2tools.iv.Prefs;
 import com.ex2tools.iv.R;
+import com.ex2tools.iv.car.CarProps;
 import com.ex2tools.iv.car.Telemetry;
+import com.ex2tools.iv.state.VehicleState;
 
 import java.util.HashMap;
 import java.util.Locale;
@@ -84,6 +87,14 @@ public final class StatusIconService extends Service {
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final AtomicBoolean busy = new AtomicBoolean(false);
     private final Map<Integer, Integer> lastRank = new HashMap<>();
+
+    // Батарея обновляется по событию SOC, а не только по таймеру: иначе цифра
+    // отстаёт от системной на один процент до трёх секунд.
+    private VehicleState state;
+    private boolean socSubscribed;
+    private long lastBatteryPost;
+    private boolean batteryScheduled;
+    private final VehicleState.Listener socListener = () -> handler.post(this::onSocChanged);
 
     private final Runnable tick = new Runnable() {
         @Override
@@ -154,12 +165,61 @@ public final class StatusIconService extends Service {
         createChannels();
         clearOldNotifications();
         cancelAll();
+        startSocWatch();
         handler.post(tick);
+    }
+
+    /** Подписка на SOC: цифра в статус-баре обновляется сразу, а не раз в 3 секунды. */
+    private void startSocWatch() {
+        if (socSubscribed || !Prefs.statusBattery(this)) return;
+        try {
+            state = VehicleState.get();
+            if (!state.ensure(this)) return;
+            state.subscribe(CarProps.SOC, new int[]{0});
+            state.addListener(socListener);
+            socSubscribed = true;
+            LogStore.add(this, "status: battery follows SOC events");
+        } catch (Throwable t) {
+            LogStore.add(this, "status: SOC subscribe failed: " + t);
+        }
+    }
+
+    private void stopSocWatch() {
+        if (!socSubscribed) return;
+        try {
+            state.removeListener(socListener);
+            state.unsubscribe(CarProps.SOC, new int[]{0});
+        } catch (Throwable ignored) {
+        }
+        socSubscribed = false;
+    }
+
+    private void onSocChanged() {
+        if (!Prefs.statusBattery(this) || batteryScheduled) return;
+        long now = SystemClock.elapsedRealtime();
+        if (now - lastBatteryPost < 400L) return;
+        batteryScheduled = true;
+        handler.postDelayed(() -> {
+            batteryScheduled = false;
+            if (!Prefs.statusBattery(this)) return;
+            lastBatteryPost = SystemClock.elapsedRealtime();
+            try {
+                executor.execute(() -> {
+                    try {
+                        postBattery();
+                    } catch (Throwable t) {
+                        LogStore.add(this, "battery update error: " + t);
+                    }
+                });
+            } catch (Throwable ignored) {
+            }
+        }, 100L);
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         boolean repost = intent != null && intent.getBooleanExtra("repost", false);
+        startSocWatch();
         handler.removeCallbacks(tick);
         handler.postDelayed(tick, repost ? 300L : 0L);
         return START_STICKY;
@@ -184,6 +244,7 @@ public final class StatusIconService extends Service {
             stopSelf();
             return;
         }
+        startSocWatch();
         if (Prefs.statusTemp(this)) {
             postTemp();
         } else {
@@ -266,19 +327,19 @@ public final class StatusIconService extends Service {
     private void postTrip() {
         float odo = Telemetry.odometerKm(this);
         boolean valid = !Float.isNaN(odo);
-        int trip = 0;
+        float trip = 0f;
         if (valid) {
             float start = Prefs.tripStartKm(this);
             if (start <= 0f) {
                 start = odo;
                 Prefs.setTripStartKm(this, start);
             }
-            trip = Math.round(Math.max(0f, odo - start));
+            trip = Math.max(0f, odo - start);
         }
-        String main = valid ? String.valueOf(trip) : "?";
+        String main = valid ? String.format(Locale.US, "%.1f", trip) : "?";
         Icon icon = textIcon(main, "", -1, 2, false, true);
         String text = valid
-                ? getString(R.string.status_trip_text, trip)
+                ? getString(R.string.status_trip_text, main)
                 : getString(R.string.status_unavailable);
         Intent reset = new Intent(this, TripResetService.class);
         PendingIntent pending = PendingIntent.getForegroundService(this, ICON_TRIP, reset,
@@ -551,6 +612,7 @@ public final class StatusIconService extends Service {
     @Override
     public void onDestroy() {
         handler.removeCallbacks(tick);
+        stopSocWatch();
         executor.shutdownNow();
         cancelAll();
         stopForeground(true);

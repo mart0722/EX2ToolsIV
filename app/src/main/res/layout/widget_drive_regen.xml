@@ -1,202 +1,175 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout
-    android:id="@+id/widget_root" xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
+
     <TextView
         android:id="@+id/widget_bg_layer"
-        android:background="@drawable/widget_card_bg_100"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:text=""/>
+        android:background="@drawable/bg_wg_card_100" />
+
     <LinearLayout
-        android:orientation="vertical"
-        android:padding="14dp"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="14dp">
+
         <TextView
-            android:textSize="10sp"
-            android:textStyle="bold"
-            android:textColor="@color/cx_text_muted"
             android:id="@+id/txt_drive_header"
-            android:visibility="gone"
+            style="@style/WgSection"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:text="Р Р•Р–РРњ Р”Р’РР–Р•РќРРЇ"
-            android:letterSpacing="0.06"/>
+            android:layout_height="wrap_content"
+            android:text="РЕЖИМ ЕЗДЫ" />
+
         <LinearLayout
-            android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1">
+            android:layout_marginTop="6dp"
+            android:layout_weight="1"
+            android:baselineAligned="false"
+            android:orientation="horizontal">
+
             <LinearLayout
-                android:gravity="center"
-                android:orientation="horizontal"
                 android:id="@+id/chip_drive_eco"
-                android:background="@drawable/widget_chip_idle"
+                style="@style/WgChip"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:layout_marginEnd="4dp">
+                android:layout_marginEnd="5dp"
+                android:layout_weight="1">
+
                 <ImageView
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:src="@drawable/ic_setting_drive_eco"
-                    android:tint="@color/cx_text_primary"
-                    android:layout_marginEnd="6dp"/>
+                    style="@style/WgIcon"
+                    android:src="@drawable/wg_ic_drive_eco"
+                    android:tint="@color/wg_text" />
+
                 <TextView
-                    android:textSize="11sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/cx_text_primary"
                     android:id="@+id/txt_drive_eco"
+                    style="@style/WgChipLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Эко"/>
+                    android:text="Эко" />
             </LinearLayout>
+
             <LinearLayout
-                android:gravity="center"
-                android:orientation="horizontal"
                 android:id="@+id/chip_drive_comfort"
-                android:background="@drawable/widget_chip_idle"
+                style="@style/WgChip"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:layout_marginStart="4dp"
-                android:layout_marginEnd="4dp">
+                android:layout_marginEnd="5dp"
+                android:layout_weight="1">
+
                 <ImageView
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:src="@drawable/ic_setting_drive_comfort"
-                    android:tint="@color/cx_text_primary"
-                    android:layout_marginEnd="6dp"/>
+                    style="@style/WgIcon"
+                    android:src="@drawable/wg_ic_drive_comfort"
+                    android:tint="@color/wg_text" />
+
                 <TextView
-                    android:textSize="11sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/cx_text_primary"
                     android:id="@+id/txt_drive_comfort"
+                    style="@style/WgChipLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Комф."/>
+                    android:text="Комфорт" />
             </LinearLayout>
+
             <LinearLayout
-                android:gravity="center"
-                android:orientation="horizontal"
                 android:id="@+id/chip_drive_sport"
-                android:background="@drawable/widget_chip_idle"
+                style="@style/WgChip"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:layout_marginStart="4dp">
+                android:layout_weight="1">
+
                 <ImageView
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:src="@drawable/ic_setting_drive_sport"
-                    android:tint="@color/cx_text_primary"
-                    android:layout_marginEnd="6dp"/>
+                    style="@style/WgIcon"
+                    android:src="@drawable/wg_ic_drive_sport"
+                    android:tint="@color/wg_text" />
+
                 <TextView
-                    android:textSize="11sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/cx_text_primary"
                     android:id="@+id/txt_drive_sport"
+                    style="@style/WgChipLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Спорт"/>
+                    android:text="Спорт" />
             </LinearLayout>
         </LinearLayout>
+
         <TextView
-            android:background="@color/widget_divider"
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="8dp"
-            android:text=""/>
-        <TextView
-            android:textSize="10sp"
-            android:textStyle="bold"
-            android:textColor="@color/cx_text_muted"
             android:id="@+id/txt_regen_header"
-            android:visibility="gone"
+            style="@style/WgSection"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:text="Р Р•РљРЈРџР•Р РђР¦РРЇ"
-            android:letterSpacing="0.06"/>
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="РЕКУПЕРАЦИЯ" />
+
         <LinearLayout
-            android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1">
+            android:layout_marginTop="6dp"
+            android:layout_weight="1"
+            android:baselineAligned="false"
+            android:orientation="horizontal">
+
             <LinearLayout
-                android:gravity="center"
-                android:orientation="horizontal"
                 android:id="@+id/chip_regen_low"
-                android:background="@drawable/widget_chip_idle"
+                style="@style/WgChip"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:layout_marginEnd="4dp">
+                android:layout_marginEnd="5dp"
+                android:layout_weight="1">
+
                 <ImageView
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:src="@drawable/ic_widget_regen_weak"
-                    android:tint="@color/cx_text_primary"
-                    android:layout_marginEnd="6dp"/>
+                    style="@style/WgIcon"
+                    android:src="@drawable/wg_ic_regen_low"
+                    android:tint="@color/wg_text" />
+
                 <TextView
-                    android:textSize="10sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/cx_text_primary"
                     android:id="@+id/txt_regen_low"
+                    style="@style/WgChipLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Слабая"/>
+                    android:text="Слабая" />
             </LinearLayout>
+
             <LinearLayout
-                android:gravity="center"
-                android:orientation="horizontal"
                 android:id="@+id/chip_regen_mid"
-                android:background="@drawable/widget_chip_idle"
+                style="@style/WgChip"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:layout_marginStart="4dp"
-                android:layout_marginEnd="4dp">
+                android:layout_marginEnd="5dp"
+                android:layout_weight="1">
+
                 <ImageView
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:src="@drawable/ic_widget_regen_mid"
-                    android:tint="@color/cx_text_primary"
-                    android:layout_marginEnd="6dp"/>
+                    style="@style/WgIcon"
+                    android:src="@drawable/wg_ic_regen_mid"
+                    android:tint="@color/wg_text" />
+
                 <TextView
-                    android:textSize="10sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/cx_text_primary"
                     android:id="@+id/txt_regen_mid"
+                    style="@style/WgChipLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Средняя"/>
+                    android:text="Средняя" />
             </LinearLayout>
+
             <LinearLayout
-                android:gravity="center"
-                android:orientation="horizontal"
                 android:id="@+id/chip_regen_high"
-                android:background="@drawable/widget_chip_idle"
+                style="@style/WgChip"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:layout_marginStart="4dp">
+                android:layout_weight="1">
+
                 <ImageView
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:src="@drawable/ic_widget_regen_strong"
-                    android:tint="@color/cx_text_primary"
-                    android:layout_marginEnd="6dp"/>
+                    style="@style/WgIcon"
+                    android:src="@drawable/wg_ic_regen_high"
+                    android:tint="@color/wg_text" />
+
                 <TextView
-                    android:textSize="10sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/cx_text_primary"
                     android:id="@+id/txt_regen_high"
+                    style="@style/WgChipLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Сильная"/>
+                    android:text="Сильная" />
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>

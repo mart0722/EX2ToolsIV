@@ -1,18 +1,18 @@
 package com.ex2tools.iv.car;
 
-import android.car.Car;
-import android.car.hardware.CarPropertyValue;
 import android.car.hardware.property.CarPropertyManager;
 import android.content.Context;
 
-import com.ex2tools.iv.LogStore;
+import com.ex2tools.iv.ReadOnly;
+import com.ex2tools.iv.vehicle.VhalGateway;
 
+/**
+ * Переходная обёртка. Все чтения идут через VhalGateway; записи запрещены
+ * в read-only сборке. Новый код должен использовать VhalGateway напрямую.
+ */
 public final class CarConnection {
 
     private static volatile CarConnection instance;
-
-    private Car car;
-    private CarPropertyManager cpm;
 
     private CarConnection() {
     }
@@ -31,101 +31,64 @@ public final class CarConnection {
         return local;
     }
 
-    public synchronized boolean ensure(Context context) {
-        if (cpm != null) return true;
-        try {
-            if (car == null) {
-                car = Car.createCar(context.getApplicationContext());
-            }
-            if (car == null) return false;
-            Object manager = car.getCarManager("property");
-            if (manager instanceof CarPropertyManager) {
-                cpm = (CarPropertyManager) manager;
-                LogStore.add(context, "Car property manager connected");
-                return true;
-            }
-            LogStore.add(context, "Car property manager unavailable");
-        } catch (Throwable t) {
-            LogStore.add(context, "Car connect failed: " + t);
+    public boolean ensure(Context context) {
+        return VhalGateway.get().ensure(context);
+    }
+
+    public CarPropertyManager cpm() {
+        return VhalGateway.get().cpm();
+    }
+
+    public boolean isConnected() {
+        return VhalGateway.get().isConnected();
+    }
+
+    public int readInt(int property, int area) {
+        return VhalGateway.get().readInt(property, area);
+    }
+
+    public float readFloat(int property, int area) {
+        return VhalGateway.get().readFloat(property, area);
+    }
+
+    public Boolean readBool(int property, int area) {
+        return VhalGateway.get().readBool(property, area);
+    }
+
+    private static volatile boolean readOnlyLogged;
+
+    private static void logReadOnly(int property, int area) {
+        if (readOnlyLogged) return;
+        readOnlyLogged = true;
+        android.util.Log.i("EX2ReadOnly",
+                "write blocked: 0x" + Integer.toHexString(property) + " area " + area);
+    }
+
+    public boolean writeInt(int property, int area, int value) {
+        if (ReadOnly.ENABLED) {
+            logReadOnly(property, area);
+            return false;
         }
         return false;
     }
 
-    public synchronized CarPropertyManager cpm() {
-        return cpm;
-    }
-
-    public boolean isConnected() {
-        return cpm != null;
-    }
-
-    public int readInt(int property, int area) {
-        try {
-            return cpm == null ? Integer.MIN_VALUE : cpm.getIntProperty(property, area);
-        } catch (Throwable t) {
-            return Integer.MIN_VALUE;
-        }
-    }
-
-    public float readFloat(int property, int area) {
-        if (cpm == null) return Float.NaN;
-        try {
-            return cpm.getFloatProperty(property, area);
-        } catch (Throwable ignored) {
-        }
-        try {
-            CarPropertyValue<?> value = cpm.getProperty(property, area);
-            Object raw = value == null ? null : value.getValue();
-            if (raw instanceof Number) return ((Number) raw).floatValue();
-        } catch (Throwable ignored) {
-        }
-        return Float.NaN;
-    }
-
-    public boolean writeInt(int property, int area, int value) {
-        try {
-            if (cpm == null) return false;
-            cpm.setIntProperty(property, area, value);
-            return true;
-        } catch (Throwable t) {
-            return false;
-        }
-    }
-
     public boolean writeFloat(int property, int area, float value) {
-        try {
-            if (cpm == null) return false;
-            cpm.setFloatProperty(property, area, value);
-            return true;
-        } catch (Throwable t) {
+        if (ReadOnly.ENABLED) {
+            logReadOnly(property, area);
             return false;
         }
-    }
-
-    public Boolean readBool(int property, int area) {
-        try {
-            return cpm == null ? null : cpm.getBooleanProperty(property, area);
-        } catch (Throwable t) {
-            return null;
-        }
+        return false;
     }
 
     public boolean writeBool(int property, int area, boolean value) {
-        try {
-            if (cpm == null) return false;
-            cpm.setBooleanProperty(property, area, value);
-            return true;
-        } catch (Throwable t) {
+        if (ReadOnly.ENABLED) {
+            logReadOnly(property, area);
             return false;
         }
+        return false;
     }
 
-    public synchronized void close() {
-        try {
-            if (car != null) car.disconnect();
-        } catch (Throwable ignored) {
-        }
-        car = null;
-        cpm = null;
+    public void close() {
+        VhalGateway.get().close();
     }
 }

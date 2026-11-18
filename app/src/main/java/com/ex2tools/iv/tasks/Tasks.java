@@ -12,6 +12,7 @@ import android.os.Debug;
 
 import com.ex2tools.iv.LogStore;
 import com.ex2tools.iv.Prefs;
+import com.ex2tools.iv.ReadOnly;
 import com.ex2tools.iv.servicemode.ServiceModeManager;
 
 import java.lang.reflect.Field;

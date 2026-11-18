@@ -27,9 +27,24 @@ final class SpeedWidgetRenderer {
 
         boolean digital = Prefs.speedMode(c) == 0;
         boolean background = Prefs.speedBackground(c);
+        float trip = WidgetsCommon.readTripKm(c);
+        boolean showTrip = Prefs.speedShowTrip(c);
         Bitmap bitmap = SpeedGaugePainter.render(c, BITMAP_SIZE, BITMAP_SIZE,
-                kmh, digital, background);
+                kmh, digital, background, trip, showTrip && !digital);
         views.setImageViewBitmap(R.id.speed_gauge, bitmap);
+
+        // Тап по пробегу внизу — то же подтверждение сброса, что и в статус-баре.
+        boolean tripTappable = showTrip && !digital;
+        views.setViewVisibility(R.id.speed_trip_tap, tripTappable ? View.VISIBLE : View.GONE);
+        if (tripTappable) {
+            android.content.Intent tap = new android.content.Intent(c, WidgetUpdateService.class)
+                    .setAction(WidgetsCommon.TRIP_RESET_DIALOG);
+            android.app.PendingIntent pending = android.app.PendingIntent.getService(
+                    c, 0x74726970, tap,
+                    android.app.PendingIntent.FLAG_UPDATE_CURRENT
+                            | android.app.PendingIntent.FLAG_IMMUTABLE);
+            views.setOnClickPendingIntent(R.id.speed_trip_tap, pending);
+        }
         return views;
     }
 }

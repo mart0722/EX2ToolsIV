@@ -25,6 +25,13 @@ public final class LockActivity extends Activity {
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final ExecutorService io = Executors.newSingleThreadExecutor();
+    private static volatile boolean showing;
+
+    /** Открыт ли сейчас экран блокировки (чтобы автоблокировка не срабатывала повторно). */
+    public static boolean isShowing() {
+        return showing;
+    }
+
     private long openedAt;
     private volatile boolean running;
 
@@ -60,6 +67,7 @@ public final class LockActivity extends Activity {
                         | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                         | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                         | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+        showing = true;
         setContentView(R.layout.activity_lock);
 
         date = findViewById(R.id.lockDate);
@@ -109,6 +117,7 @@ public final class LockActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        showing = false;
         running = false;
         handler.removeCallbacksAndMessages(null);
         io.shutdownNow();

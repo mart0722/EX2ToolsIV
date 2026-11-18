@@ -11,6 +11,7 @@ import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextClock;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -87,6 +88,9 @@ public final class WidgetsFragment extends Fragment {
     private TextView speedAlphaValue;
     private View speedAlphaRow;
     private View speedReset;
+    private FlymeSwitchRow speedTrip;
+    private View speedTripReset;
+    private FlymeSwitchRow overlayLock;
     private final Map<String, FlymeSwitchRow> overlayToggles = new LinkedHashMap<>();
     private final Map<String, SeekBar> overlaySizeSeeks = new LinkedHashMap<>();
     private final Map<String, SeekBar> overlayAlphaSeeks = new LinkedHashMap<>();
@@ -115,6 +119,7 @@ public final class WidgetsFragment extends Fragment {
         date = view.findViewById(R.id.clockDate);
         clockPreview = view.findViewById(R.id.clockPreview);
         clockDatePreview = view.findViewById(R.id.clockDatePreview);
+        wireRangeReset(view, c);
 
         modeGroup = view.findViewById(R.id.widgetModeGroup);
         overlayPanel = view.findViewById(R.id.widgetOverlayPanel);
@@ -132,6 +137,9 @@ public final class WidgetsFragment extends Fragment {
         speedAlphaValue = view.findViewById(R.id.widgetSpeedAlphaValue);
         speedAlphaRow = view.findViewById(R.id.widgetSpeedAlphaRow);
         speedReset = view.findViewById(R.id.widgetSpeedReset);
+        speedTrip = view.findViewById(R.id.widgetSpeedTrip);
+        speedTripReset = view.findViewById(R.id.widgetSpeedTripReset);
+        overlayLock = view.findViewById(R.id.widgetOverlayLock);
 
         buildOverlayRows(c);
         setupModeControls(c);
@@ -185,6 +193,34 @@ public final class WidgetsFragment extends Fragment {
             Prefs.setSpeedBackground(requireContext(), checked);
             refreshSpeed();
         });
+        speedTrip.setOnCheckedChangeListener((b, checked) -> {
+            if (binding) return;
+            Prefs.setSpeedShowTrip(requireContext(), checked);
+            refreshSpeed();
+        });
+        speedTripReset.setOnClickListener(v -> {
+            Context ctx = requireContext();
+            FlymeDialog.showConfirm(ctx,
+                    getString(R.string.widgets_trip_reset_title),
+                    getString(R.string.widgets_trip_reset_message),
+                    getString(R.string.confirm_yes),
+                    getString(R.string.cancel),
+                    () -> {
+                        boolean ok = WidgetsCommon.resetTrip(ctx);
+                        refreshSpeed();
+                        android.widget.Toast.makeText(ctx,
+                                ok ? R.string.widgets_trip_reset_done
+                                        : R.string.widgets_trip_reset_failed,
+                                android.widget.Toast.LENGTH_SHORT).show();
+                    });
+        });
+        if (overlayLock != null) {
+            overlayLock.setOnCheckedChangeListener((b, checked) -> {
+                if (binding) return;
+                Prefs.setOverlayLock(requireContext(), checked);
+                OverlayWidgetService.restart(requireContext());
+            });
+        }
         speedSize.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -194,7 +230,7 @@ public final class WidgetsFragment extends Fragment {
                 }
                 if (fromUser) {
                     Prefs.setWidgetSizePct(requireContext(), WidgetsCommon.SIZE_SPEED, pct);
-                    refreshSpeed();
+                    SpeedWidgetProvider.refreshAll(requireContext());
                 }
             }
 
@@ -433,6 +469,8 @@ public final class WidgetsFragment extends Fragment {
         speedColorGroup.check(Prefs.speedColor(c) == 1 ? R.id.widgetSpeedColorBlack
                 : Prefs.speedColor(c) == 2 ? R.id.widgetSpeedColorBlue : R.id.widgetSpeedColorWhite);
         speedBackground.setChecked(Prefs.speedBackground(c));
+        speedTrip.setChecked(Prefs.speedShowTrip(c));
+        if (overlayLock != null) overlayLock.setChecked(Prefs.overlayLock(c));
         speedEnabled.setChecked(Prefs.overlayEnabled(c, WidgetsCommon.SIZE_SPEED));
         speedPinned.setChecked(Prefs.overlayPinned(c, WidgetsCommon.SIZE_SPEED));
         if (appsModeGroup != null) {
@@ -460,8 +498,31 @@ public final class WidgetsFragment extends Fragment {
         updateAppsUi();
     }
 
-    private void updateModeUi() {
-        if (!isAdded() || modeGroup == null) return;
+    private void wireRangeReset(View view, Context c) {
+        TextView info = view.findViewById(R.id.widgetRangeInfo);
+        View reset = view.findViewById(R.id.widgetRangeReset);
+        updateRangeInfo(info, c);
+        if (reset != null) {
+            reset.setOnClickListener(v -> {
+                com.ex2tools.iv.car.RangeModel.reset(c);
+                updateRangeInfo(info, c);
+                Toast.makeText(c, R.string.widgets_range_reset_done, Toast.LENGTH_SHORT).show();
+                WidgetUpdateService.start(c);
+            });
+        }
+    }
+
+    private void updateRangeInfo(TextView info, Context c) {
+        if (info == null) return;
+        float est = com.ex2tools.iv.car.RangeModel.estimateKm(c);
+        float km = com.ex2tools.iv.car.RangeModel.learnedKm(c);
+        String text = Float.isNaN(est)
+                ? c.getString(R.string.widgets_range_info, String.format(Locale.US, "%.0f", km))
+                : c.getString(R.string.widgets_range_learned, String.format(Locale.US, "%.0f", est));
+        info.setText(text);
+    }
+
+    private void updateModeUi() {        if (!isAdded() || modeGroup == null) return;
         Context c = requireContext();
         int mode = WidgetModes.current(c);
         binding = true;
@@ -515,7 +576,9 @@ public final class WidgetsFragment extends Fragment {
     private void refreshSpeed() {
         if (!isAdded()) return;
         SpeedWidgetProvider.refreshAll(requireContext());
-        OverlayWidgetService.sync(requireContext());
+        // Настройки оверлея (цифровой/стрелочный, фон, пробег, размер) применяем
+        // сразу: сервис пересоздаёт вид, иначе они ждут следующего изменения VHAL.
+        OverlayWidgetService.restart(requireContext());
     }
 
     private void updateOpacityText(int progress) {

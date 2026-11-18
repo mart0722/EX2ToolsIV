@@ -11,6 +11,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.core.content.ContextCompat;
@@ -40,7 +41,15 @@ final class OverlayWidgetViews {
     }
 
     static View create(Context c, String key) {
-        View root = LayoutInflater.from(themeContext(c)).inflate(layout(key), null);
+        return create(c, key, 1f);
+    }
+
+    /**
+     * scale — коэффициент размера оверлея. Меняем плотность контекста, чтобы
+     * вместе с карточкой увеличивались иконки, отступы и текст.
+     */
+    static View create(Context c, String key, float scale) {
+        View root = LayoutInflater.from(themeContext(c, scale)).inflate(layout(key), null);
         bindClicks(c, root, key);
         return root;
     }
@@ -87,6 +96,10 @@ final class OverlayWidgetViews {
     }
 
     static Context themeContext(Context c) {
+        return themeContext(c, 1f);
+    }
+
+    static Context themeContext(Context c, float scale) {
         try {
             int mode = Prefs.themeMode(c);
             Configuration cfg = new Configuration(c.getResources().getConfiguration());
@@ -99,6 +112,12 @@ final class OverlayWidgetViews {
                 night = cfg.uiMode & Configuration.UI_MODE_NIGHT_MASK;
             }
             cfg.uiMode = (cfg.uiMode & ~Configuration.UI_MODE_NIGHT_MASK) | night;
+            if (scale > 1.02f || scale < 0.98f) {
+                int baseDpi = cfg.densityDpi > 0
+                        ? cfg.densityDpi
+                        : c.getResources().getDisplayMetrics().densityDpi;
+                cfg.densityDpi = Math.max(72, Math.round(baseDpi * scale));
+            }
             return c.createConfigurationContext(cfg);
         } catch (Throwable ignored) {
             return c;
@@ -106,32 +125,7 @@ final class OverlayWidgetViews {
     }
 
     private static int layout(String key) {
-        switch (key) {
-            case WidgetsCommon.SIZE_DRIVE_REGEN:
-                return R.layout.widget_drive_regen;
-            case WidgetsCommon.SIZE_DRIVE_MODE:
-                return R.layout.widget_drive_mode_vertical;
-            case WidgetsCommon.SIZE_REGEN:
-                return R.layout.widget_regen_vertical;
-            case WidgetsCommon.SIZE_FAN:
-                return R.layout.widget_fan_speed;
-            case WidgetsCommon.SIZE_TEMP:
-                return R.layout.widget_temperature;
-            case WidgetsCommon.SIZE_VENT:
-                return R.layout.widget_hvac_direction;
-            case WidgetsCommon.SIZE_VENT_FAN:
-                return R.layout.widget_hvac_direction_fan;
-            case WidgetsCommon.SIZE_HEATING:
-                return R.layout.widget_heating_test;
-            case WidgetsCommon.SIZE_BATTERY_RANGE:
-                return R.layout.widget_battery_range;
-            case WidgetsCommon.SIZE_LOCK:
-                return R.layout.widget_lock;
-            case WidgetsCommon.SIZE_APPS:
-                return R.layout.widget_apps;
-            default:
-                return R.layout.widget_drive_regen;
-        }
+        return WidgetCatalog.layout(key);
     }
 
     private static void bindClicks(Context c, View root, String key) {
@@ -176,6 +170,8 @@ final class OverlayWidgetViews {
                 click(c, root, R.id.chip_vent_floor_windshield, WidgetsCommon.VENT_FLOOR_WINDSHIELD);
                 click(c, root, R.id.chip_recirc, WidgetsCommon.RECIRC_TOGGLE);
                 click(c, root, R.id.chip_fan_ac, WidgetsCommon.AC_TOGGLE);
+                click(c, root, R.id.tv_fan_value, WidgetsCommon.AC_TOGGLE);
+                clickParent(c, root, R.id.chip_fan_ac, WidgetsCommon.AC_TOGGLE);
                 click(c, root, R.id.btn_fan_minus, WidgetsCommon.FAN_MINUS);
                 click(c, root, R.id.btn_fan_plus, WidgetsCommon.FAN_PLUS);
                 break;
@@ -265,71 +261,79 @@ final class OverlayWidgetViews {
     }
 
     private static void updateDriveRegen(Context c, View root) {
-        int drive = Telemetry.driveNow(c);
-        int regen = Telemetry.regenNow(c);
-        text(root, R.id.txt_drive_header, c.getString(R.string.k_widget_lbl_drive_header));
-        text(root, R.id.txt_regen_header, c.getString(R.string.k_widget_lbl_regen_header));
-        text(root, R.id.txt_drive_eco, c.getString(R.string.k_widget_lbl_drive_eco));
-        text(root, R.id.txt_drive_comfort, c.getString(R.string.k_widget_lbl_drive_comfort));
-        text(root, R.id.txt_drive_sport, c.getString(R.string.k_widget_lbl_drive_sport));
-        text(root, R.id.txt_regen_low, c.getString(R.string.k_widget_lbl_regen_low));
-        text(root, R.id.txt_regen_mid, c.getString(R.string.k_widget_lbl_regen_mid));
-        text(root, R.id.txt_regen_high, c.getString(R.string.k_widget_lbl_regen_high));
-        chip(c, root, R.id.chip_drive_eco, R.id.txt_drive_eco, drive == CarProps.DRIVE_ECO);
-        chip(c, root, R.id.chip_drive_comfort, R.id.txt_drive_comfort, drive == CarProps.DRIVE_COMFORT);
-        chip(c, root, R.id.chip_drive_sport, R.id.txt_drive_sport, drive == CarProps.DRIVE_SPORT);
-        chip(c, root, R.id.chip_regen_low, R.id.txt_regen_low, regen == CarProps.REGEN_WEAK);
-        chip(c, root, R.id.chip_regen_mid, R.id.txt_regen_mid, regen == CarProps.REGEN_MEDIUM);
-        chip(c, root, R.id.chip_regen_high, R.id.txt_regen_high, regen == CarProps.REGEN_STRONG);
+        Integer drive = WidgetsCommon.readDrive();
+        Integer regen = WidgetsCommon.readRegen();
+        text(root, R.id.txt_drive_header, c.getString(R.string.wg_drive_header));
+        text(root, R.id.txt_regen_header, c.getString(R.string.wg_regen_header));
+        text(root, R.id.txt_drive_eco, c.getString(R.string.wg_drive_eco));
+        text(root, R.id.txt_drive_comfort, c.getString(R.string.wg_drive_comfort));
+        text(root, R.id.txt_drive_sport, c.getString(R.string.wg_drive_sport));
+        text(root, R.id.txt_regen_low, c.getString(R.string.wg_regen_low));
+        text(root, R.id.txt_regen_mid, c.getString(R.string.wg_regen_mid));
+        text(root, R.id.txt_regen_high, c.getString(R.string.wg_regen_high));
+        chip(c, root, R.id.chip_drive_eco, R.id.txt_drive_eco,
+                drive != null && drive == CarProps.DRIVE_ECO, 1);
+        chip(c, root, R.id.chip_drive_comfort, R.id.txt_drive_comfort,
+                drive != null && drive == CarProps.DRIVE_COMFORT, 0);
+        chip(c, root, R.id.chip_drive_sport, R.id.txt_drive_sport,
+                drive != null && drive == CarProps.DRIVE_SPORT, 2);
+        chip(c, root, R.id.chip_regen_low, R.id.txt_regen_low,
+                regen != null && regen == CarProps.REGEN_WEAK);
+        chip(c, root, R.id.chip_regen_mid, R.id.txt_regen_mid,
+                regen != null && regen == CarProps.REGEN_MEDIUM);
+        chip(c, root, R.id.chip_regen_high, R.id.txt_regen_high,
+                regen != null && regen == CarProps.REGEN_STRONG);
     }
 
     private static void updateDrive(Context c, View root) {
-        int drive = Telemetry.driveNow(c);
+        Integer read = WidgetsCommon.readDrive();
+        int drive = read == null ? 0 : read;
         int icon;
         int label;
         if (drive == CarProps.DRIVE_ECO) {
-            icon = R.drawable.ic_setting_drive_eco;
-            label = R.string.k_widget_lbl_drive_eco;
+            icon = R.drawable.wg_ic_drive_eco;
+            label = R.string.wg_drive_eco;
         } else if (drive == CarProps.DRIVE_SPORT) {
-            icon = R.drawable.ic_setting_drive_sport;
-            label = R.string.k_widget_lbl_drive_sport;
+            icon = R.drawable.wg_ic_drive_sport;
+            label = R.string.wg_drive_sport;
         } else {
-            icon = R.drawable.ic_setting_drive_comfort;
-            label = R.string.k_widget_lbl_drive_comfort;
+            icon = R.drawable.wg_ic_drive_comfort;
+            label = R.string.wg_drive_comfort;
         }
         image(root, R.id.img_drive_mode, icon);
         text(root, R.id.tv_drive_mode_label, c.getString(label));
-        text(root, R.id.tv_drive_mode_footer, c.getString(R.string.k_qa_driving_label));
+        text(root, R.id.tv_drive_mode_footer, c.getString(R.string.wg_footer_drive));
     }
 
     private static void updateRegen(Context c, View root) {
-        int regen = Telemetry.regenNow(c);
+        Integer read = WidgetsCommon.readRegen();
+        int regen = read == null ? 0 : read;
         int icon;
         int label;
         if (regen == CarProps.REGEN_WEAK) {
-            icon = R.drawable.ic_widget_regen_weak;
-            label = R.string.k_widget_lbl_regen_low;
+            icon = R.drawable.wg_ic_regen_low;
+            label = R.string.wg_regen_low;
         } else if (regen == CarProps.REGEN_STRONG) {
-            icon = R.drawable.ic_widget_regen_strong;
-            label = R.string.k_widget_lbl_regen_high;
+            icon = R.drawable.wg_ic_regen_high;
+            label = R.string.wg_regen_high;
         } else {
-            icon = R.drawable.ic_widget_regen_mid;
-            label = R.string.k_widget_lbl_regen_mid;
+            icon = R.drawable.wg_ic_regen_mid;
+            label = R.string.wg_regen_mid;
         }
         image(root, R.id.img_regen_level, icon);
         text(root, R.id.tv_regen_level_label, c.getString(label));
-        text(root, R.id.tv_regen_level_footer, c.getString(R.string.k_qa_regen_label));
+        text(root, R.id.tv_regen_level_footer, c.getString(R.string.wg_footer_regen));
     }
 
     private static void updateFan(Context c, View root) {
         Integer fan = WidgetsCommon.readFan();
         text(root, R.id.tv_fan_value, fan == null ? "—" : String.valueOf(fan));
-        text(root, R.id.tv_fan_label, c.getString(R.string.k_widget_lbl_fan));
+        text(root, R.id.tv_fan_label, c.getString(R.string.wg_fan));
         for (int i = 0; i < FAN_DOTS.length; i++) {
             View dot = root.findViewById(FAN_DOTS[i]);
             if (dot != null) {
                 dot.setBackgroundResource(fan != null && i < fan
-                        ? R.drawable.widget_dot_on : R.drawable.widget_dot_off);
+                        ? R.drawable.bg_wg_dot_on : R.drawable.bg_wg_dot_off);
             }
         }
     }
@@ -338,20 +342,25 @@ final class OverlayWidgetViews {
         Float temp = WidgetsCommon.readTemp(c);
         text(root, R.id.tv_temp_value, temp == null ? "—" : String.valueOf(Math.round(temp)));
         text(root, R.id.tv_temp_unit, "\u00B0C");
-        text(root, R.id.tv_temp_label, c.getString(R.string.k_widget_lbl_temp));
+        text(root, R.id.tv_temp_label, c.getString(R.string.wg_temp));
+        View bar = root.findViewById(R.id.temp_bar);
+        if (bar instanceof ProgressBar && temp != null) {
+            int progress = Math.max(0, Math.min(15, Math.round(temp) - 17));
+            ((ProgressBar) bar).setProgress(progress);
+        }
     }
 
     private static void updateVent(Context c, View root) {
         Integer vent = WidgetsCommon.readVent();
         Boolean recirc = WidgetsCommon.readRecirc();
         int mode = vent == null ? 1 : vent;
-        text(root, R.id.txt_vent_header, c.getString(R.string.k_widget_lbl_vent_header));
-        text(root, R.id.txt_vent_face, c.getString(R.string.k_widget_lbl_vent_face));
-        text(root, R.id.txt_vent_floor, c.getString(R.string.k_widget_lbl_vent_floor));
-        text(root, R.id.txt_vent_face_floor, c.getString(R.string.k_widget_lbl_vent_face_floor));
-        text(root, R.id.txt_vent_windshield, c.getString(R.string.k_widget_lbl_vent_windshield));
-        text(root, R.id.txt_vent_floor_windshield, c.getString(R.string.k_widget_lbl_vent_floor_windshield));
-        text(root, R.id.txt_recirc, c.getString(R.string.k_widget_lbl_recirc));
+        text(root, R.id.txt_vent_header, c.getString(R.string.wg_vent_header));
+        text(root, R.id.txt_vent_face, c.getString(R.string.wg_vent_face));
+        text(root, R.id.txt_vent_floor, c.getString(R.string.wg_vent_floor));
+        text(root, R.id.txt_vent_face_floor, c.getString(R.string.wg_vent_face_floor));
+        text(root, R.id.txt_vent_windshield, c.getString(R.string.wg_vent_windshield));
+        text(root, R.id.txt_vent_floor_windshield, c.getString(R.string.wg_vent_floor_windshield));
+        text(root, R.id.txt_recirc, c.getString(R.string.wg_recirc));
         chip(c, root, R.id.chip_vent_face, R.id.txt_vent_face, mode == 1);
         chip(c, root, R.id.chip_vent_floor, R.id.txt_vent_floor, mode == 2);
         chip(c, root, R.id.chip_vent_face_floor, R.id.txt_vent_face_floor, mode == 3);
@@ -377,29 +386,52 @@ final class OverlayWidgetViews {
             View dot = root.findViewById(FAN_DOTS[i]);
             if (dot != null) {
                 dot.setBackgroundResource(fan != null && i < fan
-                        ? R.drawable.widget_dot_on : R.drawable.widget_dot_off);
+                        ? R.drawable.bg_wg_dot_on : R.drawable.bg_wg_dot_off);
             }
         }
+        boolean acOn = Boolean.TRUE.equals(ac);
         View acChip = root.findViewById(R.id.chip_fan_ac);
         if (acChip != null) {
-            acChip.setBackgroundResource(Boolean.TRUE.equals(ac)
-                    ? R.drawable.widget_chip_active : R.drawable.widget_chip_ac_off);
+            acChip.setBackgroundResource(acOn
+                    ? R.drawable.bg_wg_chip_on : R.drawable.bg_wg_chip);
+        }
+        View acIcon = root.findViewById(R.id.img_ac);
+        if (acIcon instanceof ImageView) {
+            ((ImageView) acIcon).setColorFilter(c.getColor(acOn
+                    ? R.color.wg_blue : R.color.wg_text));
         }
         View fanValue = root.findViewById(R.id.tv_fan_value);
         if (fanValue instanceof TextView) {
-            ((TextView) fanValue).setTextColor(c.getColor(Boolean.TRUE.equals(ac)
-                    ? R.color.cx_on_accent : R.color.cx_text_primary));
+            ((TextView) fanValue).setTextColor(c.getColor(R.color.wg_text));
         }
     }
 
     private static void updateBatteryRange(Context c, View root) {
-        int soc = Telemetry.soc(c);
-        float range = Telemetry.rangeKm(c);
+        Integer soc = WidgetsCommon.readSoc();
+        float factory = WidgetsCommon.readRangeKm();
+        float learned = com.ex2tools.iv.car.RangeModel.estimateKm(c);
+        float display = Float.isNaN(learned) ? factory : learned;
+
         text(root, R.id.tv_battery_range_percent,
-                soc < 0 ? "—" : c.getString(R.string.widget_battery_range_percent, soc));
+                soc == null ? "-"
+                        : c.getString(R.string.widget_battery_range_percent, soc));
+        if (soc == null) {
+            text(root, R.id.tv_battery_range_energy, "-");
+        } else {
+            String energy = String.format(new java.util.Locale("ru"), "%.1f",
+                    soc * com.ex2tools.iv.car.CarProps.CAPACITY_KWH / 100f);
+            text(root, R.id.tv_battery_range_energy,
+                    c.getString(R.string.widget_battery_range_energy, energy));
+        }
         text(root, R.id.tv_battery_range_km,
-                Float.isNaN(range) ? "—"
-                        : c.getString(R.string.widget_battery_range_km, Math.round(range)));
+                Float.isNaN(display) ? "-"
+                        : c.getString(R.string.widget_battery_range_est,
+                        String.valueOf(Math.round(display))));
+        View bar = root.findViewById(R.id.pb_battery_range);
+        if (bar instanceof android.widget.ProgressBar) {
+            ((android.widget.ProgressBar) bar).setProgress(
+                    soc == null ? 0 : Math.max(0, Math.min(100, soc)));
+        }
     }
 
     private static void openLock(Context c) {
@@ -420,19 +452,41 @@ final class OverlayWidgetViews {
         Integer seatDriver = WidgetsCommon.readSeatHeat(1);
         Integer seatPassenger = WidgetsCommon.readSeatHeat(4);
 
-        text(root, R.id.txt_heat_header, c.getString(R.string.k_widget_lbl_heat_header));
+        text(root, R.id.txt_heat_header, c.getString(R.string.wg_heat_header));
+        boolean night = (c.getResources().getConfiguration().uiMode
+                & android.content.res.Configuration.UI_MODE_NIGHT_MASK)
+                == android.content.res.Configuration.UI_MODE_NIGHT_YES;
+        View windshieldIcon = root.findViewById(R.id.img_windshield_heat);
+        if (windshieldIcon instanceof android.widget.ImageView) {
+            ((android.widget.ImageView) windshieldIcon).setImageResource(
+                    night ? R.drawable.wg_ic_windshield_heat_dark
+                            : R.drawable.wg_ic_windshield_heat_light);
+        }
+        View rearIcon = root.findViewById(R.id.img_front_rear_defrost);
+        if (rearIcon instanceof android.widget.ImageView) {
+            ((android.widget.ImageView) rearIcon).setImageResource(
+                    night ? R.drawable.wg_ic_rear_heat_dark
+                            : R.drawable.wg_ic_rear_heat_light);
+        }
+        View wheelIcon = root.findViewById(R.id.img_wheel_heat);
+        if (wheelIcon instanceof android.widget.ImageView) {
+            ((android.widget.ImageView) wheelIcon).setImageResource(
+                    night ? R.drawable.wg_ic_wheel_heat_dark
+                            : R.drawable.wg_ic_wheel_heat_light);
+        }
         toggle(c, root, R.id.chip_wheel_heat, R.id.txt_wheel_heat,
-                Boolean.TRUE.equals(wheel), c.getString(R.string.k_widget_lbl_heat_wheel));
+                Boolean.TRUE.equals(wheel), WidgetsCommon.wheelHeatPending(c),
+                c.getString(R.string.wg_heat_wheel));
         toggle(c, root, R.id.chip_front_rear_defrost, R.id.txt_front_rear_defrost,
-                Boolean.TRUE.equals(rear), c.getString(R.string.k_widget_lbl_rear_defrost));
+                Boolean.TRUE.equals(rear), c.getString(R.string.wg_heat_rear));
         toggle(c, root, R.id.chip_front_max_defrost, R.id.txt_front_max_defrost,
-                Boolean.TRUE.equals(front), c.getString(R.string.k_widget_lbl_heat_front_max));
+                Boolean.TRUE.equals(front), c.getString(R.string.wg_heat_front_max));
         toggle(c, root, R.id.chip_windshield_heat, R.id.txt_windshield_heat,
-                Boolean.TRUE.equals(windshield), c.getString(R.string.k_widget_lbl_heat_windshield));
+                Boolean.TRUE.equals(windshield), c.getString(R.string.wg_heat_windshield));
         seat(c, root, R.id.chip_seat_heat_driver, R.id.txt_seat_heat_driver,
-                seatDriver, c.getString(R.string.k_widget_lbl_heat_seat_driver));
+                seatDriver, c.getString(R.string.wg_heat_seat_driver));
         seat(c, root, R.id.chip_seat_heat_passenger, R.id.txt_seat_heat_passenger,
-                seatPassenger, c.getString(R.string.k_widget_lbl_heat_seat_passenger));
+                seatPassenger, c.getString(R.string.wg_heat_seat_passenger));
     }
 
     private static void text(View root, int id, String value) {
@@ -446,28 +500,61 @@ final class OverlayWidgetViews {
     }
 
     private static void chip(Context c, View root, int chipId, int textId, boolean active) {
+        chip(c, root, chipId, textId, active, 0);
+    }
+
+    /** accent: 0 — синий, 1 — зелёный, 2 — красный. */
+    private static void chip(Context c, View root, int chipId, int textId,
+                             boolean active, int accent) {
         View chip = root.findViewById(chipId);
         if (chip != null) {
-            chip.setBackgroundResource(active
-                    ? R.drawable.widget_chip_active : R.drawable.widget_chip_idle);
+            int background;
+            if (!active) {
+                background = R.drawable.bg_wg_chip;
+            } else if (accent == 1) {
+                background = R.drawable.bg_wg_chip_on_green;
+            } else if (accent == 2) {
+                background = R.drawable.bg_wg_chip_on_red;
+            } else {
+                background = R.drawable.bg_wg_chip_on;
+            }
+            chip.setBackgroundResource(background);
         }
         View text = root.findViewById(textId);
         if (text instanceof TextView) {
-            ((TextView) text).setTextColor(c.getColor(active
-                    ? R.color.cx_on_accent : R.color.cx_text_primary));
+            ((TextView) text).setTextColor(c.getColor(R.color.wg_text));
         }
     }
 
     private static void toggle(Context c, View root, int chipId, int textId,
                                boolean active, String label) {
-        chip(c, root, chipId, textId, active);
+        toggle(c, root, chipId, textId, active, false, label);
+    }
+
+    private static void toggle(Context c, View root, int chipId, int textId,
+                               boolean active, boolean pending, String label) {
+        View chip = root.findViewById(chipId);
+        if (chip != null) {
+            chip.setBackgroundResource(active
+                    ? R.drawable.bg_wg_chip_on_orange
+                    : pending ? R.drawable.bg_wg_chip_pending : R.drawable.bg_wg_chip);
+        }
         text(root, textId, label);
+        View t = root.findViewById(textId);
+        if (t instanceof TextView) {
+            ((TextView) t).setTextColor(c.getColor(
+                    pending && !active ? R.color.wg_blue_light : R.color.wg_text));
+        }
     }
 
     private static void seat(Context c, View root, int chipId, int textId,
                              Integer level, String label) {
         boolean active = level != null && level > 0;
-        chip(c, root, chipId, textId, active);
+        View chip = root.findViewById(chipId);
+        if (chip != null) {
+            chip.setBackgroundResource(active
+                    ? R.drawable.bg_wg_chip_on_orange : R.drawable.bg_wg_chip);
+        }
         String value = level == null ? "—" : String.valueOf(level);
         text(root, textId, label + " " + value);
     }
@@ -475,13 +562,24 @@ final class OverlayWidgetViews {
     private static void click(Context c, View root, int id, String action) {
         View v = root.findViewById(id);
         if (v == null) return;
-        v.setOnClickListener(x -> {
-            try {
-                ContextCompat.startForegroundService(c,
-                        new Intent(c, WidgetUpdateService.class).setAction(action));
-            } catch (Throwable t) {
-                LogStore.add(c, "overlay click failed " + action + ": " + t);
-            }
-        });
+        v.setOnClickListener(x -> startAction(c, action));
+    }
+
+    private static void clickParent(Context c, View root, int id, String action) {
+        View v = root.findViewById(id);
+        if (v == null) return;
+        android.view.ViewParent parent = v.getParent();
+        if (parent instanceof View) {
+            ((View) parent).setOnClickListener(x -> startAction(c, action));
+        }
+    }
+
+    private static void startAction(Context c, String action) {
+        try {
+            ContextCompat.startForegroundService(c,
+                    new Intent(c, WidgetUpdateService.class).setAction(action));
+        } catch (Throwable t) {
+            LogStore.add(c, "overlay click failed " + action + ": " + t);
+        }
     }
 }

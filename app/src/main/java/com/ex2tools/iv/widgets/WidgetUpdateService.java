@@ -17,8 +17,7 @@ import com.ex2tools.iv.LogStore;
 import com.ex2tools.iv.NotificationHelper;
 import com.ex2tools.iv.Prefs;
 import com.ex2tools.iv.R;
-import com.ex2tools.iv.car.CarConnection;
-import com.ex2tools.iv.car.Telemetry;
+import com.ex2tools.iv.state.VehicleState;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
@@ -54,6 +53,8 @@ public final class WidgetUpdateService extends Service {
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final AtomicBoolean busy = new AtomicBoolean(false);
     private final ConcurrentLinkedQueue<String> pendingActions = new ConcurrentLinkedQueue<>();
+    private final VehicleState.Listener stateListener = this::requestUpdate;
+    private volatile boolean updatePending;
 
     private final Runnable tick = new Runnable() {
         @Override
@@ -81,7 +82,9 @@ public final class WidgetUpdateService extends Service {
             executor.execute(() -> {
                 float speed = WidgetsCommon.readSpeed(WidgetUpdateService.this);
                 if (!Float.isNaN(speed)) {
-                    Prefs.setSpeedCache(WidgetUpdateService.this, speed);
+                    if (speedChanged(WidgetUpdateService.this, speed)) {
+                        Prefs.setSpeedCache(WidgetUpdateService.this, speed);
+                    }
                 } else {
                     speed = Prefs.speedCache(WidgetUpdateService.this);
                 }
@@ -131,6 +134,8 @@ public final class WidgetUpdateService extends Service {
     public void onCreate() {
         super.onCreate();
         startForeground(NotificationHelper.ID_WIDGETS, NotificationHelper.widgets(this));
+        WidgetsCommon.subscribeAll(this);
+        VehicleState.get().addListener(stateListener);
         handler.post(tick);
         handler.post(speedTick);
     }
@@ -146,10 +151,16 @@ public final class WidgetUpdateService extends Service {
     }
 
     private void requestUpdate() {
-        if (!busy.compareAndSet(false, true)) return;
+        if (!busy.compareAndSet(false, true)) {
+            updatePending = true;
+            return;
+        }
         executor.execute(() -> {
             try {
-                updateAll();
+                do {
+                    updatePending = false;
+                    updateAll();
+                } while (updatePending && !executor.isShutdown());
             } catch (Throwable t) {
                 LogStore.add(this, "widget update failed: " + t);
             } finally {
@@ -159,8 +170,8 @@ public final class WidgetUpdateService extends Service {
     }
 
     private void updateAll() {
-        CarConnection cc = CarConnection.get();
-        boolean carReady = cc.ensure(this);
+        VehicleState state = VehicleState.get();
+        boolean carReady = state.ensure(this);
         if (!pendingActions.isEmpty()) {
             if (!carReady) {
                 scheduleRetry();
@@ -180,6 +191,13 @@ public final class WidgetUpdateService extends Service {
             stopSelf();
             return;
         }
+
+        // Обогрев руля: подтвердить или повторить отложенный запрос (нужен D).
+        if (WidgetsCommon.wheelHeatPending(this)) {
+            WidgetsCommon.checkWheelPending(this);
+        }
+        // Модель запаса хода: накапливаем дельты SOC/одометра (сама себя троттлит).
+        com.ex2tools.iv.car.RangeModel.sample(this);
 
         AppWidgetManager awm = AppWidgetManager.getInstance(this);
         int[] driveRegenIds = ids(awm, DriveRegenWidgetProvider.class);
@@ -206,16 +224,16 @@ public final class WidgetUpdateService extends Service {
         boolean needHeating = heatingIds.length > 0;
         boolean needBatteryRange = batteryRangeIds.length > 0;
 
-        Integer drive = needDrive ? intOrNull(Telemetry.driveNow(this)) : null;
-        Integer regen = needRegen ? intOrNull(Telemetry.regenNow(this)) : null;
+        Integer drive = needDrive ? WidgetsCommon.readDrive() : null;
+        Integer regen = needRegen ? WidgetsCommon.readRegen() : null;
         Integer fan = needFan ? readFanCached() : null;
         Float temp = needTemp ? readTempCached() : null;
         Integer vent = needVent ? WidgetsCommon.readVent() : null;
         Boolean recirc = needVent ? WidgetsCommon.readRecirc() : null;
         Boolean ac = needAc ? WidgetsCommon.readAc() : null;
-        Integer batteryPercent = needBatteryRange ? Telemetry.soc(this) : null;
+        Integer batteryPercent = needBatteryRange ? WidgetsCommon.readSoc() : null;
         if (batteryPercent != null && batteryPercent < 0) batteryPercent = null;
-        float rangeKm = needBatteryRange ? Telemetry.rangeKm(this) : Float.NaN;
+        float rangeKm = needBatteryRange ? WidgetsCommon.readRangeKm() : Float.NaN;
 
         Boolean rear = null;
         Boolean front = null;
@@ -247,14 +265,18 @@ public final class WidgetUpdateService extends Service {
                 WidgetsRenderer.ventFan(this, vent, recirc, fan, ac));
         any |= update(awm, heatingIds,
                 WidgetsRenderer.heating(this, wheel, rear, front, windshield,
-                        seatDriver, seatPassenger));
+                        seatDriver, seatPassenger, WidgetsCommon.wheelHeatPending(this)));
         if (speedIds.length > 0) {
             SpeedWidgetProvider.update(this, awm, speedIds);
             any = true;
         }
+        float learnedKm = com.ex2tools.iv.car.RangeModel.estimateKm(this);
+        float displayRange = Float.isNaN(learnedKm) ? rangeKm : learnedKm;
+        Float energyKwh = batteryPercent == null ? null
+                : batteryPercent * com.ex2tools.iv.car.CarProps.CAPACITY_KWH / 100f;
         any |= update(awm, batteryRangeIds,
                 WidgetsRenderer.batteryRange(this, batteryPercent,
-                        Float.isNaN(rangeKm) ? null : rangeKm));
+                        Float.isNaN(displayRange) ? null : displayRange, energyKwh));
         any |= update(awm, lockIds, WidgetsRenderer.lock(this));
         if (ids(awm, ClockWidgetProvider.class).length > 0) {
             ClockWidgetProvider.refreshAll(this);
@@ -417,6 +439,9 @@ public final class WidgetUpdateService extends Service {
             case WidgetsCommon.WHEEL_HEAT_TOGGLE:
                 WidgetsCommon.toggleWheelHeat(this);
                 break;
+            case WidgetsCommon.TRIP_RESET_DIALOG:
+                com.ex2tools.iv.status.TripResetService.start(this);
+                break;
             case WidgetsCommon.SEAT_DRIVER_CYCLE:
                 WidgetsCommon.cycleSeat(this, 1);
                 break;
@@ -428,12 +453,14 @@ public final class WidgetUpdateService extends Service {
         }
     }
 
-    private static Integer intOrNull(int value) {
-        return value == Integer.MIN_VALUE ? null : value;
+    private static boolean speedChanged(Context c, float speed) {
+        float cached = Prefs.speedCache(c);
+        return Float.isNaN(cached) || Math.abs(cached - speed) >= 0.4f;
     }
 
     @Override
     public void onDestroy() {
+        VehicleState.get().removeListener(stateListener);
         handler.removeCallbacks(speedTick);
         handler.removeCallbacksAndMessages(null);
         executor.shutdownNow();

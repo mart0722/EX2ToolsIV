@@ -29,6 +29,33 @@ public final class Prefs {
         get(c).edit().putInt("theme_mode", mode).apply();
     }
 
+    /** Последняя уставка печки, которую выставлял пользователь. */
+    public static int lastTempSet(Context c) {
+        return get(c).getInt("last_temp_set", -1);
+    }
+
+    public static void setLastTempSet(Context c, int value) {
+        get(c).edit().putInt("last_temp_set", value).apply();
+    }
+
+    /** Запрет перетаскивания оверлеев. */
+    public static boolean overlayLock(Context c) {
+        return get(c).getBoolean("overlay_lock", false);
+    }
+
+    public static void setOverlayLock(Context c, boolean value) {
+        get(c).edit().putBoolean("overlay_lock", value).apply();
+    }
+
+    /** Показывать пробег поездки вместо цифр на стрелочном спидометре. */
+    public static boolean speedShowTrip(Context c) {
+        return get(c).getBoolean("speed_show_trip", false);
+    }
+
+    public static void setSpeedShowTrip(Context c, boolean value) {
+        get(c).edit().putBoolean("speed_show_trip", value).apply();
+    }
+
     public static SharedPreferences get(Context context) {
         SharedPreferences local = cached;
         if (local != null) return local;
@@ -92,6 +119,50 @@ public final class Prefs {
 
     public static void setTtl65(Context c, boolean value) {
         get(c).edit().putBoolean("ttl_65_ativo", value).apply();
+    }
+
+    // --- автоблокировка экрана ---
+
+    public static boolean autoLock(Context c) {
+        return get(c).getBoolean("auto_lock_enabled", false);
+    }
+
+    public static void setAutoLock(Context c, boolean value) {
+        get(c).edit().putBoolean("auto_lock_enabled", value).apply();
+    }
+
+    public static int autoLockTimeoutSec(Context c) {
+        return get(c).getInt("auto_lock_timeout_sec", 60);
+    }
+
+    public static void setAutoLockTimeoutSec(Context c, int value) {
+        get(c).edit().putInt("auto_lock_timeout_sec", Math.max(15, value)).apply();
+    }
+
+    // --- обогрев руля: отложенный запрос (машина включает его только в D) ---
+
+    public static boolean wheelHeatPending(Context c) {
+        return get(c).getBoolean("wheel_heat_pending", false);
+    }
+
+    public static void setWheelHeatPending(Context c, boolean value) {
+        get(c).edit().putBoolean("wheel_heat_pending", value).apply();
+    }
+
+    public static long wheelHeatPendingAt(Context c) {
+        return get(c).getLong("wheel_heat_pending_at", 0L);
+    }
+
+    public static void setWheelHeatPendingAt(Context c, long value) {
+        get(c).edit().putLong("wheel_heat_pending_at", value).apply();
+    }
+
+    public static long wheelHeatRetryAt(Context c) {
+        return get(c).getLong("wheel_heat_retry_at", 0L);
+    }
+
+    public static void setWheelHeatRetryAt(Context c, long value) {
+        get(c).edit().putLong("wheel_heat_retry_at", value).apply();
     }
 
     public static boolean statusWifi(Context c) {

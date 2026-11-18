@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Тёмная тема: как на референсах. -->
+    <color name="wg_card">#0F1624</color>
+    <color name="wg_card_000">#000F1624</color>
+    <color name="wg_card_020">#330F1624</color>
+    <color name="wg_card_040">#660F1624</color>
+    <color name="wg_card_060">#990F1624</color>
+    <color name="wg_card_080">#CC0F1624</color>
+    <color name="wg_card_100">#FF0F1624</color>
+    <color name="wg_stroke_000">#00FFFFFF</color>
+    <color name="wg_stroke_020">#0AFFFFFF</color>
+    <color name="wg_stroke_040">#12FFFFFF</color>
+    <color name="wg_stroke_060">#18FFFFFF</color>
+    <color name="wg_stroke_080">#1FFFFFFF</color>
+    <color name="wg_stroke_100">#26FFFFFF</color>
+
+    <color name="wg_chip">#1D2537</color>
+    <color name="wg_chip_on">#16233A</color>
+    <color name="wg_chip_on_green">#12291F</color>
+    <color name="wg_chip_on_orange">#2A1A10</color>
+    <color name="wg_track">#263043</color>
+
+    <color name="wg_text">#E9EFFA</color>
+    <color name="wg_text2">#93A3BC</color>
+    <color name="wg_muted">#6C7A90</color>
+
+    <color name="wg_blue">#2B7FF6</color>
+    <color name="wg_blue_light">#58A2FE</color>
+    <color name="wg_green">#22E07A</color>
+    <color name="wg_orange">#FF7A1A</color>`n    <color name="wg_red">#E5484D</color>
+    <color name="wg_white">#FFFFFF</color>
+</resources>

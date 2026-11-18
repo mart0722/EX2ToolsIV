@@ -34,4 +34,18 @@ public final class CarPropertyManager {
     public CarPropertyValue getProperty(int propertyId, int area) {
         throw new UnsupportedOperationException("stub");
     }
+
+    public boolean registerCallback(CarPropertyEventCallback callback, int propertyId, float rateHz) {
+        throw new UnsupportedOperationException("stub");
+    }
+
+    public void unregisterCallback(CarPropertyEventCallback callback) {
+        throw new UnsupportedOperationException("stub");
+    }
+
+    public interface CarPropertyEventCallback {
+        void onChangeEvent(CarPropertyValue value);
+
+        void onErrorEvent(int propertyId, int zone);
+    }
 }

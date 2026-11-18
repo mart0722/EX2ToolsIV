@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="WgTitle">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/wg_text</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:maxLines">2</item>
+        <item name="android:ellipsize">end</item>
+    </style>
+
+    <style name="WgSection">
+        <item name="android:textSize">11sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/wg_muted</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:letterSpacing">0.04</item>
+        <item name="android:maxLines">1</item>
+    </style>
+
+    <style name="WgValue">
+        <item name="android:textSize">44sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/wg_text</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:maxLines">1</item>
+    </style>
+
+    <style name="WgUnit">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/wg_text2</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <style name="WgChip">
+        <item name="android:background">@drawable/bg_wg_chip</item>
+        <item name="android:gravity">center</item>
+        <item name="android:orientation">vertical</item>
+        <item name="android:paddingStart">4dp</item>
+        <item name="android:paddingEnd">4dp</item>
+        <item name="android:paddingTop">8dp</item>
+        <item name="android:paddingBottom">6dp</item>
+    </style>
+
+    <style name="WgChipLabel">
+        <item name="android:textSize">11sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/wg_text</item>
+        <item name="android:gravity">center</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:maxLines">3</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:layout_marginTop">4dp</item>
+    </style>
+
+    <style name="WgIcon">
+        <item name="android:layout_width">38dp</item>
+        <item name="android:layout_height">38dp</item>
+        <item name="android:importantForAccessibility">no</item>
+    </style>
+
+    <style name="WgRoundButton">
+        <item name="android:background">@drawable/bg_wg_round</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textSize">24sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/wg_text</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:layout_width">44dp</item>
+        <item name="android:layout_height">44dp</item>
+    </style>
+</resources>

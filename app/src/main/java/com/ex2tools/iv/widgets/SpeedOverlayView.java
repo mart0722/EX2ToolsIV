@@ -19,6 +19,8 @@ final class SpeedOverlayView extends View {
     private boolean initialized;
     private boolean digital;
     private boolean showBackground;
+    private boolean showTrip;
+    private float trip = Float.NaN;
 
     SpeedOverlayView(Context context) {
         super(context);
@@ -30,11 +32,13 @@ final class SpeedOverlayView extends View {
         return this;
     }
 
-    void update(Context c, float kmh) {
+    void update(Context c, float kmh, float tripKm) {
         float value = Float.isNaN(kmh) ? 0f : kmh;
         targetSpeed = Math.max(0f, Math.min(SpeedGaugePainter.MAX_SPEED, value));
         digital = Prefs.speedMode(c) == 0;
         showBackground = Prefs.speedBackground(c);
+        showTrip = Prefs.speedShowTrip(c);
+        trip = tripKm;
         if (!initialized) {
             shownSpeed = targetSpeed;
             initialized = true;
@@ -59,6 +63,6 @@ final class SpeedOverlayView extends View {
         }
 
         SpeedGaugePainter.draw(getContext(), canvas, getWidth(), getHeight(),
-                shownSpeed, digital, showBackground);
+                shownSpeed, digital, showBackground, trip, showTrip && !digital);
     }
 }

@@ -54,7 +54,6 @@
     <color name="widget_bg_alpha_080">#CC0F1722</color>
     <color name="widget_bg_alpha_100">#FF0F1722</color>
     <color name="widget_card_stroke">#1FFFFFFF</color>
-    <color name="widget_chip_ac_off_bg">#000000</color>
     <color name="widget_divider">#1AFFFFFF</color>
 
     <color name="overview_card_top">#CC2C2F3D</color>

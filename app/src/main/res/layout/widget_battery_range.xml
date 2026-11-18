@@ -8,42 +8,78 @@
         android:id="@+id/widget_bg_layer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@drawable/widget_card_bg_100"
-        android:text="" />
+        android:background="@drawable/bg_wg_card_100" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:gravity="center"
-        android:orientation="horizontal"
-        android:padding="12dp">
+        android:orientation="vertical"
+        android:paddingStart="14dp"
+        android:paddingTop="8dp"
+        android:paddingEnd="14dp"
+        android:paddingBottom="8dp"
+        android:gravity="center_vertical">
 
-        <ImageView
-            android:id="@+id/img_battery_range"
-            android:layout_width="34dp"
-            android:layout_height="34dp"
-            android:importantForAccessibility="no"
-            android:src="@drawable/ic_battery"
-            android:tint="@color/cx_text_primary" />
-
-        <TextView
-            android:id="@+id/tv_battery_range_percent"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:text="—"
-            android:textColor="@color/cx_text_primary"
-            android:textSize="28sp"
-            android:textStyle="bold" />
+            android:baselineAligned="false"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-        <TextView
-            android:id="@+id/tv_battery_range_km"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="18dp"
-            android:text="—"
-            android:textColor="@color/cx_text_secondary"
-            android:textSize="19sp"
-            android:textStyle="bold" />
+            <TextView
+                android:id="@+id/tv_battery_range_percent"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:gravity="start"
+                android:includeFontPadding="false"
+                android:maxLines="1"
+                android:text="-"
+                android:textColor="@color/wg_text"
+                android:textSize="28sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_battery_range_energy"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="4dp"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:maxLines="1"
+                android:text="-"
+                android:textColor="@color/wg_text"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_battery_range_km"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:gravity="end"
+                android:includeFontPadding="false"
+                android:maxLines="1"
+                android:text="-"
+                android:textColor="@color/wg_text2"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <ProgressBar
+            android:id="@+id/pb_battery_range"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="6dp"
+            android:layout_marginTop="6dp"
+            android:max="100"
+            android:progress="0"
+            android:progressDrawable="@drawable/wg_battery_bar" />
     </LinearLayout>
 </FrameLayout>

@@ -16,7 +16,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
-import android.widget.RemoteViews;
 
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
@@ -25,18 +24,14 @@ import com.ex2tools.iv.LogStore;
 import com.ex2tools.iv.NotificationHelper;
 import com.ex2tools.iv.Prefs;
 import com.ex2tools.iv.R;
-import com.ex2tools.iv.car.CarConnection;
-import com.ex2tools.iv.car.Telemetry;
+import com.ex2tools.iv.state.VehicleState;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Floating widgets for launchers which do not support AppWidgetHost (or as a
- * non-invasive alternative for any launcher). The widgets are normal
- * RemoteViews inflated into windows of TYPE_APPLICATION_OVERLAY and are shown
- * while the current HOME launcher is in front (or while an individual widget
- * is pinned).
+ * РџР»Р°РІР°СЋС‰РёРµ РІРёРґР¶РµС‚С‹ РїРѕРІРµСЂС… СЂР°Р±РѕС‡РµРіРѕ СЃС‚РѕР»Р°. Р—РЅР°С‡РµРЅРёСЏ С‡РёС‚Р°СЋС‚СЃСЏ РёР·
+ * VehicleState, РѕР±РЅРѕРІР»РµРЅРёРµ вЂ” РїРѕ СЃРѕР±С‹С‚РёСЏРј, Р° РЅРµ РѕРїСЂРѕСЃРѕРј VHAL.
  */
 public final class OverlayWidgetService extends Service {
 
@@ -49,6 +44,9 @@ public final class OverlayWidgetService extends Service {
     private WindowManager windowManager;
     private volatile boolean destroyed;
     private int lastThemeSignature = Integer.MIN_VALUE;
+    private volatile boolean stateDirty = true;
+
+    private final VehicleState.Listener stateListener = () -> stateDirty = true;
 
     private final Runnable poll = new Runnable() {
         @Override
@@ -72,6 +70,8 @@ public final class OverlayWidgetService extends Service {
             lastThemeSignature = themeSignature;
             ForegroundState state = foregroundState();
             boolean anyEnabled = false;
+            boolean render = stateDirty;
+            stateDirty = false;
             for (OverlaySpec spec : specs) {
                 boolean enabled = Prefs.overlayEnabled(OverlayWidgetService.this, spec.key);
                 anyEnabled |= enabled;
@@ -82,8 +82,8 @@ public final class OverlayWidgetService extends Service {
                     show = false;
                 }
                 if (show) {
-                    ensure(spec);
-                    update(spec);
+                    boolean created = ensure(spec);
+                    if (render || created) update(spec);
                 } else {
                     remove(spec);
                 }
@@ -158,6 +158,8 @@ public final class OverlayWidgetService extends Service {
         for (String key : OverlaySpec.keys()) {
             specs.add(new OverlaySpec(key));
         }
+        WidgetsCommon.subscribeAll(this);
+        VehicleState.get().addListener(stateListener);
         handler.post(poll);
     }
 
@@ -190,6 +192,7 @@ public final class OverlayWidgetService extends Service {
         destroyed = true;
         running = false;
         LogStore.add(this, "overlay service destroyed");
+        VehicleState.get().removeListener(stateListener);
         handler.removeCallbacksAndMessages(null);
         for (OverlaySpec spec : specs) {
             remove(spec);
@@ -204,17 +207,19 @@ public final class OverlayWidgetService extends Service {
         return null;
     }
 
-    private void ensure(OverlaySpec spec) {
-        if (spec.view != null || windowManager == null) return;
+    private boolean ensure(OverlaySpec spec) {
+        if (spec.view != null || windowManager == null) return false;
         try {
             FrameLayout container = new FrameLayout(this);
             View content;
             if (WidgetsCommon.SIZE_SPEED.equals(spec.key)) {
                 spec.speedView = new SpeedOverlayView(this);
                 content = spec.speedView.view();
-                spec.speedView.update(this, WidgetsCommon.readSpeed(this));
+                spec.speedView.update(this, WidgetsCommon.readSpeed(this), WidgetsCommon.readTripKm(this));
             } else {
-                content = OverlayWidgetViews.create(this, spec.key);
+                float scale = WidgetsCommon.SIZE_APPS.equals(spec.key)
+                        ? 1f : Prefs.overlaySizePct(this, spec.key) / 100f;
+                content = OverlayWidgetViews.create(this, spec.key, scale);
                 OverlayWidgetViews.update(this, content, spec.key);
             }
             if (WidgetsCommon.SIZE_SPEED.equals(spec.key)) {
@@ -259,8 +264,10 @@ public final class OverlayWidgetService extends Service {
             spec.params = lp;
             LogStore.add(this, "overlay added " + spec.key + " " + width + "x" + height
                     + " at " + lp.x + "," + lp.y);
+            return true;
         } catch (Throwable t) {
             LogStore.add(this, "overlay add " + spec.key + " failed: " + t);
+            return false;
         }
     }
 
@@ -268,7 +275,7 @@ public final class OverlayWidgetService extends Service {
         if (spec.view == null || spec.content == null) return;
         try {
             if (WidgetsCommon.SIZE_SPEED.equals(spec.key) && spec.speedView != null) {
-                spec.speedView.update(this, WidgetsCommon.readSpeed(this));
+                spec.speedView.update(this, WidgetsCommon.readSpeed(this), WidgetsCommon.readTripKm(this));
             } else {
                 OverlayWidgetViews.update(this, spec.content, spec.key);
             }
@@ -290,68 +297,9 @@ public final class OverlayWidgetService extends Service {
         spec.speedView = null;
     }
 
-    private RemoteViews build(String key) {
-        RemoteViews views;
-        switch (key) {
-            case WidgetsCommon.SIZE_SPEED:
-                views = SpeedWidgetRenderer.build(this, -1, WidgetsCommon.readSpeed(this));
-                break;
-            case WidgetsCommon.SIZE_DRIVE_REGEN:
-                views = WidgetsRenderer.driveRegen(this,
-                        intOrNull(Telemetry.driveNow(this)),
-                        intOrNull(Telemetry.regenNow(this)));
-                break;
-            case WidgetsCommon.SIZE_DRIVE_MODE:
-                views = WidgetsRenderer.driveVertical(this, intOrNull(Telemetry.driveNow(this)));
-                break;
-            case WidgetsCommon.SIZE_REGEN:
-                views = WidgetsRenderer.regenVertical(this, intOrNull(Telemetry.regenNow(this)));
-                break;
-            case WidgetsCommon.SIZE_FAN:
-                views = WidgetsRenderer.fan(this, WidgetsCommon.readFan(),
-                        R.layout.widget_fan_speed);
-                break;
-            case WidgetsCommon.SIZE_TEMP:
-                views = WidgetsRenderer.temperature(this, WidgetsCommon.readTemp(this),
-                        R.layout.widget_temperature);
-                break;
-            case WidgetsCommon.SIZE_VENT:
-                views = WidgetsRenderer.vent(this, WidgetsCommon.readVent(),
-                        WidgetsCommon.readRecirc());
-                break;
-            case WidgetsCommon.SIZE_VENT_FAN:
-                views = WidgetsRenderer.ventFan(this, WidgetsCommon.readVent(),
-                        WidgetsCommon.readRecirc(), WidgetsCommon.readFan(),
-                        WidgetsCommon.readAc());
-                break;
-            case WidgetsCommon.SIZE_HEATING:
-                views = WidgetsRenderer.heating(this,
-                        WidgetsCommon.readWheelHeat(),
-                        WidgetsCommon.readRearDefrost(),
-                        WidgetsCommon.readFrontMaxDefrost(),
-                        WidgetsCommon.readWindshieldHeat(),
-                        WidgetsCommon.readSeatHeat(1),
-                        WidgetsCommon.readSeatHeat(4));
-                break;
-            case WidgetsCommon.SIZE_BATTERY_RANGE:
-                views = WidgetsRenderer.batteryRange(this,
-                        Telemetry.soc(this) < 0 ? null : Telemetry.soc(this),
-                        Float.isNaN(Telemetry.rangeKm(this)) ? null : Telemetry.rangeKm(this));
-                break;
-            case WidgetsCommon.SIZE_LOCK:
-                views = WidgetsRenderer.lock(this);
-                break;
-            default:
-                views = new RemoteViews(getPackageName(), R.layout.widget_speed);
-                break;
-        }
-        // The overlay window itself controls the final size. Do not apply
-        // the AppWidget scale a second time.
-        return views;
-    }
-
     private void bindDrag(OverlaySpec spec, FrameLayout container, View content,
                           WindowManager.LayoutParams lp) {
+        if (Prefs.overlayLock(this)) return;
         View drag = content.findViewById(R.id.widget_bg_layer);
         if (drag == null || drag.getVisibility() != View.VISIBLE) drag = content;
         View.OnTouchListener listener = new View.OnTouchListener() {
@@ -389,6 +337,12 @@ public final class OverlayWidgetService extends Service {
                         if (moved) {
                             Prefs.setOverlayPos(OverlayWidgetService.this,
                                     spec.key, lp.x, lp.y);
+                        } else if (WidgetsCommon.SIZE_SPEED.equals(spec.key)
+                                && event.getActionMasked() == MotionEvent.ACTION_UP
+                                && v.getHeight() > 0
+                                && event.getY() >= v.getHeight() * 0.72f) {
+                            // Тап по нижней части спидометра (там пробег) — сброс с подтверждением.
+                            com.ex2tools.iv.status.TripResetService.start(OverlayWidgetService.this);
                         }
                         return true;
                     default:
@@ -441,10 +395,6 @@ public final class OverlayWidgetService extends Service {
         }
     }
 
-    private static Integer intOrNull(int value) {
-        return value == Integer.MIN_VALUE ? null : value;
-    }
-
     private int dp(int value) {
         return Math.round(value * density());
     }
@@ -476,46 +426,14 @@ public final class OverlayWidgetService extends Service {
 
         OverlaySpec(String key) {
             this.key = key;
-            switch (key) {
-                case WidgetsCommon.SIZE_SPEED:
-                    widthDp = 240; heightDp = 240; defaultX = 40; defaultY = 160;
-                    break;
-                case WidgetsCommon.SIZE_DRIVE_REGEN:
-                    widthDp = 420; heightDp = 220; defaultX = 40; defaultY = 40;
-                    break;
-                case WidgetsCommon.SIZE_DRIVE_MODE:
-                    widthDp = 180; heightDp = 240; defaultX = 40; defaultY = 420;
-                    break;
-                case WidgetsCommon.SIZE_REGEN:
-                    widthDp = 180; heightDp = 240; defaultX = 240; defaultY = 420;
-                    break;
-                case WidgetsCommon.SIZE_FAN:
-                    widthDp = 240; heightDp = 150; defaultX = 40; defaultY = 40;
-                    break;
-                case WidgetsCommon.SIZE_TEMP:
-                    widthDp = 260; heightDp = 150; defaultX = 300; defaultY = 40;
-                    break;
-                case WidgetsCommon.SIZE_VENT:
-                    widthDp = 420; heightDp = 220; defaultX = 40; defaultY = 280;
-                    break;
-                case WidgetsCommon.SIZE_VENT_FAN:
-                    widthDp = 420; heightDp = 260; defaultX = 40; defaultY = 520;
-                    break;
-                case WidgetsCommon.SIZE_HEATING:
-                    widthDp = 420; heightDp = 260; defaultX = 480; defaultY = 520;
-                    break;
-                case WidgetsCommon.SIZE_BATTERY_RANGE:
-                    widthDp = 230; heightDp = 90; defaultX = 40; defaultY = 700;
-                    break;
-                case WidgetsCommon.SIZE_LOCK:
-                    widthDp = 160; heightDp = 160; defaultX = 360; defaultY = 700;
-                    break;
-                case WidgetsCommon.SIZE_APPS:
-                    widthDp = 84; heightDp = 84; defaultX = 560; defaultY = 700;
-                    break;
-                default:
-                    widthDp = 220; heightDp = 220; defaultX = 40; defaultY = 40;
-                    break;
+            WidgetCatalog.Entry entry = WidgetCatalog.get(key);
+            if (entry == null) {
+                widthDp = 220; heightDp = 220; defaultX = 40; defaultY = 40;
+            } else {
+                widthDp = entry.widthDp;
+                heightDp = entry.heightDp;
+                defaultX = entry.defaultX;
+                defaultY = entry.defaultY;
             }
         }
 

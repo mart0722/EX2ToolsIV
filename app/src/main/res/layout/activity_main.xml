@@ -82,5 +82,6 @@
                 android:src="@drawable/ic_refresh"
                 android:tint="@color/flyme_blue" />
         </LinearLayout>
+
     </FrameLayout>
 </LinearLayout>

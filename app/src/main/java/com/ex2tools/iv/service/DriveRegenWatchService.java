@@ -14,14 +14,37 @@ import androidx.core.content.ContextCompat;
 import com.ex2tools.iv.LogStore;
 import com.ex2tools.iv.NotificationHelper;
 import com.ex2tools.iv.Prefs;
-import com.ex2tools.iv.car.DriveRegenController;
+import com.ex2tools.iv.car.CarProps;
 import com.ex2tools.iv.car.Telemetry;
+import com.ex2tools.iv.drive.DriveController;
+import com.ex2tools.iv.state.VehicleState;
 
+/**
+ * Принудительное удержание режима движения и рекуперации.
+ *
+ * Работает только если пользователь включил переключатель «Удерживать режим».
+ * Пишет в машину строго в четырёх случаях:
+ *   1) после загрузки ГУ (сервис стартует из BootReceiver);
+ *   2) после пробуждения экрана (SCREEN_ON / USER_PRESENT);
+ *   3) после смены передачи;
+ *   4) по команде синхронизации из UI.
+ *
+ * Ручное переключение в штатном меню не «перебивается»: если значение
+ * изменилось вне наших окон применения, оно принимается как новое желаемое.
+ * Есть потолок: не больше MAX_APPLIES попыток за WINDOW_MS.
+ */
 public final class DriveRegenWatchService extends Service {
 
+    private static final long WINDOW_MS = 10 * 60 * 1000L;
+    private static final int MAX_APPLIES = 8;
+    private static final long QUIET_BEFORE_ADOPT_MS = 30_000L;
+
     private static volatile boolean running;
+
     private volatile boolean forceApply;
+    private volatile boolean stopRequested;
     private Thread worker;
+
     private final BroadcastReceiver wakeReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -45,6 +68,7 @@ public final class DriveRegenWatchService extends Service {
         }
     }
 
+    /** Включён переключатель — сервис работает, выключен — останавливается. */
     public static void sync(Context context) {
         if (Prefs.autoApply(context)) start(context);
         else stop(context);
@@ -82,31 +106,71 @@ public final class DriveRegenWatchService extends Service {
 
     private void runWatch() {
         try {
-            DriveRegenController controller = new DriveRegenController(this);
+            VehicleState state = VehicleState.get();
+            for (int attempt = 0; attempt < 36 && !stopRequested; attempt++) {
+                if (state.ensure(this)) break;
+                Thread.sleep(5_000L);
+            }
+            if (!state.isReady()) {
+                LogStore.add(this, "drive watch: VHAL недоступен, выходим");
+                return;
+            }
+            state.subscribe(CarProps.DRIVE_MODE, CarProps.DRIVE_AREAS);
+            state.subscribe(CarProps.REGEN_MODE, CarProps.REGEN_AREAS);
+
+            DriveController controller = DriveController.get();
             long[] delays = {0L, 1500L, 4000L, 8000L, 16000L};
+            long lastWriteAt = 0L;
+            int lastGear = Telemetry.gear(this);
+            long windowStart = System.currentTimeMillis();
+            int applies = 0;
+
+            // Первичное применение после загрузки/синхронизации.
             for (long delay : delays) {
-                if (Thread.currentThread().isInterrupted()) return;
+                if (stopRequested || Thread.currentThread().isInterrupted()) return;
+                if (!Prefs.autoApply(this)) return;
                 if (delay > 0) Thread.sleep(delay);
-                DriveRegenController.Result r = controller.applySaved();
-                LogStore.add(this, "watch apply: " + r.message + " exact=" + r.exact);
+                DriveController.Outcome r = controller.applySaved(this);
+                applies++;
+                lastWriteAt = System.currentTimeMillis();
+                LogStore.add(this, "watch apply: " + r.describe());
                 if (r.exact) break;
             }
 
-            int lastGear = Telemetry.gear(this);
-            while (!Thread.currentThread().isInterrupted()) {
+            while (!Thread.currentThread().isInterrupted() && !stopRequested) {
                 if (!Prefs.autoApply(this)) break;
-                if (forceApply) {
-                    forceApply = false;
-                    DriveRegenController.Result r = controller.applySaved();
-                    LogStore.add(this, "watch wake apply: " + r.message + " exact=" + r.exact);
+                Thread.sleep(1000L);
+
+                long now = System.currentTimeMillis();
+                if (now - windowStart > WINDOW_MS) {
+                    windowStart = now;
+                    applies = 0;
                 }
+
                 int gear = Telemetry.gear(this);
-                if (gear != Integer.MIN_VALUE && gear != lastGear) {
+                boolean gearChanged = gear != Integer.MIN_VALUE && gear != lastGear;
+                if (gearChanged) {
                     lastGear = gear;
-                    DriveRegenController.Result r = controller.applySaved();
-                    LogStore.add(this, "watch gear " + gear + ": " + r.message + " exact=" + r.exact);
+                    forceApply = true;
                 }
-                Thread.sleep(2000L);
+
+                if (forceApply && applies < MAX_APPLIES) {
+                    forceApply = false;
+                    DriveController.Outcome r = controller.applySaved(this);
+                    applies++;
+                    lastWriteAt = System.currentTimeMillis();
+                    LogStore.add(this, "watch " + (gearChanged ? "gear" : "wake")
+                            + " apply: " + r.describe());
+                } else if (forceApply) {
+                    forceApply = false;
+                    LogStore.add(this, "watch: лимит попыток исчерпан, ждём пробуждения");
+                }
+
+                // Ручное переключение в штатном меню принимаем как новое желаемое,
+                // но только вне окна применения, чтобы не спорить с ECU.
+                if (now - lastWriteAt > QUIET_BEFORE_ADOPT_MS) {
+                    adoptManualChange(controller);
+                }
             }
         } catch (InterruptedException ignored) {
             Thread.currentThread().interrupt();
@@ -118,8 +182,27 @@ public final class DriveRegenWatchService extends Service {
         }
     }
 
+    private void adoptManualChange(DriveController controller) {
+        Integer drive = controller.currentDrive();
+        Integer regen = controller.currentRegen();
+        boolean changed = false;
+        if (drive != null && drive != Prefs.drive(this)) {
+            Prefs.setDrive(this, drive);
+            changed = true;
+        }
+        if (regen != null && regen != Prefs.regen(this)) {
+            Prefs.setRegen(this, regen);
+            changed = true;
+        }
+        if (changed) {
+            LogStore.add(this, "watch: принято ручное переключение drive=" + drive
+                    + " regen=" + regen);
+        }
+    }
+
     @Override
     public void onDestroy() {
+        stopRequested = true;
         running = false;
         if (worker != null) worker.interrupt();
         try {

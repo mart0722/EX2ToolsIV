@@ -1,100 +1,89 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout
-    android:id="@+id/widget_root" xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
+
     <TextView
         android:id="@+id/widget_bg_layer"
-        android:background="@drawable/widget_card_bg_100"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:text=""/>
+        android:background="@drawable/bg_wg_card_100" />
+
     <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:gravity="center_horizontal"
         android:orientation="vertical"
-        android:padding="10dp"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:padding="12dp">
+
         <TextView
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:textColor="@color/cx_text_primary"
-            android:gravity="center"
             android:id="@+id/btn_vent_next"
-            android:background="@drawable/btn_circle"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:text="+"/>
+            style="@style/WgRoundButton"
+            android:text="+" />
+
         <LinearLayout
-            android:gravity="center"
-            android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1">
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical">
+
             <ImageView
                 android:id="@+id/img_vent_mode"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:layout_marginBottom="4dp"
-                android:src="@drawable/ic_climate_vent_face"
-                android:tint="@color/cx_text_primary" />
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/wg_ic_vent_face"
+                android:tint="@color/wg_text" />
+
             <TextView
-                android:textSize="13sp"
-                android:textStyle="bold"
-                android:textColor="@color/cx_text_primary"
                 android:id="@+id/tv_vent_mode_label"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="—"/>
+                android:layout_marginTop="6dp"
+                android:includeFontPadding="false"
+                android:text="Лицо"
+                android:textColor="@color/wg_text"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
             <TextView
-                android:textSize="10sp"
-                android:textColor="@color/cx_text_secondary"
                 android:id="@+id/tv_vent_mode_footer"
-                android:visibility="gone"
+                style="@style/WgSection"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:text="Обдув"/>
+                android:text="ОБДУВ" />
         </LinearLayout>
+
         <TextView
-            android:textSize="22sp"
-            android:textStyle="bold"
-            android:textColor="@color/cx_text_primary"
-            android:gravity="center"
             android:id="@+id/btn_vent_prev"
-            android:background="@drawable/btn_circle"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:text="−"/>
-        <TextView
-            android:background="@color/widget_divider"
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="8dp"
-            android:text=""/>
+            style="@style/WgRoundButton"
+            android:text="−" />
+
         <LinearLayout
-            android:gravity="center"
-            android:orientation="horizontal"
             android:id="@+id/chip_recirc_v"
-            android:background="@drawable/widget_chip_idle"
-            android:padding="6dp"
+            style="@style/WgChip"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal">
+
             <ImageView
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:src="@drawable/ic_climate_recirc"
-                android:tint="@color/cx_text_primary"
-                android:layout_marginEnd="6dp"/>
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/wg_ic_recirc" />
+
             <TextView
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:textColor="@color/cx_text_primary"
                 android:id="@+id/txt_recirc_v"
+                style="@style/WgChipLabel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Рециркуляция"/>
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="0dp"
+                android:text="Рецирк." />
         </LinearLayout>
     </LinearLayout>
 </FrameLayout>

@@ -16,9 +16,9 @@ import com.ex2tools.iv.Prefs;
  */
 final class SpeedGaugePainter {
 
-    static final float MAX_SPEED = 150f;
-    private static final int CELLS = 30;
-    private static final int LABEL_EVERY = 6;
+    static final float MAX_SPEED = 160f;
+    private static final int CELLS = 32;
+    private static final int LABEL_EVERY = 4;
     private static final float START_ANGLE = 135f;
     private static final float SWEEP_ANGLE = 270f;
 
@@ -26,16 +26,18 @@ final class SpeedGaugePainter {
     }
 
     static Bitmap render(Context c, int width, int height, float kmh,
-                         boolean digital, boolean showBackground) {
+                         boolean digital, boolean showBackground,
+                         float tripKm, boolean showTrip) {
         int w = Math.max(1, width);
         int h = Math.max(1, height);
         Bitmap bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
-        draw(c, new Canvas(bitmap), w, h, kmh, digital, showBackground);
+        draw(c, new Canvas(bitmap), w, h, kmh, digital, showBackground, tripKm, showTrip);
         return bitmap;
     }
 
     static void draw(Context c, Canvas canvas, int width, int height, float kmh,
-                     boolean digital, boolean showBackground) {
+                     boolean digital, boolean showBackground,
+                     float tripKm, boolean showTrip) {
         Palette p = palette(c);
         float size = Math.min(width, height);
         float cx = width * 0.5f;
@@ -55,13 +57,14 @@ final class SpeedGaugePainter {
         if (digital) {
             drawDigital(canvas, size, speed, p, showBackground, false);
         } else {
-            drawAnalog(canvas, size, speed, p, showBackground);
+            drawAnalog(canvas, size, speed, p, showBackground, tripKm, showTrip);
         }
         canvas.restore();
     }
 
     private static void drawAnalog(Canvas canvas, float size, float speed,
-                                   Palette p, boolean maskText) {
+                                   Palette p, boolean maskText,
+                                   float tripKm, boolean showTrip) {
         // The dial used to occupy only 72% of the overlay. At large sizes this
         // left a lot of empty space around the clock, so use more of the view.
         float radius = size * 0.43f;
@@ -101,7 +104,7 @@ final class SpeedGaugePainter {
         label.setColor(p.label);
         label.setTextAlign(Paint.Align.CENTER);
         label.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL));
-        label.setTextSize(size * 0.042f);
+        label.setTextSize(size * 0.095f);
 
         float tickInner = radius - size * 0.046f;
         float tickOuter = radius - size * 0.022f;
@@ -137,7 +140,42 @@ final class SpeedGaugePainter {
         hub.setColor(p.surface);
         canvas.drawCircle(0f, 0f, size * 0.011f, hub);
 
-        drawDigital(canvas, size, speed, p, maskText, true);
+        if (showTrip) {
+            drawTrip(canvas, size, tripKm, p, maskText);
+        } else {
+            drawDigital(canvas, size, speed, p, maskText, true);
+        }
+    }
+
+    private static void drawTrip(Canvas canvas, float size, float tripKm,
+                                 Palette p, boolean maskText) {
+        String text = Float.isNaN(tripKm) ? "—"
+                : (tripKm < 100f ? String.format(java.util.Locale.US, "%.1f", tripKm)
+                : String.valueOf(Math.round(tripKm)));
+        float y = size * 0.225f;
+
+        Paint number = new Paint(Paint.ANTI_ALIAS_FLAG);
+        number.setColor(p.text);
+        number.setTextAlign(Paint.Align.CENTER);
+        number.setTypeface(Typeface.create("sans-serif", Typeface.BOLD));
+        number.setTextSize(size * 0.132f);
+
+        if (maskText) {
+            Paint stroke = new Paint(number);
+            stroke.setStyle(Paint.Style.STROKE);
+            stroke.setStrokeWidth(size * 0.018f);
+            stroke.setColor(p.surface);
+            stroke.setAlpha(238);
+            drawCentered(canvas, text, 0f, y, stroke);
+        }
+        drawCentered(canvas, text, 0f, y, number);
+
+        Paint unit = new Paint(Paint.ANTI_ALIAS_FLAG);
+        unit.setColor(p.muted);
+        unit.setTextAlign(Paint.Align.CENTER);
+        unit.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL));
+        unit.setTextSize(size * 0.045f);
+        drawCentered(canvas, "км", 0f, size * 0.345f, unit);
     }
 
     private static void drawDigital(Canvas canvas, float size, float speed,
@@ -206,7 +244,7 @@ final class SpeedGaugePainter {
                 return new Palette(
                         Color.rgb(19, 104, 251),
                         Color.WHITE,
-                        Color.WHITE,
+                        Color.rgb(19, 104, 251),
                         Color.rgb(143, 160, 188),
                         Color.argb(56, 143, 160, 188),
                         Color.rgb(15, 23, 34));

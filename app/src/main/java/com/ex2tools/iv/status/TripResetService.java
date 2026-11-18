@@ -82,9 +82,10 @@ public final class TripResetService extends Service {
                 FlymePress.setEnabled(confirm, false);
             } else {
                 float start = Prefs.tripStartKm(this);
-                int trip = start <= 0f ? 0 : Math.round(Math.max(0f, odo - start));
+                float tripValue = start <= 0f ? 0f : Math.max(0f, odo - start);
                 int total = Math.round(odo);
-                current.setText(getString(R.string.trip_reset_current_fmt, trip));
+                current.setText(getString(R.string.trip_reset_current_fmt,
+                        String.format(java.util.Locale.US, "%.1f", tripValue)));
                 odometer.setText(getString(R.string.trip_reset_odometer_fmt, total));
                 confirm.setOnClickListener(v -> {
                     Prefs.setTripStartKm(this, odo);

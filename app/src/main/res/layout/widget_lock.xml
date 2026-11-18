@@ -8,24 +8,22 @@
         android:id="@+id/widget_bg_layer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@drawable/widget_card_bg_100"
-        android:text="" />
+        android:background="@drawable/bg_wg_card_100" />
 
     <LinearLayout
         android:id="@+id/lock_body"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:gravity="center"
         android:orientation="vertical"
         android:padding="10dp">
 
         <ImageView
             android:id="@+id/img_lock"
-            android:layout_width="56dp"
-            android:layout_height="56dp"
-            android:contentDescription="@string/widget_lock_label"
-            android:src="@drawable/ic_lock"
-            android:tint="@color/cx_text_primary" />
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:contentDescription="@string/wg_lock_label"
+            android:src="@drawable/wg_ic_lock"
+            android:tint="@color/wg_text" />
     </LinearLayout>
 </FrameLayout>

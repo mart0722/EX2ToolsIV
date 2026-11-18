@@ -12,10 +12,14 @@ import androidx.core.content.ContextCompat;
 import com.ex2tools.iv.LogStore;
 import com.ex2tools.iv.NotificationHelper;
 import com.ex2tools.iv.Prefs;
-import com.ex2tools.iv.car.CarProps;
-import com.ex2tools.iv.car.DriveRegenController;
-import com.ex2tools.iv.car.Telemetry;
+import com.ex2tools.iv.drive.DriveController;
+import com.ex2tools.iv.state.VehicleState;
 
+/**
+ * «Применить сейчас»: один раз отправляет сохранённые drive/regen.
+ * Никаких циклов и повторных попыток по событиям — этим занимается
+ * DriveRegenWatchService, и только если пользователь его включил.
+ */
 public final class DriveRegenService extends Service {
 
     public static final String EXTRA_ONCE = "once";
@@ -27,9 +31,18 @@ public final class DriveRegenService extends Service {
         Intent i = new Intent(context, DriveRegenService.class);
         i.putExtra(EXTRA_ONCE, once);
         try {
-            ContextCompat.startForegroundService(context, i);
+            if (once || Prefs.autoApply(context)) {
+                ContextCompat.startForegroundService(context, i);
+            }
         } catch (Throwable t) {
             LogStore.add(context, "start drive service failed: " + t);
+        }
+    }
+
+    public static void stop(Context context) {
+        try {
+            context.stopService(new Intent(context, DriveRegenService.class));
+        } catch (Throwable ignored) {
         }
     }
 
@@ -41,48 +54,27 @@ public final class DriveRegenService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        boolean once = intent != null && intent.getBooleanExtra(EXTRA_ONCE, false);
         if (running) {
             LogStore.add(this, "drive service already running");
             return START_NOT_STICKY;
         }
-        if (!once && !Prefs.autoApply(this)) {
-            stopSelf();
-            return START_NOT_STICKY;
-        }
         running = true;
-        worker = new Thread(() -> runApply(once), "ex2-drive");
+        worker = new Thread(this::runApply, "ex2-drive");
         worker.start();
         return START_NOT_STICKY;
     }
 
-    private void runApply(boolean once) {
+    private void runApply() {
         try {
-            long[] delays = once
-                    ? new long[]{0L, 900L, 2200L}
-                    : new long[]{0L, 1500L, 4000L, 8000L, 16000L};
-            DriveRegenController controller = new DriveRegenController(this);
+            VehicleState.get().ensure(this);
+            DriveController controller = DriveController.get();
+            long[] delays = {0L, 900L, 2200L};
             for (long delay : delays) {
                 if (Thread.currentThread().isInterrupted()) break;
                 if (delay > 0) Thread.sleep(delay);
-                DriveRegenController.Result r = controller.applySaved();
-                LogStore.add(this, "apply: " + r.message + " exact=" + r.exact);
-                if (once && r.exact) break;
-            }
-
-            if (!once && Prefs.autoApply(this)) {
-                long end = System.currentTimeMillis() + 180000L;
-                int lastGear = Telemetry.gear(this);
-                while (!Thread.currentThread().isInterrupted()
-                        && System.currentTimeMillis() < end) {
-                    Thread.sleep(1000L);
-                    int gear = Telemetry.gear(this);
-                    if (gear != Integer.MIN_VALUE && gear != lastGear) {
-                        lastGear = gear;
-                        controller.applySaved();
-                        LogStore.add(this, "re-applied after gear " + gear);
-                    }
-                }
+                DriveController.Outcome r = controller.applySaved(this);
+                LogStore.add(this, "apply now: " + r.describe());
+                if (r.exact) break;
             }
         } catch (InterruptedException ignored) {
             Thread.currentThread().interrupt();

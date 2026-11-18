@@ -29,6 +29,7 @@ public final class BootReceiver extends BroadcastReceiver {
         }
 
         DriveRegenWatchService.sync(context);
+        com.ex2tools.iv.lock.AutoLockService.sync(context);
         StatusIconService.sync(context);
         ScreenshotButtonService.sync(context);
         com.ex2tools.iv.tasks.TaskManagerButtonService.sync(context);

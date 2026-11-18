@@ -8,8 +8,7 @@
         android:id="@+id/widget_bg_layer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@drawable/widget_card_bg_100"
-        android:text="" />
+        android:background="@drawable/bg_wg_card_100" />
 
     <LinearLayout
         android:id="@+id/apps_container"

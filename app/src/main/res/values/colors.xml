@@ -65,7 +65,6 @@
     <color name="cx_notice">#FFD37A</color>
     <color name="widget_divider">#1A1E2530</color>
     <color name="widget_card_stroke">#1F1E2530</color>
-    <color name="widget_chip_ac_off_bg">#CBD2DA</color>
     <color name="widget_bg_alpha_000">#00FFFFFF</color>
     <color name="widget_bg_alpha_020">#33FFFFFF</color>
     <color name="widget_bg_alpha_040">#66FFFFFF</color>

@@ -29,10 +29,13 @@ import com.ex2tools.iv.LogStore;
 import com.ex2tools.iv.MainActivity;
 import com.ex2tools.iv.Prefs;
 import com.ex2tools.iv.R;
+import com.ex2tools.iv.ReadOnly;
+import com.ex2tools.iv.body.BodyController;
 import com.ex2tools.iv.car.CarConnection;
 import com.ex2tools.iv.car.CarProps;
 import com.ex2tools.iv.car.RvcBlackBackground;
 import com.ex2tools.iv.car.Ttl65;
+import com.ex2tools.iv.drive.DriveController;
 import com.ex2tools.iv.screenshot.ScreenshotButtonService;
 import com.ex2tools.iv.service.DriveRegenService;
 import com.ex2tools.iv.service.DriveRegenWatchService;
@@ -52,6 +55,8 @@ public final class SettingsFragment extends Fragment {
     private FlymeSwitchRow switchSpeedAutoLock;
     private FlymeSwitchRow switchRvcBlack;
     private FlymeSwitchRow switchTtl65;
+    private FlymeSwitchRow switchAutoLock;
+    private FlymeSegmentedGroup autoLockTimeGroup;
     private Dialog rvcProgress;
     private Dialog ttlProgress;
     private boolean rvcBusy;
@@ -84,6 +89,8 @@ public final class SettingsFragment extends Fragment {
         switchSpeedAutoLock = view.findViewById(R.id.switchSpeedAutoLock);
         switchRvcBlack = view.findViewById(R.id.switchRvcBlack);
         switchTtl65 = view.findViewById(R.id.switchTtl65);
+        switchAutoLock = view.findViewById(R.id.switchAutoLock);
+        autoLockTimeGroup = view.findViewById(R.id.autoLockTimeGroup);
         applyResult = view.findViewById(R.id.applyResult);
 
         binding = true;
@@ -108,22 +115,24 @@ public final class SettingsFragment extends Fragment {
         driveGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
             if (!isChecked || binding) return;
             Prefs.setDrive(requireContext(), driveValue(checkedId));
+            applyFromSelection();
         });
         regenGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
             if (!isChecked || binding) return;
             Prefs.setRegen(requireContext(), regenValue(checkedId));
+            applyFromSelection();
         });
 
         autoApply.setChecked(Prefs.autoApply(c));
         autoApply.setOnCheckedChangeListener((b, checked) -> {
-            Prefs.setAutoApply(requireContext(), checked);
-            DriveRegenWatchService.sync(requireContext());
+            Prefs.setAutoApply(c, checked);
+            DriveRegenWatchService.sync(c);
+            if (checked) {
+                Toast.makeText(c, R.string.auto_apply_on, Toast.LENGTH_SHORT).show();
+            }
         });
 
-        view.findViewById(R.id.applyNow).setOnClickListener(v -> {
-            applyResult.setText(R.string.applying);
-            ((MainActivity) requireActivity()).restartDriveApply(true);
-        });
+        view.findViewById(R.id.applyNow).setOnClickListener(v -> applyFromSelection());
 
         switchScreenshotButton.setChecked(Prefs.screenshotButton(c));
         switchScreenshotButton.setOnCheckedChangeListener((b, checked) -> {
@@ -190,6 +199,23 @@ public final class SettingsFragment extends Fragment {
         switchTtl65.setOnCheckedChangeListener((b, checked) -> {
             if (binding || ttlBusy) return;
             beginTtl65(checked);
+        });
+
+        switchAutoLock.setChecked(Prefs.autoLock(c));
+        autoLockTimeGroup.check(autoLockButton(Prefs.autoLockTimeoutSec(c)));
+        switchAutoLock.setOnCheckedChangeListener((b, checked) -> {
+            if (binding) return;
+            Prefs.setAutoLock(requireContext(), checked);
+            com.ex2tools.iv.lock.AutoLockService.sync(requireContext());
+            Toast.makeText(requireContext(),
+                    checked ? R.string.settings_auto_lock_on : R.string.settings_auto_lock_off,
+                    Toast.LENGTH_SHORT).show();
+        });
+        autoLockTimeGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+            if (!isChecked || binding) return;
+            int sec = checkedId == R.id.autoLock30 ? 30
+                    : checkedId == R.id.autoLock300 ? 300 : 60;
+            Prefs.setAutoLockTimeoutSec(requireContext(), sec);
         });
 
         view.findViewById(R.id.settingsCustomCommands).setOnClickListener(v ->
@@ -269,6 +295,14 @@ public final class SettingsFragment extends Fragment {
             switchTtl65.setChecked(Prefs.ttl65(c));
             binding = false;
         }
+        if (switchAutoLock != null) {
+            binding = true;
+            switchAutoLock.setChecked(Prefs.autoLock(c));
+            if (autoLockTimeGroup != null) {
+                autoLockTimeGroup.check(autoLockButton(Prefs.autoLockTimeoutSec(c)));
+            }
+            binding = false;
+        }
         String result = Prefs.lastResult(c);
         String applied = Prefs.lastApplied(c);
         if (result.isEmpty()) {
@@ -318,11 +352,11 @@ public final class SettingsFragment extends Fragment {
         Context c = requireContext();
         Prefs.setSpeedAutoLock(c, enabled);
         new Thread(() -> {
-            CarConnection cc = CarConnection.get();
-            boolean ready = cc.ensure(c);
-            final boolean ok = ready
-                    && cc.writeInt(CarProps.SPEED_AUTO_LOCK, 0, enabled ? 2 : 1);
-            LogStore.add(c, "speed auto lock " + (enabled ? "on" : "off") + ": " + ok);
+            com.ex2tools.iv.vehicle.CommandDispatcher.Result result =
+                    BodyController.get().setSpeedAutoLock(enabled);
+            final boolean ok = result != null && result.ok();
+            LogStore.add(c, "speed auto lock " + (enabled ? "on" : "off") + ": " + ok
+                    + (result == null ? "" : " " + result.status));
             if (!isAdded()) return;
             requireActivity().runOnUiThread(() -> {
                 if (!isAdded()) return;
@@ -497,6 +531,38 @@ public final class SettingsFragment extends Fragment {
         }
     }
 
+    private int applyToken;
+
+    /**
+     * Применение режима сразу после выбора.
+     *
+     * Раньше выбор только сохранялся в настройках, а команда уходила лишь по
+     * кнопке «Применить сейчас» или при смене передачи — из-за этого казалось,
+     * что режим меняется только на стоянке.
+     */
+    private void applyFromSelection() {
+        if (!isAdded()) return;
+        final Context app = requireContext().getApplicationContext();
+        applyResult.setText(R.string.applying);
+        ((MainActivity) requireActivity()).restartDriveApply(true);
+        final int token = ++applyToken;
+        applyResult.postDelayed(() -> {
+            if (!isAdded() || token != applyToken) return;
+            DriveController dc = DriveController.get();
+            Integer drive = dc.freshDrive();
+            Integer regen = dc.freshRegen();
+            String actual = (drive == null ? "?" : CarProps.driveLabel(app, drive))
+                    + " / " + (regen == null ? "?" : CarProps.regenLabel(app, regen));
+            boolean exact = drive != null && regen != null
+                    && drive == Prefs.drive(app) && regen == Prefs.regen(app);
+            LogStore.add(app, "apply from ui: want=" + Prefs.drive(app) + "/" + Prefs.regen(app)
+                    + " read=" + drive + "/" + regen + " exact=" + exact);
+            applyResult.setText(exact
+                    ? getString(R.string.drive_applied)
+                    : getString(R.string.drive_apply_refused, actual));
+        }, 2200L);
+    }
+
     private void rebootHeadUnit() {
         if (!isAdded()) return;
         final Context app = requireContext().getApplicationContext();
@@ -529,6 +595,12 @@ public final class SettingsFragment extends Fragment {
                                 Toast.LENGTH_LONG).show());
             }
         }, "head-unit-reboot").start();
+    }
+
+    private static int autoLockButton(int seconds) {
+        if (seconds <= 30) return R.id.autoLock30;
+        if (seconds >= 300) return R.id.autoLock300;
+        return R.id.autoLock60;
     }
 
     private int themeButton(int mode) {

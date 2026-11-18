@@ -94,6 +94,14 @@
             android:theme="@style/Theme.EX2ToolsIV.Transparent" />
 
         <receiver
+            android:name=".servicemode.RestoreAlarmReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name=".servicemode.RestoreServicesReceiver"
+            android:exported="false" />
+
+        <receiver
             android:name=".service.BootReceiver"
             android:directBootAware="true"
             android:exported="true">
@@ -105,14 +113,6 @@
                 <action android:name="android.intent.action.USER_UNLOCKED" />
             </intent-filter>
         </receiver>
-
-        <receiver
-            android:name=".servicemode.RestoreAlarmReceiver"
-            android:exported="false" />
-
-        <receiver
-            android:name=".servicemode.RestoreServicesReceiver"
-            android:exported="false" />
 
         <receiver
             android:name=".status.WifiActionReceiver"
@@ -143,14 +143,10 @@
             android:exported="false"
             android:foregroundServiceType="dataSync" />
 
-        <receiver
-            android:name=".service.WakeReceiver"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.SCREEN_ON" />
-                <action android:name="android.intent.action.USER_PRESENT" />
-            </intent-filter>
-        </receiver>
+        <service
+            android:name=".lock.AutoLockService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
 
         <service
             android:name=".servicemode.RestoreTriggerService"

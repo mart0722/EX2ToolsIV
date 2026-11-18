@@ -1,15 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout
-    android:id="@+id/widget_root" xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:padding="8dp">
+    android:layout_height="match_parent">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_wg_card_100" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:padding="8dp">
 
         <TextClock
             android:id="@+id/clockTime"
@@ -21,15 +26,11 @@
             android:autoSizeStepGranularity="2sp"
             android:autoSizeTextType="uniform"
             android:fontFamily="sans-serif-condensed"
-            android:format12Hour="h:mm"
+            android:format12Hour="HH:mm"
             android:format24Hour="HH:mm"
             android:gravity="center"
             android:includeFontPadding="false"
-            android:shadowColor="#40000000"
-            android:shadowDx="0"
-            android:shadowDy="2"
-            android:shadowRadius="6"
-            android:textColor="@color/clock_text"
+            android:textColor="@color/wg_text"
             android:textSize="42sp"
             android:textStyle="bold" />
 
@@ -42,11 +43,7 @@
             android:gravity="center"
             android:includeFontPadding="false"
             android:maxLines="1"
-            android:shadowColor="#40000000"
-            android:shadowDx="0"
-            android:shadowDy="1"
-            android:shadowRadius="4"
-            android:textColor="@color/clock_text"
-            android:textSize="16sp" />
+            android:textColor="@color/wg_text2"
+            android:textSize="18sp" />
     </LinearLayout>
 </FrameLayout>

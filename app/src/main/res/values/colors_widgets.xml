@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Светлая тема: карточки почти белые, акценты те же. -->
+    <color name="wg_card">#F7F9FE</color>
+    <color name="wg_card_000">#00F7F9FE</color>
+    <color name="wg_card_020">#33F7F9FE</color>
+    <color name="wg_card_040">#66F7F9FE</color>
+    <color name="wg_card_060">#99F7F9FE</color>
+    <color name="wg_card_080">#CCF7F9FE</color>
+    <color name="wg_card_100">#FFF7F9FE</color>
+    <color name="wg_stroke_000">#0016202E</color>
+    <color name="wg_stroke_020">#0816202E</color>
+    <color name="wg_stroke_040">#1016202E</color>
+    <color name="wg_stroke_060">#1416202E</color>
+    <color name="wg_stroke_080">#1816202E</color>
+    <color name="wg_stroke_100">#1F16202E</color>
+
+    <color name="wg_chip">#E4EAF5</color>
+    <color name="wg_chip_on">#E7F0FF</color>
+    <color name="wg_chip_on_green">#E4F8EE</color>
+    <color name="wg_chip_on_orange">#FDEDE3</color>
+    <color name="wg_track">#D3DBE9</color>
+
+    <color name="wg_text">#16202E</color>
+    <color name="wg_text2">#5B6B84</color>
+    <color name="wg_muted">#8A99AE</color>
+
+    <color name="wg_blue">#1F6FE5</color>
+    <color name="wg_blue_light">#3E8BFF</color>
+    <color name="wg_green">#12A85C</color>
+    <color name="wg_orange">#E8641A</color>`n    <color name="wg_red">#D93036</color>
+    <color name="wg_white">#FFFFFF</color>
+</resources>

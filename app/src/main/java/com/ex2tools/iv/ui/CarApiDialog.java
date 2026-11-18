@@ -17,6 +17,7 @@ import android.widget.TextView;
 import com.ex2tools.iv.R;
 import com.ex2tools.iv.car.CarConnection;
 import com.ex2tools.iv.car.ChargeStatusProbe;
+import com.ex2tools.iv.vehicle.VhalGateway;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -204,6 +205,9 @@ public final class CarApiDialog {
         }
 
         StringBuilder sb = new StringBuilder();
+        sb.append("VhalGateway: ").append(VhalGateway.get().describe()).append("\n\n");
+        sb.append("VehicleState: ").append(com.ex2tools.iv.state.VehicleState.get().describe())
+                .append("\n\n");
         adaptNames = buildAdaptNames(c);
         sb.append("AdaptAPI: ").append(adaptAvailable ? "available" : "not available");
         if (adaptAvailable) sb.append(" (").append(adaptNames.size()).append(" names)");

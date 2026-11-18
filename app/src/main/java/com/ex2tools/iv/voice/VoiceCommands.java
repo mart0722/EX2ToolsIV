@@ -247,14 +247,14 @@ public final class VoiceCommands {
         boolean heat = VoiceText.has(t, "обогрев", "обогрей", "отопл", "нагрев", "нагрей", "прогре");
         if ((fast && cool && !heat) || (VoiceText.has(t, "охлади", "выстуди", "остуди")
                 && VoiceText.has(t, "салон"))) {
-            WidgetsCommon.setTemp(c, 16);
+            WidgetsCommon.setTemp(c, 17);
             WidgetsCommon.setFan(7);
             WidgetsCommon.setAc(c, true);
             return ok("Охлаждаю салон");
         }
         if ((fast && heat) || (VoiceText.has(t, "прогрей", "обогрей", "нагрей")
                 && VoiceText.has(t, "салон"))) {
-            WidgetsCommon.setTemp(c, 30);
+            WidgetsCommon.setTemp(c, 32);
             WidgetsCommon.setFan(7);
             WidgetsCommon.setAc(c, true);
             return ok("Прогреваю салон");
@@ -360,11 +360,11 @@ public final class VoiceCommands {
             return null;
         }
         if (VoiceText.has(t, "максим")) {
-            WidgetsCommon.setTemp(c, 30);
+            WidgetsCommon.setTemp(c, 32);
             return ok("Температура 30°");
         }
         if (VoiceText.has(t, "минимум")) {
-            WidgetsCommon.setTemp(c, 16);
+            WidgetsCommon.setTemp(c, 17);
             return ok("Температура 16°");
         }
         if (VoiceText.has(t, "половин")) {

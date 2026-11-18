@@ -21,6 +21,7 @@ import com.ex2tools.iv.LogStore;
 import com.ex2tools.iv.NotificationHelper;
 import com.ex2tools.iv.Prefs;
 import com.ex2tools.iv.R;
+import com.ex2tools.iv.ReadOnly;
 import com.ex2tools.iv.screenshot.ScreenshotButtonService;
 import com.ex2tools.iv.service.DriveRegenService;
 import com.ex2tools.iv.service.DriveRegenWatchService;

@@ -22,17 +22,20 @@ public final class WidgetsRenderer {
     public static RemoteViews driveRegen(Context c, Integer drive, Integer regen) {
         RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_drive_regen);
         bg(v, c);
-        v.setTextViewText(R.id.txt_drive_header, c.getString(R.string.k_widget_lbl_drive_header));
-        v.setTextViewText(R.id.txt_regen_header, c.getString(R.string.k_widget_lbl_regen_header));
-        v.setTextViewText(R.id.txt_drive_eco, c.getString(R.string.k_widget_lbl_drive_eco));
-        v.setTextViewText(R.id.txt_drive_comfort, c.getString(R.string.k_widget_lbl_drive_comfort));
-        v.setTextViewText(R.id.txt_drive_sport, c.getString(R.string.k_widget_lbl_drive_sport));
-        v.setTextViewText(R.id.txt_regen_low, c.getString(R.string.k_widget_lbl_regen_low));
-        v.setTextViewText(R.id.txt_regen_mid, c.getString(R.string.k_widget_lbl_regen_mid));
-        v.setTextViewText(R.id.txt_regen_high, c.getString(R.string.k_widget_lbl_regen_high));
-        chip(v, c, R.id.chip_drive_eco, R.id.txt_drive_eco, drive != null && drive == CarProps.DRIVE_ECO);
-        chip(v, c, R.id.chip_drive_comfort, R.id.txt_drive_comfort, drive != null && drive == CarProps.DRIVE_COMFORT);
-        chip(v, c, R.id.chip_drive_sport, R.id.txt_drive_sport, drive != null && drive == CarProps.DRIVE_SPORT);
+        v.setTextViewText(R.id.txt_drive_header, c.getString(R.string.wg_drive_header));
+        v.setTextViewText(R.id.txt_regen_header, c.getString(R.string.wg_regen_header));
+        v.setTextViewText(R.id.txt_drive_eco, c.getString(R.string.wg_drive_eco));
+        v.setTextViewText(R.id.txt_drive_comfort, c.getString(R.string.wg_drive_comfort));
+        v.setTextViewText(R.id.txt_drive_sport, c.getString(R.string.wg_drive_sport));
+        v.setTextViewText(R.id.txt_regen_low, c.getString(R.string.wg_regen_low));
+        v.setTextViewText(R.id.txt_regen_mid, c.getString(R.string.wg_regen_mid));
+        v.setTextViewText(R.id.txt_regen_high, c.getString(R.string.wg_regen_high));
+        chip(v, c, R.id.chip_drive_eco, R.id.txt_drive_eco,
+                drive != null && drive == CarProps.DRIVE_ECO, 1);
+        chip(v, c, R.id.chip_drive_comfort, R.id.txt_drive_comfort,
+                drive != null && drive == CarProps.DRIVE_COMFORT, 0);
+        chip(v, c, R.id.chip_drive_sport, R.id.txt_drive_sport,
+                drive != null && drive == CarProps.DRIVE_SPORT, 2);
         chip(v, c, R.id.chip_regen_low, R.id.txt_regen_low, regen != null && regen == CarProps.REGEN_WEAK);
         chip(v, c, R.id.chip_regen_mid, R.id.txt_regen_mid, regen != null && regen == CarProps.REGEN_MEDIUM);
         chip(v, c, R.id.chip_regen_high, R.id.txt_regen_high, regen != null && regen == CarProps.REGEN_STRONG);
@@ -51,18 +54,18 @@ public final class WidgetsRenderer {
         int icon;
         int label;
         if (drive != null && drive == CarProps.DRIVE_ECO) {
-            icon = R.drawable.ic_setting_drive_eco;
-            label = R.string.k_widget_lbl_drive_eco;
+            icon = R.drawable.wg_ic_drive_eco;
+            label = R.string.wg_drive_eco;
         } else if (drive != null && drive == CarProps.DRIVE_SPORT) {
-            icon = R.drawable.ic_setting_drive_sport;
-            label = R.string.k_widget_lbl_drive_sport;
+            icon = R.drawable.wg_ic_drive_sport;
+            label = R.string.wg_drive_sport;
         } else {
-            icon = R.drawable.ic_setting_drive_comfort;
-            label = R.string.k_widget_lbl_drive_comfort;
+            icon = R.drawable.wg_ic_drive_comfort;
+            label = R.string.wg_drive_comfort;
         }
         v.setImageViewResource(R.id.img_drive_mode, icon);
         v.setTextViewText(R.id.tv_drive_mode_label, c.getString(label));
-        v.setTextViewText(R.id.tv_drive_mode_footer, c.getString(R.string.k_qa_driving_label));
+        v.setTextViewText(R.id.tv_drive_mode_footer, c.getString(R.string.wg_footer_drive));
         click(v, c, R.id.btn_drive_next, WidgetsCommon.DRIVE_NEXT);
         click(v, c, R.id.btn_drive_prev, WidgetsCommon.DRIVE_PREV);
         return v;
@@ -74,18 +77,18 @@ public final class WidgetsRenderer {
         int icon;
         int label;
         if (regen != null && regen == CarProps.REGEN_WEAK) {
-            icon = R.drawable.ic_widget_regen_weak;
-            label = R.string.k_widget_lbl_regen_low;
+            icon = R.drawable.wg_ic_regen_low;
+            label = R.string.wg_regen_low;
         } else if (regen != null && regen == CarProps.REGEN_STRONG) {
-            icon = R.drawable.ic_widget_regen_strong;
-            label = R.string.k_widget_lbl_regen_high;
+            icon = R.drawable.wg_ic_regen_high;
+            label = R.string.wg_regen_high;
         } else {
-            icon = R.drawable.ic_widget_regen_mid;
-            label = R.string.k_widget_lbl_regen_mid;
+            icon = R.drawable.wg_ic_regen_mid;
+            label = R.string.wg_regen_mid;
         }
         v.setImageViewResource(R.id.img_regen_level, icon);
         v.setTextViewText(R.id.tv_regen_level_label, c.getString(label));
-        v.setTextViewText(R.id.tv_regen_level_footer, c.getString(R.string.k_qa_regen_label));
+        v.setTextViewText(R.id.tv_regen_level_footer, c.getString(R.string.wg_footer_regen));
         click(v, c, R.id.btn_regen_next, WidgetsCommon.REGEN_NEXT);
         click(v, c, R.id.btn_regen_prev, WidgetsCommon.REGEN_PREV);
         return v;
@@ -95,10 +98,10 @@ public final class WidgetsRenderer {
         RemoteViews v = new RemoteViews(c.getPackageName(), layout);
         bg(v, c);
         v.setTextViewText(R.id.tv_fan_value, fan == null ? "—" : String.valueOf(fan));
-        v.setTextViewText(R.id.tv_fan_label, c.getString(R.string.k_widget_lbl_fan));
+        v.setTextViewText(R.id.tv_fan_label, c.getString(R.string.wg_fan));
         for (int i = 0; i < FAN_DOTS.length; i++) {
             v.setInt(FAN_DOTS[i], "setBackgroundResource",
-                    fan != null && i < fan ? R.drawable.widget_dot_on : R.drawable.widget_dot_off);
+                    fan != null && i < fan ? R.drawable.bg_wg_dot_on : R.drawable.bg_wg_dot_off);
         }
         click(v, c, R.id.btn_fan_minus, WidgetsCommon.FAN_MINUS);
         click(v, c, R.id.btn_fan_plus, WidgetsCommon.FAN_PLUS);
@@ -111,7 +114,11 @@ public final class WidgetsRenderer {
         v.setTextViewText(R.id.tv_temp_value,
                 temp == null ? "—" : String.valueOf(Math.round(temp)));
         v.setTextViewText(R.id.tv_temp_unit, "°C");
-        v.setTextViewText(R.id.tv_temp_label, c.getString(R.string.k_widget_lbl_temp));
+        v.setTextViewText(R.id.tv_temp_label, c.getString(R.string.wg_temp));
+        if (temp != null) {
+            int progress = Math.max(0, Math.min(15, Math.round(temp) - 17));
+            v.setProgressBar(R.id.temp_bar, 16, progress, false);
+        }
         click(v, c, R.id.btn_temp_minus, WidgetsCommon.TEMP_MINUS);
         click(v, c, R.id.btn_temp_plus, WidgetsCommon.TEMP_PLUS);
         return v;
@@ -120,13 +127,13 @@ public final class WidgetsRenderer {
     public static RemoteViews vent(Context c, Integer vent, Boolean recirc) {
         RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_hvac_direction);
         bg(v, c);
-        v.setTextViewText(R.id.txt_vent_header, c.getString(R.string.k_widget_lbl_vent_header));
-        v.setTextViewText(R.id.txt_vent_face, c.getString(R.string.k_widget_lbl_vent_face));
-        v.setTextViewText(R.id.txt_vent_floor, c.getString(R.string.k_widget_lbl_vent_floor));
-        v.setTextViewText(R.id.txt_vent_face_floor, c.getString(R.string.k_widget_lbl_vent_face_floor));
-        v.setTextViewText(R.id.txt_vent_windshield, c.getString(R.string.k_widget_lbl_vent_windshield));
-        v.setTextViewText(R.id.txt_vent_floor_windshield, c.getString(R.string.k_widget_lbl_vent_floor_windshield));
-        v.setTextViewText(R.id.txt_recirc, c.getString(R.string.k_widget_lbl_recirc));
+        v.setTextViewText(R.id.txt_vent_header, c.getString(R.string.wg_vent_header));
+        v.setTextViewText(R.id.txt_vent_face, c.getString(R.string.wg_vent_face));
+        v.setTextViewText(R.id.txt_vent_floor, c.getString(R.string.wg_vent_floor));
+        v.setTextViewText(R.id.txt_vent_face_floor, c.getString(R.string.wg_vent_face_floor));
+        v.setTextViewText(R.id.txt_vent_windshield, c.getString(R.string.wg_vent_windshield));
+        v.setTextViewText(R.id.txt_vent_floor_windshield, c.getString(R.string.wg_vent_floor_windshield));
+        v.setTextViewText(R.id.txt_recirc, c.getString(R.string.wg_recirc));
         chip(v, c, R.id.chip_vent_face, R.id.txt_vent_face, vent != null && vent == 1);
         chip(v, c, R.id.chip_vent_floor, R.id.txt_vent_floor, vent != null && vent == 2);
         chip(v, c, R.id.chip_vent_face_floor, R.id.txt_vent_face_floor, vent != null && vent == 3);
@@ -148,12 +155,11 @@ public final class WidgetsRenderer {
         int mode = vent == null ? 1 : vent;
         v.setImageViewResource(R.id.img_vent_mode, WidgetsCommon.ventIcon(mode));
         v.setTextViewText(R.id.tv_vent_mode_label, c.getString(WidgetsCommon.ventLabel(mode)));
-        v.setTextViewText(R.id.tv_vent_mode_footer, c.getString(R.string.k_widget_lbl_vent_short));
-        v.setTextViewText(R.id.txt_recirc_v, c.getString(R.string.k_widget_lbl_recirc));
+        v.setTextViewText(R.id.tv_vent_mode_footer, c.getString(R.string.wg_vent_short));
+        v.setTextViewText(R.id.txt_recirc_v, c.getString(R.string.wg_recirc));
         v.setInt(R.id.chip_recirc_v, "setBackgroundResource",
-                Boolean.TRUE.equals(recirc) ? R.drawable.widget_chip_active : R.drawable.widget_chip_idle);
-        v.setTextColor(R.id.txt_recirc_v, c.getColor(Boolean.TRUE.equals(recirc)
-                ? R.color.cx_on_accent : R.color.cx_text_primary));
+                Boolean.TRUE.equals(recirc) ? R.drawable.bg_wg_chip_on : R.drawable.bg_wg_chip);
+        v.setTextColor(R.id.txt_recirc_v, c.getColor(R.color.wg_text));
         click(v, c, R.id.btn_vent_next, WidgetsCommon.VENT_NEXT);
         click(v, c, R.id.btn_vent_prev, WidgetsCommon.VENT_PREV);
         click(v, c, R.id.chip_recirc_v, WidgetsCommon.RECIRC_TOGGLE);
@@ -174,12 +180,14 @@ public final class WidgetsRenderer {
         v.setTextViewText(R.id.tv_fan_value, fan == null ? "—" : String.valueOf(fan));
         for (int i = 0; i < FAN_DOTS.length; i++) {
             v.setInt(FAN_DOTS[i], "setBackgroundResource",
-                    fan != null && i < fan ? R.drawable.widget_dot_on : R.drawable.widget_dot_off);
+                    fan != null && i < fan ? R.drawable.bg_wg_dot_on : R.drawable.bg_wg_dot_off);
         }
+        boolean acOn = Boolean.TRUE.equals(ac);
         v.setInt(R.id.chip_fan_ac, "setBackgroundResource",
-                Boolean.TRUE.equals(ac) ? R.drawable.widget_chip_active : R.drawable.widget_chip_ac_off);
-        v.setTextColor(R.id.tv_fan_value, c.getColor(Boolean.TRUE.equals(ac)
-                ? R.color.cx_on_accent : R.color.cx_text_primary));
+                acOn ? R.drawable.bg_wg_chip_on : R.drawable.bg_wg_chip);
+        v.setInt(R.id.img_ac, "setColorFilter",
+                c.getColor(acOn ? R.color.wg_blue : R.color.wg_text));
+        v.setTextColor(R.id.tv_fan_value, c.getColor(R.color.wg_text));
         click(v, c, R.id.chip_vent_face, WidgetsCommon.VENT_FACE);
         click(v, c, R.id.chip_vent_floor, WidgetsCommon.VENT_FLOOR);
         click(v, c, R.id.chip_vent_face_floor, WidgetsCommon.VENT_FACE_FLOOR);
@@ -187,28 +195,45 @@ public final class WidgetsRenderer {
         click(v, c, R.id.chip_vent_floor_windshield, WidgetsCommon.VENT_FLOOR_WINDSHIELD);
         click(v, c, R.id.chip_recirc, WidgetsCommon.RECIRC_TOGGLE);
         click(v, c, R.id.chip_fan_ac, WidgetsCommon.AC_TOGGLE);
+        click(v, c, R.id.tv_fan_value, WidgetsCommon.AC_TOGGLE);
         click(v, c, R.id.btn_fan_minus, WidgetsCommon.FAN_MINUS);
         click(v, c, R.id.btn_fan_plus, WidgetsCommon.FAN_PLUS);
         return v;
     }
 
     public static RemoteViews heating(Context c, Boolean wheel, Boolean rear, Boolean front,
-                                      Boolean windshield, Integer seatDriver, Integer seatPassenger) {
+                                      Boolean windshield, Integer seatDriver, Integer seatPassenger,
+                                      boolean wheelPending) {
         RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_heating_test);
         bg(v, c);
-        v.setTextViewText(R.id.txt_heat_header, c.getString(R.string.k_widget_lbl_heat_header));
+        // Рамка стекла берётся из темы, стрелки всегда оранжевые — поэтому две
+        // версии ассета и выбор по фактической теме приложения.
+        Context tc = OverlayWidgetViews.themeContext(c);
+        boolean night = (tc.getResources().getConfiguration().uiMode
+                & android.content.res.Configuration.UI_MODE_NIGHT_MASK)
+                == android.content.res.Configuration.UI_MODE_NIGHT_YES;
+        v.setImageViewResource(R.id.img_windshield_heat,
+                night ? R.drawable.wg_ic_windshield_heat_dark
+                        : R.drawable.wg_ic_windshield_heat_light);
+        v.setImageViewResource(R.id.img_front_rear_defrost,
+                night ? R.drawable.wg_ic_rear_heat_dark
+                        : R.drawable.wg_ic_rear_heat_light);
+        v.setImageViewResource(R.id.img_wheel_heat,
+                night ? R.drawable.wg_ic_wheel_heat_dark
+                        : R.drawable.wg_ic_wheel_heat_light);
+        v.setTextViewText(R.id.txt_heat_header, c.getString(R.string.wg_heat_header));
         toggle(v, c, R.id.chip_wheel_heat, R.id.txt_wheel_heat,
-                Boolean.TRUE.equals(wheel), c.getString(R.string.k_widget_lbl_heat_wheel));
+                Boolean.TRUE.equals(wheel), wheelPending, c.getString(R.string.wg_heat_wheel));
         toggle(v, c, R.id.chip_front_rear_defrost, R.id.txt_front_rear_defrost,
-                Boolean.TRUE.equals(rear), c.getString(R.string.k_widget_lbl_rear_defrost));
+                Boolean.TRUE.equals(rear), c.getString(R.string.wg_heat_rear));
         toggle(v, c, R.id.chip_front_max_defrost, R.id.txt_front_max_defrost,
-                Boolean.TRUE.equals(front), c.getString(R.string.k_widget_lbl_heat_front_max));
+                Boolean.TRUE.equals(front), c.getString(R.string.wg_heat_front_max));
         toggle(v, c, R.id.chip_windshield_heat, R.id.txt_windshield_heat,
-                Boolean.TRUE.equals(windshield), c.getString(R.string.k_widget_lbl_heat_windshield));
+                Boolean.TRUE.equals(windshield), c.getString(R.string.wg_heat_windshield));
         seat(v, c, R.id.chip_seat_heat_driver, R.id.txt_seat_heat_driver,
-                seatDriver, c.getString(R.string.k_widget_lbl_heat_seat_driver));
+                seatDriver, c.getString(R.string.wg_heat_seat_driver));
         seat(v, c, R.id.chip_seat_heat_passenger, R.id.txt_seat_heat_passenger,
-                seatPassenger, c.getString(R.string.k_widget_lbl_heat_seat_passenger));
+                seatPassenger, c.getString(R.string.wg_heat_seat_passenger));
         click(v, c, R.id.chip_wheel_heat, WidgetsCommon.WHEEL_HEAT_TOGGLE);
         click(v, c, R.id.chip_front_rear_defrost, WidgetsCommon.REAR_DEFROST_TOGGLE);
         click(v, c, R.id.chip_front_max_defrost, WidgetsCommon.FRONT_MAX_DEFROST_TOGGLE);
@@ -218,22 +243,38 @@ public final class WidgetsRenderer {
         return v;
     }
 
-    public static RemoteViews batteryRange(Context c, Integer soc, Float range) {
+    public static RemoteViews batteryRange(Context c, Integer soc, Float range, Float energyKwh) {
         RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_battery_range);
         bg(v, c);
-        // Resolve colors with the app's own day/night choice. AppWidget hosts inflate
-        // the layout with their own configuration, so XML colors can ignore our theme.
         Context tc = OverlayWidgetViews.themeContext(c);
-        int primary = tc.getColor(R.color.cx_text_primary);
-        int secondary = tc.getColor(R.color.cx_text_secondary);
+        int primary = tc.getColor(R.color.wg_text);
+        int secondary = tc.getColor(R.color.wg_text2);
+
+        int percent = soc == null ? 0 : Math.max(0, Math.min(100, soc));
         v.setTextColor(R.id.tv_battery_range_percent, primary);
+        v.setTextColor(R.id.tv_battery_range_energy, primary);
         v.setTextColor(R.id.tv_battery_range_km, secondary);
-        v.setInt(R.id.img_battery_range, "setColorFilter", primary);
+
         v.setTextViewText(R.id.tv_battery_range_percent,
-                soc == null ? "—" : c.getString(R.string.widget_battery_range_percent, soc));
-        v.setTextViewText(R.id.tv_battery_range_km,
-                range == null ? "—" : c.getString(R.string.widget_battery_range_km,
-                        Math.round(range)));
+                soc == null ? "-" : c.getString(R.string.widget_battery_range_percent, percent));
+
+        if (energyKwh == null || Float.isNaN(energyKwh)) {
+            v.setTextViewText(R.id.tv_battery_range_energy, "-");
+        } else {
+            String value = String.format(new java.util.Locale("ru"), "%.1f", energyKwh);
+            v.setTextViewText(R.id.tv_battery_range_energy,
+                    c.getString(R.string.widget_battery_range_energy, value));
+        }
+
+        if (range == null || Float.isNaN(range)) {
+            v.setTextViewText(R.id.tv_battery_range_km, "-");
+        } else {
+            v.setTextViewText(R.id.tv_battery_range_km,
+                    c.getString(R.string.widget_battery_range_est,
+                            String.valueOf(Math.round(range))));
+        }
+
+        v.setProgressBar(R.id.pb_battery_range, 100, soc == null ? 0 : percent, false);
         return v;
     }
 
@@ -241,7 +282,7 @@ public final class WidgetsRenderer {
         RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_lock);
         bg(v, c);
         Context tc = OverlayWidgetViews.themeContext(c);
-        v.setInt(R.id.img_lock, "setColorFilter", tc.getColor(R.color.cx_text_primary));
+        v.setInt(R.id.img_lock, "setColorFilter", tc.getColor(R.color.wg_text));
         Intent intent = new Intent(c, LockActivity.class)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pending = PendingIntent.getActivity(c, 0x4c4f434b, intent,
@@ -256,21 +297,55 @@ public final class WidgetsRenderer {
     }
 
     private static void chip(RemoteViews v, Context c, int chipId, int textId, boolean active) {
-        v.setInt(chipId, "setBackgroundResource",
-                active ? R.drawable.widget_chip_active : R.drawable.widget_chip_idle);
-        v.setTextColor(textId, c.getColor(active ? R.color.cx_on_accent : R.color.cx_text_primary));
+        chip(v, c, chipId, textId, active, 0);
+    }
+
+    /** accent: 0 — синий, 1 — зелёный, 2 — красный. */
+    private static void chip(RemoteViews v, Context c, int chipId, int textId,
+                             boolean active, int accent) {
+        int background;
+        if (!active) {
+            background = R.drawable.bg_wg_chip;
+        } else if (accent == 1) {
+            background = R.drawable.bg_wg_chip_on_green;
+        } else if (accent == 2) {
+            background = R.drawable.bg_wg_chip_on_red;
+        } else {
+            background = R.drawable.bg_wg_chip_on;
+        }
+        v.setInt(chipId, "setBackgroundResource", background);
+        v.setTextColor(textId, c.getColor(R.color.wg_text));
     }
 
     private static void toggle(RemoteViews v, Context c, int chipId, int textId,
                                boolean active, String label) {
-        chip(v, c, chipId, textId, active);
+        toggle(v, c, chipId, textId, active, false, label);
+    }
+
+    /** Три состояния: выключено / ожидание подтверждения (синяя обводка) / включено. */
+    private static void toggle(RemoteViews v, Context c, int chipId, int textId,
+                               boolean active, boolean pending, String label) {
+        int bg;
+        if (active) {
+            bg = R.drawable.bg_wg_chip_on_orange;
+        } else if (pending) {
+            bg = R.drawable.bg_wg_chip_pending;
+        } else {
+            bg = R.drawable.bg_wg_chip;
+        }
+        v.setInt(chipId, "setBackgroundResource", bg);
+        v.setTextColor(textId, pending && !active
+                ? c.getColor(R.color.wg_blue_light)
+                : c.getColor(R.color.wg_text));
         v.setTextViewText(textId, label);
     }
 
     private static void seat(RemoteViews v, Context c, int chipId, int textId,
                              Integer level, String label) {
         boolean active = level != null && level > 0;
-        chip(v, c, chipId, textId, active);
+        v.setInt(chipId, "setBackgroundResource",
+                active ? R.drawable.bg_wg_chip_on_orange : R.drawable.bg_wg_chip);
+        v.setTextColor(textId, c.getColor(R.color.wg_text));
         String value = level == null ? "—" : String.valueOf(level);
         v.setTextViewText(textId, label + " " + value);
     }

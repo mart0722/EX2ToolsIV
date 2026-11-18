@@ -399,7 +399,18 @@ public final class MainActivity extends AppCompatActivity {
     }
 
     public void restartDriveApply(boolean once) {
-        com.ex2tools.iv.service.DriveRegenService.start(this, once);
+        final int drive = Prefs.drive(this);
+        final int regen = Prefs.regen(this);
+        new Thread(() -> {
+            com.ex2tools.iv.drive.DriveController.get().setDrive(drive);
+            try {
+                Thread.sleep(450L);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            }
+            com.ex2tools.iv.drive.DriveController.get().setRegen(regen);
+        }, "drive-apply").start();
     }
 
     @Override

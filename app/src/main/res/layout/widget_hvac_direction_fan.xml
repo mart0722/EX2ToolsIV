@@ -1,299 +1,293 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout
-    android:id="@+id/widget_root" xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
+
     <TextView
         android:id="@+id/widget_bg_layer"
-        android:background="@drawable/widget_card_bg_100"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:text=""/>
+        android:background="@drawable/bg_wg_card_100" />
+
     <LinearLayout
-        android:orientation="vertical"
-        android:padding="14dp"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="14dp">
+
         <LinearLayout
-            android:orientation="horizontal"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1">
-            <LinearLayout
-                android:gravity="center"
-                android:orientation="vertical"
-                android:id="@+id/chip_vent_face"
-                android:background="@drawable/widget_chip_idle"
-                android:padding="2dp"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:layout_marginEnd="3dp">
-                <ImageView
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:src="@drawable/ic_climate_vent_face"
-                    android:tint="@color/cx_text_primary" />
-                <TextView
-                    android:textSize="11sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/cx_text_primary"
-                    android:id="@+id/txt_vent_face"
-                    android:visibility="gone"
-                    android:layout_width="wrap_content"
-                    android:layout_height="0dp"
-                    android:text="Лицо"/>
-            </LinearLayout>
-            <LinearLayout
-                android:gravity="center"
-                android:orientation="vertical"
-                android:id="@+id/chip_vent_floor"
-                android:background="@drawable/widget_chip_idle"
-                android:padding="2dp"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:layout_marginStart="3dp"
-                android:layout_marginEnd="3dp">
-                <ImageView
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:src="@drawable/ic_climate_vent_floor"
-                    android:tint="@color/cx_text_primary" />
-                <TextView
-                    android:textSize="11sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/cx_text_primary"
-                    android:id="@+id/txt_vent_floor"
-                    android:visibility="gone"
-                    android:layout_width="wrap_content"
-                    android:layout_height="0dp"
-                    android:text="Ноги"/>
-            </LinearLayout>
-            <LinearLayout
-                android:gravity="center"
-                android:orientation="vertical"
-                android:id="@+id/chip_vent_face_floor"
-                android:background="@drawable/widget_chip_idle"
-                android:padding="2dp"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:layout_marginStart="3dp"
-                android:layout_marginEnd="3dp">
-                <ImageView
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:src="@drawable/ic_climate_vent_face_floor"
-                    android:tint="@color/cx_text_primary" />
-                <TextView
-                    android:textSize="10sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/cx_text_primary"
-                    android:id="@+id/txt_vent_face_floor"
-                    android:visibility="gone"
-                    android:layout_width="wrap_content"
-                    android:layout_height="0dp"
-                    android:text="Лицо+Ноги"/>
-            </LinearLayout>
-            <LinearLayout
-                android:gravity="center"
-                android:orientation="vertical"
-                android:id="@+id/chip_vent_windshield"
-                android:background="@drawable/widget_chip_idle"
-                android:padding="2dp"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:layout_marginStart="3dp"
-                android:layout_marginEnd="3dp">
-                <ImageView
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:src="@drawable/ic_climate_vent_windshield"
-                    android:tint="@color/cx_text_primary" />
-                <TextView
-                    android:textSize="11sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/cx_text_primary"
-                    android:id="@+id/txt_vent_windshield"
-                    android:visibility="gone"
-                    android:layout_width="wrap_content"
-                    android:layout_height="0dp"
-                    android:text="Стекло"/>
-            </LinearLayout>
-            <LinearLayout
-                android:gravity="center"
-                android:orientation="vertical"
-                android:id="@+id/chip_vent_floor_windshield"
-                android:background="@drawable/widget_chip_idle"
-                android:padding="2dp"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:layout_marginStart="3dp"
-                android:layout_marginEnd="3dp">
-                <ImageView
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:src="@drawable/ic_climate_vent_floor_windshield"
-                    android:tint="@color/cx_text_primary" />
-                <TextView
-                    android:textSize="10sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/cx_text_primary"
-                    android:id="@+id/txt_vent_floor_windshield"
-                    android:visibility="gone"
-                    android:layout_width="wrap_content"
-                    android:layout_height="0dp"
-                    android:text="Ноги+Стекло"/>
-            </LinearLayout>
-            <LinearLayout
-                android:gravity="center"
-                android:orientation="vertical"
-                android:id="@+id/chip_recirc"
-                android:background="@drawable/widget_chip_idle"
-                android:padding="2dp"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:layout_marginStart="3dp">
-                <ImageView
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:src="@drawable/ic_climate_recirc"
-                    android:tint="@color/cx_text_primary" />
-                <TextView
-                    android:textSize="10sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/cx_text_primary"
-                    android:id="@+id/txt_recirc"
-                    android:visibility="gone"
-                    android:layout_width="wrap_content"
-                    android:layout_height="0dp"
-                    android:text="Рециркуляция"/>
-            </LinearLayout>
-        </LinearLayout>
-        <TextView
-            android:background="@color/widget_divider"
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="8dp"
-            android:text=""/>
-        <LinearLayout
+            android:layout_height="wrap_content"
             android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1">
+            android:orientation="horizontal">
+
+            <ImageView
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/wg_ic_vent"
+                android:tint="@color/wg_text" />
+
             <TextView
-                android:textSize="20sp"
-                android:textStyle="bold"
-                android:textColor="@color/cx_text_primary"
-                android:gravity="center"
-                android:id="@+id/btn_fan_minus"
-                android:background="@drawable/btn_circle"
-                android:layout_width="42dp"
-                android:layout_height="42dp"
-                android:text="−"/>
+                style="@style/WgTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:text="Обдув и вентилятор" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="96dp"
+            android:layout_marginTop="8dp"
+            android:baselineAligned="false"
+            android:orientation="horizontal">
+
             <LinearLayout
-                android:gravity="center"
-                android:orientation="vertical"
+                android:id="@+id/chip_vent_face"
+                style="@style/WgChip"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="4dp"
+                android:layout_weight="1">
+
+                <ImageView
+                    style="@style/WgIcon"
+                    android:src="@drawable/wg_ic_vent_face"
+                    android:tint="@color/wg_text" />
+
+                <TextView
+                    android:id="@+id/txt_vent_face"
+                    style="@style/WgChipLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Лицо" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/chip_vent_floor"
+                style="@style/WgChip"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="4dp"
+                android:layout_weight="1">
+
+                <ImageView
+                    style="@style/WgIcon"
+                    android:src="@drawable/wg_ic_vent_floor"
+                    android:tint="@color/wg_text" />
+
+                <TextView
+                    android:id="@+id/txt_vent_floor"
+                    style="@style/WgChipLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Ноги" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/chip_vent_face_floor"
+                style="@style/WgChip"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="4dp"
+                android:layout_weight="1">
+
+                <ImageView
+                    style="@style/WgIcon"
+                    android:src="@drawable/wg_ic_vent_face_floor"
+                    android:tint="@color/wg_text" />
+
+                <TextView
+                    android:id="@+id/txt_vent_face_floor"
+                    style="@style/WgChipLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Лицо+ноги" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/chip_vent_windshield"
+                style="@style/WgChip"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="4dp"
+                android:layout_weight="1">
+
+                <ImageView
+                    style="@style/WgIcon"
+                    android:src="@drawable/wg_ic_vent_windshield"
+                    android:tint="@color/wg_text" />
+
+                <TextView
+                    android:id="@+id/txt_vent_windshield"
+                    style="@style/WgChipLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Стекло" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/chip_vent_floor_windshield"
+                style="@style/WgChip"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="4dp"
+                android:layout_weight="1">
+
+                <ImageView
+                    style="@style/WgIcon"
+                    android:src="@drawable/wg_ic_vent_floor_windshield"
+                    android:tint="@color/wg_text" />
+
+                <TextView
+                    android:id="@+id/txt_vent_floor_windshield"
+                    style="@style/WgChipLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Ноги+стекло" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/chip_recirc"
+                style="@style/WgChip"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1">
+
                 <ImageView
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_marginBottom="2dp"
-                    android:src="@drawable/ic_climate_fan"
-                    android:tint="@color/cx_text_primary" />
-                <LinearLayout
-                    android:gravity="center"
-                    android:orientation="horizontal"
-                    android:id="@+id/chip_fan_ac"
-                    android:background="@drawable/widget_chip_ac_off"
-                    android:paddingTop="1dp"
-                    android:paddingBottom="1dp"
+                    style="@style/WgIcon"
+                    android:src="@drawable/wg_ic_recirc"
+                    android:tint="@color/wg_text" />
+
+                <TextView
+                    android:id="@+id/txt_recirc"
+                    style="@style/WgChipLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:paddingStart="12dp"
-                    android:paddingEnd="12dp">
-                    <TextView
-                        android:textSize="20sp"
-                        android:textStyle="bold"
-                        android:textColor="@color/cx_text_primary"
-                        android:id="@+id/tv_fan_value"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="—"/>
-                </LinearLayout>
-                <LinearLayout
-                    android:orientation="horizontal"
+                    android:text="Рецирк." />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="10dp"
+            android:layout_weight="1"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/btn_fan_minus"
+                style="@style/WgRoundButton"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:text="−" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tv_fan_value"
+                    style="@style/WgValue"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp">
+                    android:text="—"
+                    android:textSize="30sp" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:gravity="bottom"
+                    android:orientation="horizontal">
                     <TextView
                         android:id="@+id/dot_fan_1"
-                        android:background="@drawable/widget_dot_off"
-                        android:layout_width="6dp"
-                        android:layout_height="6dp"
-                        android:text=""
-                        android:layout_marginEnd="2dp"/>
+                        android:layout_width="10dp"
+                        android:layout_height="10dp"
+                        android:layout_marginEnd="4dp"
+                        android:background="@drawable/bg_wg_dot_off" />
                     <TextView
                         android:id="@+id/dot_fan_2"
-                        android:background="@drawable/widget_dot_off"
-                        android:layout_width="6dp"
-                        android:layout_height="6dp"
-                        android:text=""
-                        android:layout_marginEnd="2dp"/>
+                        android:layout_width="10dp"
+                        android:layout_height="10dp"
+                        android:layout_marginEnd="4dp"
+                        android:background="@drawable/bg_wg_dot_off" />
                     <TextView
                         android:id="@+id/dot_fan_3"
-                        android:background="@drawable/widget_dot_off"
-                        android:layout_width="6dp"
-                        android:layout_height="6dp"
-                        android:text=""
-                        android:layout_marginEnd="2dp"/>
+                        android:layout_width="10dp"
+                        android:layout_height="10dp"
+                        android:layout_marginEnd="4dp"
+                        android:background="@drawable/bg_wg_dot_off" />
                     <TextView
                         android:id="@+id/dot_fan_4"
-                        android:background="@drawable/widget_dot_off"
-                        android:layout_width="6dp"
-                        android:layout_height="6dp"
-                        android:text=""
-                        android:layout_marginEnd="2dp"/>
+                        android:layout_width="10dp"
+                        android:layout_height="10dp"
+                        android:layout_marginEnd="4dp"
+                        android:background="@drawable/bg_wg_dot_off" />
                     <TextView
                         android:id="@+id/dot_fan_5"
-                        android:background="@drawable/widget_dot_off"
-                        android:layout_width="6dp"
-                        android:layout_height="6dp"
-                        android:text=""
-                        android:layout_marginEnd="2dp"/>
+                        android:layout_width="10dp"
+                        android:layout_height="10dp"
+                        android:layout_marginEnd="4dp"
+                        android:background="@drawable/bg_wg_dot_off" />
                     <TextView
                         android:id="@+id/dot_fan_6"
-                        android:background="@drawable/widget_dot_off"
-                        android:layout_width="6dp"
-                        android:layout_height="6dp"
-                        android:text=""
-                        android:layout_marginEnd="2dp"/>
+                        android:layout_width="10dp"
+                        android:layout_height="10dp"
+                        android:layout_marginEnd="4dp"
+                        android:background="@drawable/bg_wg_dot_off" />
                     <TextView
                         android:id="@+id/dot_fan_7"
-                        android:background="@drawable/widget_dot_off"
-                        android:layout_width="6dp"
-                        android:layout_height="6dp"
-                        android:text=""/>
+                        android:layout_width="10dp"
+                        android:layout_height="10dp"
+                        android:background="@drawable/bg_wg_dot_off" />
                 </LinearLayout>
             </LinearLayout>
-            <TextView
-                android:textSize="20sp"
-                android:textStyle="bold"
-                android:textColor="@color/cx_text_primary"
+
+            <LinearLayout
+                android:id="@+id/chip_fan_ac"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="6dp"
+                android:background="@drawable/bg_wg_chip"
                 android:gravity="center"
+                android:orientation="horizontal"
+                android:paddingStart="10dp"
+                android:paddingTop="7dp"
+                android:paddingEnd="10dp"
+                android:paddingBottom="7dp">
+
+                <ImageView
+                    android:id="@+id/img_ac"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/wg_ic_ac"
+                    android:tint="@color/wg_text" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:text="AC"
+                    android:textColor="@color/wg_text"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <TextView
                 android:id="@+id/btn_fan_plus"
-                android:background="@drawable/btn_circle"
-                android:layout_width="42dp"
-                android:layout_height="42dp"
-                android:text="+"/>
+                style="@style/WgRoundButton"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:text="+" />
         </LinearLayout>
     </LinearLayout>
 </FrameLayout>

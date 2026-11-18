@@ -4,6 +4,7 @@ import android.content.Context;
 
 import com.ex2tools.iv.LogStore;
 import com.ex2tools.iv.Prefs;
+import com.ex2tools.iv.ReadOnly;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;

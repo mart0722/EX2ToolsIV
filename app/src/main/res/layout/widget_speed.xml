@@ -4,6 +4,12 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <TextView
+        android:id="@+id/widget_bg_layer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_wg_card_100" />
+
     <LinearLayout
         android:id="@+id/speed_digital"
         android:layout_width="match_parent"
@@ -17,8 +23,8 @@
             android:layout_height="wrap_content"
             android:includeFontPadding="false"
             android:text="--"
-            android:textColor="@color/flyme_white"
-            android:textSize="64sp"
+            android:textColor="@color/wg_text"
+            android:textSize="66sp"
             android:textStyle="bold" />
 
         <TextView
@@ -27,8 +33,8 @@
             android:layout_height="wrap_content"
             android:includeFontPadding="false"
             android:text="@string/unit_kmh"
-            android:textColor="#80FFFFFF"
-            android:textSize="18sp" />
+            android:textColor="@color/wg_text2"
+            android:textSize="16sp" />
     </LinearLayout>
 
     <ImageView
@@ -37,5 +43,14 @@
         android:layout_height="match_parent"
         android:contentDescription="@string/widget_name_speed"
         android:scaleType="fitCenter"
+        android:visibility="gone" />
+
+    <!-- Прозрачная зона внизу по центру: тап по пробегу открывает подтверждение сброса. -->
+    <View
+        android:id="@+id/speed_trip_tap"
+        android:layout_width="150dp"
+        android:layout_height="40dp"
+        android:layout_gravity="bottom|center_horizontal"
+        android:background="@android:color/transparent"
         android:visibility="gone" />
 </FrameLayout>

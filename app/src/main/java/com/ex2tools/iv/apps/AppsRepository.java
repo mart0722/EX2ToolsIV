@@ -14,6 +14,7 @@ import android.graphics.drawable.Drawable;
 
 import com.ex2tools.iv.Actions;
 import com.ex2tools.iv.LogStore;
+import com.ex2tools.iv.ReadOnly;
 
 import java.io.File;
 import java.io.FileInputStream;
