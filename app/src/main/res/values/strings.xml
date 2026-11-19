@@ -632,7 +632,7 @@
     <string name="confirm_yes">Подтвердить</string>
 
     <string name="voice_custom_commands">Мои команды</string>
-    <string name="voice_custom_commands_note">Свои фразы для запуска приложений</string>
+    <string name="voice_custom_commands_note">Свои фразы для приложений и подогревов</string>
     <string name="voice_custom_empty">Пока нет своих команд</string>
     <string name="voice_custom_add">Добавить</string>
     <string name="voice_available_commands">Доступные команды</string>
@@ -653,7 +653,7 @@
     <string name="voice_custom_phrase_short">Фраза слишком короткая</string>
     <string name="voice_custom_duplicate">Такая фраза уже есть</string>
     <string name="voice_custom_delete_title">Удалить команду?</string>
-    <string name="voice_custom_delete_message">«%1$s» больше не будет запускать %2$s.</string>
+    <string name="voice_custom_delete_message">Удалить фразу «%1$s» и её действия: %2$s?</string>
     <string name="voice_custom_app_missing">Приложение не найдено</string>
     <string name="voice_custom_saved">Сохранено</string>
     <string name="voice_custom_list_hint">Нажмите для изменения, удерживайте для удаления.</string>

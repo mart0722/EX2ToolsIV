@@ -35,15 +35,7 @@ public final class VoiceCommandsDialog {
                     "«Вентилятор 3» / «Выключи обдув»",
                     "«Кондиционер включи» / «выключи»",
                     "«Рециркуляция» / «Свежий воздух»",
-                    "«Обогрев лобового» / «заднего»",
                     "«Охлади салон» / «Прогрей салон»"},
-            {"Подогревы",
-                    "«Включи подогрев руля» / «Выключи подогрев руля»",
-                    "«Подогрев водительского сиденья на один / два / три»",
-                    "«Подогрев пассажирского сиденья на один / два / три»",
-                    "«Выключи подогрев водительского сиденья»",
-                    "«Выключи подогрев пассажирского сиденья»",
-                    "«Включи подогрев сидений» / «Выключи подогрев сидений»"},
             {"Движение",
                     "«Режим Эко» / «Комфорт» / «Спорт»",
                     "«Следующий режим»",
@@ -102,7 +94,7 @@ public final class VoiceCommandsDialog {
             addNote(c, list, c.getString(R.string.voice_available_commands_custom_note));
         } else {
             for (CustomVoiceCommands.Command command : custom) {
-                addCommand(c, list, "«" + command.phrase + "»");
+                if (command.enabled) addCommand(c, list, "«" + command.phrase + "» — " + command.description());
             }
         }
     }

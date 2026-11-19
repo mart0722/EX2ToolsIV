@@ -156,6 +156,14 @@ public final class VoiceService extends Service {
         }
     }
 
+    public static void commandsChanged(Context c) {
+        if (!Prefs.voiceEnabled(c) || !running) return;
+        try {
+            ContextCompat.startForegroundService(c, new Intent(c, VoiceService.class)
+                    .setAction("com.ex2tools.iv.voice.RELOAD_COMMANDS"));
+        } catch (Throwable t) { LogStore.add(c, "voice reload commands: " + t); }
+    }
+
     public static void sync(Context c) {
         if (!Prefs.voiceEnabled(c)) {
             stop(c);
@@ -190,6 +198,10 @@ public final class VoiceService extends Service {
         startForegroundSafe();
         maybeStartKeyserver();
         String action = intent == null ? null : intent.getAction();
+        if ("com.ex2tools.iv.voice.RELOAD_COMMANDS".equals(action)) {
+            restartRecognition.set(true);
+            return START_STICKY;
+        }
         if (ACTION_LISTEN.equals(action)) {
             if (ready) {
                 enterCommandMode(null);

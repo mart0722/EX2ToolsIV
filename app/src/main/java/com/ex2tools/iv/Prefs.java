@@ -696,6 +696,15 @@ public final class Prefs {
         get(c).edit().putBoolean("voice_overlay", value).apply();
     }
 
+    public static boolean voiceHeatingDefaultsAdded(Context c) {
+        return get(c).getBoolean("voice_heating_defaults_v1", false);
+    }
+
+    public static void setVoiceCommandsWithDefaults(Context c, String value) {
+        get(c).edit().putString("voice_custom_commands", value)
+                .putBoolean("voice_heating_defaults_v1", true).apply();
+    }
+
     public static String voiceCustomCommands(Context c) {
         return get(c).getString("voice_custom_commands", "[]");
     }
