@@ -157,17 +157,13 @@ final class OverlayWidgetViews {
             case WidgetsCommon.SIZE_VENT:
                 click(c, root, R.id.chip_vent_face, WidgetsCommon.VENT_FACE);
                 click(c, root, R.id.chip_vent_floor, WidgetsCommon.VENT_FLOOR);
-                click(c, root, R.id.chip_vent_face_floor, WidgetsCommon.VENT_FACE_FLOOR);
                 click(c, root, R.id.chip_vent_windshield, WidgetsCommon.VENT_WINDSHIELD);
-                click(c, root, R.id.chip_vent_floor_windshield, WidgetsCommon.VENT_FLOOR_WINDSHIELD);
                 click(c, root, R.id.chip_recirc, WidgetsCommon.RECIRC_TOGGLE);
                 break;
             case WidgetsCommon.SIZE_VENT_FAN:
                 click(c, root, R.id.chip_vent_face, WidgetsCommon.VENT_FACE);
                 click(c, root, R.id.chip_vent_floor, WidgetsCommon.VENT_FLOOR);
-                click(c, root, R.id.chip_vent_face_floor, WidgetsCommon.VENT_FACE_FLOOR);
                 click(c, root, R.id.chip_vent_windshield, WidgetsCommon.VENT_WINDSHIELD);
-                click(c, root, R.id.chip_vent_floor_windshield, WidgetsCommon.VENT_FLOOR_WINDSHIELD);
                 click(c, root, R.id.chip_recirc, WidgetsCommon.RECIRC_TOGGLE);
                 click(c, root, R.id.chip_fan_ac, WidgetsCommon.AC_TOGGLE);
                 click(c, root, R.id.tv_fan_value, WidgetsCommon.AC_TOGGLE);
@@ -357,15 +353,11 @@ final class OverlayWidgetViews {
         text(root, R.id.txt_vent_header, c.getString(R.string.wg_vent_header));
         text(root, R.id.txt_vent_face, c.getString(R.string.wg_vent_face));
         text(root, R.id.txt_vent_floor, c.getString(R.string.wg_vent_floor));
-        text(root, R.id.txt_vent_face_floor, c.getString(R.string.wg_vent_face_floor));
         text(root, R.id.txt_vent_windshield, c.getString(R.string.wg_vent_windshield));
-        text(root, R.id.txt_vent_floor_windshield, c.getString(R.string.wg_vent_floor_windshield));
         text(root, R.id.txt_recirc, c.getString(R.string.wg_recirc));
-        chip(c, root, R.id.chip_vent_face, R.id.txt_vent_face, mode == 1);
-        chip(c, root, R.id.chip_vent_floor, R.id.txt_vent_floor, mode == 2);
-        chip(c, root, R.id.chip_vent_face_floor, R.id.txt_vent_face_floor, mode == 3);
-        chip(c, root, R.id.chip_vent_windshield, R.id.txt_vent_windshield, mode == 4);
-        chip(c, root, R.id.chip_vent_floor_windshield, R.id.txt_vent_floor_windshield, mode == 6);
+        chip(c, root, R.id.chip_vent_face, R.id.txt_vent_face, (mode & 1) != 0);
+        chip(c, root, R.id.chip_vent_floor, R.id.txt_vent_floor, (mode & 2) != 0);
+        chip(c, root, R.id.chip_vent_windshield, R.id.txt_vent_windshield, (mode & 4) != 0);
         chip(c, root, R.id.chip_recirc, R.id.txt_recirc, Boolean.TRUE.equals(recirc));
     }
 
@@ -375,11 +367,9 @@ final class OverlayWidgetViews {
         Integer fan = WidgetsCommon.readFan();
         Boolean ac = WidgetsCommon.readAc();
         int mode = vent == null ? 1 : vent;
-        chip(c, root, R.id.chip_vent_face, R.id.txt_vent_face, mode == 1);
-        chip(c, root, R.id.chip_vent_floor, R.id.txt_vent_floor, mode == 2);
-        chip(c, root, R.id.chip_vent_face_floor, R.id.txt_vent_face_floor, mode == 3);
-        chip(c, root, R.id.chip_vent_windshield, R.id.txt_vent_windshield, mode == 4);
-        chip(c, root, R.id.chip_vent_floor_windshield, R.id.txt_vent_floor_windshield, mode == 6);
+        chip(c, root, R.id.chip_vent_face, R.id.txt_vent_face, (mode & 1) != 0);
+        chip(c, root, R.id.chip_vent_floor, R.id.txt_vent_floor, (mode & 2) != 0);
+        chip(c, root, R.id.chip_vent_windshield, R.id.txt_vent_windshield, (mode & 4) != 0);
         chip(c, root, R.id.chip_recirc, R.id.txt_recirc, Boolean.TRUE.equals(recirc));
         text(root, R.id.tv_fan_value, fan == null ? "—" : String.valueOf(fan));
         for (int i = 0; i < FAN_DOTS.length; i++) {

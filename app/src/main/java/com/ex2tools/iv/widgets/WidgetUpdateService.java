@@ -401,16 +401,16 @@ public final class WidgetUpdateService extends Service {
                 WidgetsCommon.stepTemp(this, -1f);
                 break;
             case WidgetsCommon.VENT_FACE:
-                WidgetsCommon.setVent(1);
+                WidgetsCommon.toggleVent(1);
                 break;
             case WidgetsCommon.VENT_FLOOR:
-                WidgetsCommon.setVent(2);
+                WidgetsCommon.toggleVent(2);
                 break;
             case WidgetsCommon.VENT_FACE_FLOOR:
                 WidgetsCommon.setVent(3);
                 break;
             case WidgetsCommon.VENT_WINDSHIELD:
-                WidgetsCommon.setVent(4);
+                WidgetsCommon.toggleVent(4);
                 break;
             case WidgetsCommon.VENT_FLOOR_WINDSHIELD:
                 WidgetsCommon.setVent(6);

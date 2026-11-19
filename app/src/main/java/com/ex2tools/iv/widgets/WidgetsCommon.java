@@ -344,6 +344,10 @@ public final class WidgetsCommon {
         ClimateController.get().stepVent(direction);
     }
 
+    public static void toggleVent(int direction) {
+        ClimateController.get().toggleVent(direction);
+    }
+
     public static void setVent(int value) {
         ClimateController.get().setVent(value);
     }

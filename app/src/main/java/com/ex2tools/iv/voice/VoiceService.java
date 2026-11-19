@@ -102,6 +102,8 @@ public final class VoiceService extends Service {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent == null || !ACTION_ECARX_KEY.equals(intent.getAction())) return;
+            if (Prefs.steeringClimate(VoiceService.this)
+                    && intent.getIntExtra(EXTRA_ECARX_TYPE, 0) == 0) return;
             if (!Prefs.voiceEnabled(VoiceService.this) || !Prefs.voiceMicKey(VoiceService.this)) return;
             int type = intent.getIntExtra(EXTRA_ECARX_TYPE, 0);
             if (type != 0 && type != 1) return;

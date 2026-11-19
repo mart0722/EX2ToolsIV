@@ -301,6 +301,14 @@
                         android:padding="@dimen/card_padding">
 
                         <com.ex2tools.iv.ui.FlymeSwitchRow
+                            android:id="@+id/widgetOverlayDocked"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/widgets_overlay_docked"
+                            android:textColor="@color/flyme_label_level1"
+                            android:textSize="22sp" />
+
+                        <com.ex2tools.iv.ui.FlymeSwitchRow
                             android:id="@+id/widgetOverlayLock"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
