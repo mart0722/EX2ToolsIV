@@ -18,6 +18,9 @@ final class SteeringClimate {
     private final Handler handler;
     private volatile long expiry;
     private final ExecutorService commands = Executors.newSingleThreadExecutor();
+    private Toast feedback;
+    private volatile long generation;
+    private long lastCommandAt;
     private long lastTap;
     private boolean waiting;
     private final Runnable single;
@@ -74,14 +77,22 @@ final class SteeringClimate {
         expiry = now + 15000;
         try {
             Settings.Global.putLong(context.getContentResolver(), "ex2_climate_expiry", expiry);
+            long session = generation;
             commands.execute(() -> {
-                if (expiry <= SystemClock.elapsedRealtime()) return;
+                // Respect the dispatcher's 120 ms per-property limit without rejecting fast taps.
+                long delay = 130L - (SystemClock.elapsedRealtime() - lastCommandAt);
+                if (delay > 0) {
+                    try { Thread.sleep(delay); }
+                    catch (InterruptedException interrupted) { Thread.currentThread().interrupt(); return; }
+                }
+                if (generation != session || expiry <= SystemClock.elapsedRealtime()) return;
+                lastCommandAt = SystemClock.elapsedRealtime();
                 try {
                     CommandDispatcher.Result result = key <= 2
-                            ? ClimateController.get().adjustTemp(key == 1 ? 1f : -1f)
-                            : ClimateController.get().adjustFan(key == 3 ? 1 : -1);
+                            ? ClimateController.get().adjustTempFromSteering(key == 1 ? 1f : -1f)
+                            : ClimateController.get().adjustFanFromSteering(key == 3 ? 1 : -1);
                     handler.post(() -> {
-                        if (expiry == 0) return;
+                        if (expiry == 0 || generation != session) return;
                         if (result == null || !result.ok()) {
                             show("Команда климата не выполнена");
                             leave(true);
@@ -105,8 +116,10 @@ final class SteeringClimate {
         handler.removeCallbacks(single);
         leave(false);
         commands.shutdownNow();
+        if (feedback != null) feedback.cancel();
     }
     private void leave(boolean notify) {
+        generation++;
         expiry = 0;
         handler.removeCallbacks(beat);
         try {
@@ -115,5 +128,9 @@ final class SteeringClimate {
         } catch (Throwable t) { LogStore.add(context, "steering climate reset: " + t); }
         if (notify) show("Обычное управление кнопками");
     }
-    private void show(String text) { Toast.makeText(context, text, Toast.LENGTH_SHORT).show(); }
+    private void show(String text) {
+        if (feedback != null) feedback.cancel();
+        feedback = Toast.makeText(context, text, Toast.LENGTH_SHORT);
+        feedback.show();
+    }
 }

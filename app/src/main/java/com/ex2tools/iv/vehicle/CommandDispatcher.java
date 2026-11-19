@@ -62,6 +62,11 @@ public final class CommandDispatcher {
     }
 
     public Result submit(Command command) {
+        return submit(command, true);
+    }
+
+    /** Send without polling read-back for interactive controls; state events confirm later. */
+    public Result submit(Command command, boolean awaitConfirmation) {
         if (command == null) {
             return new Result(Status.REJECTED, "empty command");
         }
@@ -107,6 +112,11 @@ public final class CommandDispatcher {
         if (!written) {
             log("rejected write: " + text);
             return new Result(Status.REJECTED, "write failed: " + text);
+        }
+
+        if (!awaitConfirmation) {
+            log("sent: " + text);
+            return new Result(Status.SENT, "sent: " + text);
         }
 
         Object readBack = null;

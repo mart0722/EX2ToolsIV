@@ -67,7 +67,7 @@ public final class MainActivity extends AppCompatActivity {
     private final Fragment[] fragments = new Fragment[10];
     private final Drawable[] heroDrawables = new Drawable[10];
     private static final String[] TAGS = {"overview", "settings", "status", "voice", "widgets",
-            "sounds", "apps", "service", "info", "steering"};
+            "sounds", "apps", "service", "steering", "info"};
 
     private static final int[] HERO_BG = {
             R.drawable.hero_overview, R.drawable.hero_settings, R.drawable.hero_status,
@@ -78,13 +78,13 @@ public final class MainActivity extends AppCompatActivity {
     private static final int[] ICONS = {
             R.drawable.ic_dashboard, R.drawable.ic_settings, R.drawable.ic_status,
             R.drawable.ic_voice, R.drawable.ic_widgets, R.drawable.ic_widget_volume,
-            R.drawable.ic_apps, R.drawable.ic_service, R.drawable.ic_info, R.drawable.ic_climate_wheel_heat
+            R.drawable.ic_apps, R.drawable.ic_service, R.drawable.ic_climate_wheel_heat, R.drawable.ic_info
     };
 
     private static final int[] TITLES = {
             R.string.overview_title, R.string.settings_title, R.string.status_bar_title,
             R.string.voice_title, R.string.widgets_title, R.string.sounds_title,
-            R.string.apps_page_title, R.string.service_title, R.string.info_title, R.string.steering_title
+            R.string.apps_page_title, R.string.service_title, R.string.steering_title, R.string.info_title
     };
 
     @Override
@@ -325,9 +325,9 @@ public final class MainActivity extends AppCompatActivity {
             case 7:
                 return new ServiceModeFragment();
             case 8:
-                return new InfoFragment();
-            case 9:
                 return new com.ex2tools.iv.ui.SteeringFragment();
+            case 9:
+                return new InfoFragment();
             case 0:
             default:
                 return new OverviewFragment();
