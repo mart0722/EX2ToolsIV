@@ -59,6 +59,10 @@ public final class ClimateController {
     // --- temperature ---
 
     public CommandDispatcher.Result setTemp(float value) {
+        return setTemp(value, true);
+    }
+
+    private CommandDispatcher.Result setTemp(float value, boolean awaitConfirmation) {
         int celsius = Math.max(17, Math.min(32, Math.round(value)));
         pendingTemp = celsius;
         pendingTempAt = android.os.SystemClock.elapsedRealtime();
@@ -68,13 +72,13 @@ public final class ClimateController {
         for (int area : TEMP_AREAS) {
             // Основной setpoint, который использует штатный климат.
             CommandDispatcher.Result set = dispatcher.submit(new CommandDispatcher.Command(
-                    CarProps.HVAC_TEMP_SET, area, PropertySpec.Type.INT, celsius));
+                    CarProps.HVAC_TEMP_SET, area, PropertySpec.Type.INT, celsius), awaitConfirmation);
             // И adjust — его показывает штатный слайдер.
             dispatcher.submit(new CommandDispatcher.Command(
-                    CarProps.HVAC_TEMP_ADJUST, area, PropertySpec.Type.INT, celsius));
+                    CarProps.HVAC_TEMP_ADJUST, area, PropertySpec.Type.INT, celsius), awaitConfirmation);
             last = set;
         }
-        logTempState("write " + celsius);
+        if (awaitConfirmation) logTempState("write " + celsius);
         return last;
     }
 
@@ -84,6 +88,33 @@ public final class ClimateController {
         float base = current == null ? 22f : Math.round(current);
         logTempState("base " + base);
         return setTemp(base + delta);
+    }
+
+    public synchronized CommandDispatcher.Result adjustTempFromSteering(float delta) {
+        Float current = pendingTemp();
+        if (current == null) current = readTargetTemp();
+        return setTemp((current == null ? 22f : Math.round(current)) + delta, false);
+    }
+
+    private Integer steeringFan;
+    private long steeringFanAt;
+
+    public synchronized CommandDispatcher.Result adjustFanFromSteering(int delta) {
+        long now = android.os.SystemClock.elapsedRealtime();
+        Integer current = steeringFan != null && now - steeringFanAt < 1000L
+                ? steeringFan : readIntAny(CarProps.HVAC_FAN_SPEED, CarProps.FAN_AREAS);
+        int target = Math.max(0, Math.min(7, (current == null ? 3 : current) + delta));
+        CommandDispatcher.Result result = null;
+        for (int area : state().areas(CarProps.HVAC_FAN_SPEED, CarProps.FAN_AREAS)) {
+            result = dispatcher.submit(new CommandDispatcher.Command(
+                    CarProps.HVAC_FAN_SPEED, area, PropertySpec.Type.INT, target), false);
+            if (result.ok()) break;
+        }
+        if (result != null && result.ok()) {
+            steeringFan = target;
+            steeringFanAt = android.os.SystemClock.elapsedRealtime();
+        } else steeringFan = null;
+        return result;
     }
 
     /**
