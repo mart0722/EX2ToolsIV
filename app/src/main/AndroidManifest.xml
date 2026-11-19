@@ -6,6 +6,7 @@
         android:minSdkVersion="28"
         android:targetSdkVersion="29" />
 
+    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
@@ -132,6 +133,8 @@
             android:name=".service.DriveRegenService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
+
+        <service android:name=".voice.SteeringKeysService" android:exported="false" />
 
         <service
             android:name=".voice.VoiceService"

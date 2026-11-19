@@ -140,13 +140,28 @@ public final class ClimateController {
 
     // --- vent ---
 
-    public CommandDispatcher.Result setVent(int value) {
+    public synchronized CommandDispatcher.Result toggleVent(int direction) {
+        Integer current = readIntAny(CarProps.HVAC_FAN_DIRECTION, CarProps.FAN_DIRECTION_AREAS);
+        long now = android.os.SystemClock.elapsedRealtime();
+        int base = pendingVent != null && now - pendingVentAt < 2000L
+                ? pendingVent : (current == null ? 0 : current);
+        return setVent(VentSelection.toggle(base, direction));
+    }
+
+    private Integer pendingVent;
+    private long pendingVentAt;
+
+    public synchronized CommandDispatcher.Result setVent(int value) {
         int mode = validVent(value) ? value : 1;
         CommandDispatcher.Result last = null;
         for (int area : VENT_AREAS) {
             last = dispatcher.submit(new CommandDispatcher.Command(
                     CarProps.HVAC_FAN_DIRECTION, area, PropertySpec.Type.INT, mode));
         }
+        if (last != null && last.ok()) {
+            pendingVent = mode;
+            pendingVentAt = android.os.SystemClock.elapsedRealtime();
+        } else pendingVent = null;
         return last;
     }
 

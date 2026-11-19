@@ -516,6 +516,22 @@ public final class Prefs {
         get(c).edit().putBoolean("overlay_" + key + "_pinned", value).apply();
     }
 
+    public static boolean overlayDocked(Context c) {
+        return get(c).getBoolean("overlay_docked", false);
+    }
+
+    public static void setOverlayDocked(Context c, boolean value) {
+        get(c).edit().putBoolean("overlay_docked", value).apply();
+    }
+
+    public static int overlayCorner(Context c, String key) {
+        return Math.max(0, Math.min(3, get(c).getInt("overlay_" + key + "_corner", 0)));
+    }
+
+    public static void setOverlayCorner(Context c, String key, int corner) {
+        get(c).edit().putInt("overlay_" + key + "_corner", corner).apply();
+    }
+
     public static int overlayX(Context c, String key, int fallback) {
         return get(c).getInt("overlay_" + key + "_x", fallback);
     }
@@ -654,6 +670,14 @@ public final class Prefs {
 
     public static void setVoiceWake(Context c, boolean value) {
         get(c).edit().putBoolean("voice_wake_enabled", value).apply();
+    }
+
+    public static boolean steeringClimate(Context c) {
+        return get(c).getBoolean("steering_climate", false);
+    }
+
+    public static void setSteeringClimate(Context c, boolean value) {
+        get(c).edit().putBoolean("steering_climate", value).apply();
     }
 
     public static boolean voiceMicKey(Context c) {

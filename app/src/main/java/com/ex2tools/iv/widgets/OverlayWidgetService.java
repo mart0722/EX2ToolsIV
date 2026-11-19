@@ -88,6 +88,7 @@ public final class OverlayWidgetService extends Service {
                     remove(spec);
                 }
             }
+            layoutDockedWidgets();
             if (!anyEnabled) {
                 stopSelf();
                 return;
@@ -271,6 +272,46 @@ public final class OverlayWidgetService extends Service {
         }
     }
 
+    // Keep each corner as a vertical stack. Tall stacks continue inward in a new column.
+    private void layoutDockedWidgets() {
+        if (!Prefs.overlayDocked(this)) return;
+        int width = getResources().getDisplayMetrics().widthPixels;
+        int height = getResources().getDisplayMetrics().heightPixels;
+        int gap = dp(8);
+        for (int corner = 0; corner < 4; corner++) {
+            boolean right = (corner & 1) != 0;
+            boolean bottom = (corner & 2) != 0;
+            int used = gap;
+            int inset = gap;
+            int columnWidth = 0;
+            for (OverlaySpec spec : specs) {
+                if (spec.view == null || spec.params == null) continue;
+                WindowManager.LayoutParams lp = spec.params;
+                if (Prefs.overlayCorner(this, spec.key) != corner) continue;
+                if (used > gap && used + lp.height > height - gap) {
+                    inset += columnWidth + gap;
+                    used = gap;
+                    columnWidth = 0;
+                }
+                int x = right ? width - inset - lp.width : inset;
+                int y = bottom ? height - used - lp.height : used;
+                x = Math.max(0, Math.min(width - lp.width, x));
+                y = Math.max(0, Math.min(height - lp.height, y));
+                if (lp.x != x || lp.y != y) {
+                    lp.x = x;
+                    lp.y = y;
+                    try {
+                        windowManager.updateViewLayout(spec.view, lp);
+                    } catch (Throwable t) {
+                        LogStore.add(this, "overlay dock " + spec.key + " failed: " + t);
+                    }
+                }
+                used += lp.height + gap;
+                columnWidth = Math.max(columnWidth, lp.width);
+            }
+        }
+    }
+
     private void update(OverlaySpec spec) {
         if (spec.view == null || spec.content == null) return;
         try {
@@ -334,9 +375,15 @@ public final class OverlayWidgetService extends Service {
                         return true;
                     case MotionEvent.ACTION_UP:
                     case MotionEvent.ACTION_CANCEL:
-                        if (moved) {
-                            Prefs.setOverlayPos(OverlayWidgetService.this,
-                                    spec.key, lp.x, lp.y);
+                        if (moved && Prefs.overlayDocked(OverlayWidgetService.this)) {
+                            int width = getResources().getDisplayMetrics().widthPixels;
+                            int height = getResources().getDisplayMetrics().heightPixels;
+                            int corner = (lp.x + lp.width / 2 >= width / 2 ? 1 : 0)
+                                    | (lp.y + lp.height / 2 >= height / 2 ? 2 : 0);
+                            Prefs.setOverlayCorner(OverlayWidgetService.this, spec.key, corner);
+                            layoutDockedWidgets();
+                        } else if (moved) {
+                            Prefs.setOverlayPos(OverlayWidgetService.this, spec.key, lp.x, lp.y);
                         } else if (WidgetsCommon.SIZE_SPEED.equals(spec.key)
                                 && event.getActionMasked() == MotionEvent.ACTION_UP
                                 && v.getHeight() > 0

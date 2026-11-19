@@ -28,6 +28,7 @@ public final class BootReceiver extends BroadcastReceiver {
             return;
         }
 
+        com.ex2tools.iv.voice.SteeringKeysService.sync(context);
         DriveRegenWatchService.sync(context);
         com.ex2tools.iv.lock.AutoLockService.sync(context);
         StatusIconService.sync(context);

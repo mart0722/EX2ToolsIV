@@ -130,21 +130,15 @@ public final class WidgetsRenderer {
         v.setTextViewText(R.id.txt_vent_header, c.getString(R.string.wg_vent_header));
         v.setTextViewText(R.id.txt_vent_face, c.getString(R.string.wg_vent_face));
         v.setTextViewText(R.id.txt_vent_floor, c.getString(R.string.wg_vent_floor));
-        v.setTextViewText(R.id.txt_vent_face_floor, c.getString(R.string.wg_vent_face_floor));
         v.setTextViewText(R.id.txt_vent_windshield, c.getString(R.string.wg_vent_windshield));
-        v.setTextViewText(R.id.txt_vent_floor_windshield, c.getString(R.string.wg_vent_floor_windshield));
         v.setTextViewText(R.id.txt_recirc, c.getString(R.string.wg_recirc));
-        chip(v, c, R.id.chip_vent_face, R.id.txt_vent_face, vent != null && vent == 1);
-        chip(v, c, R.id.chip_vent_floor, R.id.txt_vent_floor, vent != null && vent == 2);
-        chip(v, c, R.id.chip_vent_face_floor, R.id.txt_vent_face_floor, vent != null && vent == 3);
-        chip(v, c, R.id.chip_vent_windshield, R.id.txt_vent_windshield, vent != null && vent == 4);
-        chip(v, c, R.id.chip_vent_floor_windshield, R.id.txt_vent_floor_windshield, vent != null && vent == 6);
+        chip(v, c, R.id.chip_vent_face, R.id.txt_vent_face, vent != null && (vent & 1) != 0);
+        chip(v, c, R.id.chip_vent_floor, R.id.txt_vent_floor, vent != null && (vent & 2) != 0);
+        chip(v, c, R.id.chip_vent_windshield, R.id.txt_vent_windshield, vent != null && (vent & 4) != 0);
         chip(v, c, R.id.chip_recirc, R.id.txt_recirc, Boolean.TRUE.equals(recirc));
         click(v, c, R.id.chip_vent_face, WidgetsCommon.VENT_FACE);
         click(v, c, R.id.chip_vent_floor, WidgetsCommon.VENT_FLOOR);
-        click(v, c, R.id.chip_vent_face_floor, WidgetsCommon.VENT_FACE_FLOOR);
         click(v, c, R.id.chip_vent_windshield, WidgetsCommon.VENT_WINDSHIELD);
-        click(v, c, R.id.chip_vent_floor_windshield, WidgetsCommon.VENT_FLOOR_WINDSHIELD);
         click(v, c, R.id.chip_recirc, WidgetsCommon.RECIRC_TOGGLE);
         return v;
     }
@@ -171,11 +165,9 @@ public final class WidgetsRenderer {
         RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_hvac_direction_fan);
         bg(v, c);
         int mode = vent == null ? 1 : vent;
-        chip(v, c, R.id.chip_vent_face, R.id.txt_vent_face, mode == 1);
-        chip(v, c, R.id.chip_vent_floor, R.id.txt_vent_floor, mode == 2);
-        chip(v, c, R.id.chip_vent_face_floor, R.id.txt_vent_face_floor, mode == 3);
-        chip(v, c, R.id.chip_vent_windshield, R.id.txt_vent_windshield, mode == 4);
-        chip(v, c, R.id.chip_vent_floor_windshield, R.id.txt_vent_floor_windshield, mode == 6);
+        chip(v, c, R.id.chip_vent_face, R.id.txt_vent_face, (mode & 1) != 0);
+        chip(v, c, R.id.chip_vent_floor, R.id.txt_vent_floor, (mode & 2) != 0);
+        chip(v, c, R.id.chip_vent_windshield, R.id.txt_vent_windshield, (mode & 4) != 0);
         chip(v, c, R.id.chip_recirc, R.id.txt_recirc, Boolean.TRUE.equals(recirc));
         v.setTextViewText(R.id.tv_fan_value, fan == null ? "—" : String.valueOf(fan));
         for (int i = 0; i < FAN_DOTS.length; i++) {
@@ -190,9 +182,7 @@ public final class WidgetsRenderer {
         v.setTextColor(R.id.tv_fan_value, c.getColor(R.color.wg_text));
         click(v, c, R.id.chip_vent_face, WidgetsCommon.VENT_FACE);
         click(v, c, R.id.chip_vent_floor, WidgetsCommon.VENT_FLOOR);
-        click(v, c, R.id.chip_vent_face_floor, WidgetsCommon.VENT_FACE_FLOOR);
         click(v, c, R.id.chip_vent_windshield, WidgetsCommon.VENT_WINDSHIELD);
-        click(v, c, R.id.chip_vent_floor_windshield, WidgetsCommon.VENT_FLOOR_WINDSHIELD);
         click(v, c, R.id.chip_recirc, WidgetsCommon.RECIRC_TOGGLE);
         click(v, c, R.id.chip_fan_ac, WidgetsCommon.AC_TOGGLE);
         click(v, c, R.id.tv_fan_value, WidgetsCommon.AC_TOGGLE);

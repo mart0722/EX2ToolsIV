@@ -295,7 +295,7 @@
     <string name="widgets_overlay_alpha">Прозрачность overlay</string>
     <string name="widgets_overlay_settings_note">Размер и прозрачность overlay</string>
     <string name="widgets_overlay_note">Overlay-виджеты рисуются поверх текущего рабочего стола и скрываются при открытии приложений.</string>
-    <string name="widgets_overlay_hint">Перетаскивайте виджет за фон. Положение сохраняется отдельно для каждого виджета. Overlay-виджеты следуют теме приложения; у спидометра свои темы.</string>
+    <string name="widgets_overlay_hint">Перетаскивайте виджет за фон. При включённой «Привязке к углам» виджеты собираются в колонки у ближайшего угла; иначе положение сохраняется свободно. Overlay-виджеты следуют теме приложения; у спидометра свои темы.</string>
     <string name="widgets_overlay_pinned">Поверх приложений</string>
     <string name="widgets_overlay_pinned_note">Не скрывать при открытии других приложений</string>
     <string name="widgets_overlay_enabled">Включить</string>
@@ -770,4 +770,9 @@
 
     <!-- Виджеты: наши подписи -->
     <string name="wg_temp_short">Температура печки</string>
+    <string name="widgets_overlay_docked">Привязка к углам</string>
+    <string name="steering_title">Кнопки руля</string>
+    <string name="steering_climate">Управление климатом</string>
+    <string name="steering_climate_hint">Двойное нажатие голосовой кнопки переключает режим климата.</string>
+    <string name="steering_help">Громкость +/− — температура на 1 °C.\nСледующий / предыдущий трек — скорость вентилятора.\n\nПовторное двойное нажатие или 15 секунд без нажатий возвращают обычное управление.\n\nДля работы нужен патч штатного сервиса кнопок. Голосовое управление и доступ к микрофону для режима климата не требуются.</string>
 </resources>
