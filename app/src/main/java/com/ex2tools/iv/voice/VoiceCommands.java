@@ -51,6 +51,8 @@ public final class VoiceCommands {
     public static Result execute(Context c, String raw) {
         String text = VoiceText.normalize(raw);
         if (text.isEmpty()) return no("Не понял команду");
+        CustomVoiceCommands.Command configured = CustomVoiceCommands.matchExact(c, text);
+        if (configured != null) return openCustom(c, configured);
         List<String> clauses = VoiceText.splitClauses(text);
         if (clauses.size() <= 1) {
             String clause = clauses.isEmpty() ? text : clauses.get(0);
@@ -73,6 +75,9 @@ public final class VoiceCommands {
 
         CustomVoiceCommands.Command custom = CustomVoiceCommands.match(c, clause);
         if (custom != null) return openCustom(c, custom);
+        if (CustomVoiceCommands.isHeatingRequest(t)) {
+            return no("Команда подогрева не настроена в «Мои команды»");
+        }
 
         if (VoiceText.has(t, "который час", "сколько времени", "скажи время",
                 "текущее время", "время сейчас", "подскажи время")) {
@@ -95,8 +100,6 @@ public final class VoiceCommands {
         if (boost != null) return boost;
         Result close = closeApp(c, t);
         if (close != null) return close;
-        Result glass = glass(c, t);
-        if (glass != null) return glass;
         Result window = window(c, t);
         if (window != null) return window;
         Result trunk = trunk(t);
@@ -109,10 +112,6 @@ public final class VoiceCommands {
         if (fan != null) return fan;
         Result recirc = recirc(c, t);
         if (recirc != null) return recirc;
-        Result wheel = wheel(c, t);
-        if (wheel != null) return wheel;
-        Result seat = seat(c, t);
-        if (seat != null) return seat;
         Result ac = ac(c, t);
         if (ac != null) return ac;
         Result drive = drive(c, t);
@@ -278,27 +277,6 @@ public final class VoiceCommands {
             return home(c);
         }
         return null;
-    }
-
-    private static Result glass(Context c, String t) {
-        boolean heat = VoiceText.has(t, "подогрев", "обогрев", "нагрев", "греть", "грей", "размороз");
-        if (!heat) return null;
-        boolean front = VoiceText.has(t, "лобов", "ветров");
-        boolean rear = VoiceText.has(t, "задн", "зеркал");
-        if (!front && !rear) return null;
-        boolean on = !VoiceText.has(t, "выключи", "выключить", "отключи", "отключить",
-                "отруби", "стоп", "убери", "погаси");
-        StringBuilder reply = new StringBuilder();
-        if (front) {
-            WidgetsCommon.setWindshieldHeat(c, on);
-            reply.append(on ? "Подогрев лобового включён" : "Подогрев лобового выключен");
-        }
-        if (rear) {
-            WidgetsCommon.setRearDefrost(c, on);
-            if (reply.length() > 0) reply.append("; ");
-            reply.append(on ? "Подогрев заднего включён" : "Подогрев заднего выключен");
-        }
-        return ok(reply.toString());
     }
 
     private static Result window(Context c, String t) {
@@ -483,32 +461,6 @@ public final class VoiceCommands {
         return ok(on ? "Рециркуляция включена" : "Свежий воздух");
     }
 
-    private static Result wheel(Context c, String t) {
-        if (!VoiceText.has(t, "рул")) return null;
-        if (!VoiceText.has(t, "обогрев", "подогрев", "нагрев", "греть", "грей")) return null;
-        int level = level(t, 0) == 0 ? 0 : 1;
-        WidgetsCommon.setWheelHeatLevel(c, level);
-        return ok(level == 0 ? "Обогрев руля выключен" : "Обогрев руля включён");
-    }
-
-    private static Result seat(Context c, String t) {
-        if (!VoiceText.has(t, "обогрев", "подогрев", "нагрев", "греть", "грей")) return null;
-        boolean all = VoiceText.has(t, "сидений", "кресел", "сидушек", "все", "оба", "всех");
-        boolean passenger = VoiceText.has(t, "пассаж", "прав");
-        Integer current = WidgetsCommon.readSeatHeat(passenger ? 4 : 1);
-        int level = level(t, current == null ? 0 : current);
-        if (all) {
-            WidgetsCommon.setSeatHeat(c, 1, level);
-            WidgetsCommon.setSeatHeat(c, 4, level);
-            return ok(level == 0 ? "Подогрев сидений выключен" : "Подогрев сидений " + level);
-        }
-        int area = passenger ? 4 : 1;
-        WidgetsCommon.setSeatHeat(c, area, level);
-        return ok(level == 0
-                ? (passenger ? "Подогрев пассажирского выключен" : "Подогрев водительского выключен")
-                : (passenger ? "Подогрев пассажирского " : "Подогрев водительского ") + level);
-    }
-
     private static Result ac(Context c, String t) {
         if (!VoiceText.has(t, "кондиционер", "кондей", "климат")) return null;
         boolean on = !VoiceText.has(t, "выключи", "выключить", "отключи", "отключить",
@@ -609,6 +561,10 @@ public final class VoiceCommands {
     }
 
     private static Result openCustom(Context c, CustomVoiceCommands.Command command) {
+        if (command.isHeating()) {
+            HeatingVoiceExecutor.submit(c, command);
+            return ok("Выполняю: " + command.description());
+        }
         if (openPackage(c, command.packageName)) return ok("Открываю " + command.label);
         return no("Приложение не найдено");
     }
@@ -681,25 +637,6 @@ public final class VoiceCommands {
         } catch (Throwable ignored) {
         }
         return null;
-    }
-
-    private static int level(String t, int current) {
-        if (VoiceText.has(t, "выключи", "выключить", "отключи", "отключить", "отруби",
-                "стоп", "убери", "погаси")) {
-            return 0;
-        }
-        if (VoiceText.has(t, "максим")) return 3;
-        if (VoiceText.has(t, "минимум")) return 1;
-        if (VoiceText.has(t, "половин", "средн", "середин")) return 2;
-        Integer n = VoiceText.firstInt(t);
-        if (n != null) return n <= 0 ? 0 : clamp(n, 1, 3);
-        if (VoiceText.has(t, "увеличь", "увеличить", "больше", "сильнее")) {
-            return clamp(current + 1, 1, 3);
-        }
-        if (VoiceText.has(t, "уменьши", "уменьшить", "меньше", "слабее")) {
-            return clamp(current - 1, 1, 3);
-        }
-        return 1;
     }
 
     private static String ventName(int mode) {
