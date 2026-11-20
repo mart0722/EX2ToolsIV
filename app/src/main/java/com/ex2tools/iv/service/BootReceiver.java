@@ -29,6 +29,9 @@ public final class BootReceiver extends BroadcastReceiver {
         }
 
         DriveRegenWatchService.sync(context);
+        com.ex2tools.iv.service.CabinClimateService.sync(context);
+        ComfortRestoreService.startIfEnabled(context);
+        WindowFollowService.startIfEnabled(context);
         com.ex2tools.iv.lock.AutoLockService.sync(context);
         StatusIconService.sync(context);
         ScreenshotButtonService.sync(context);

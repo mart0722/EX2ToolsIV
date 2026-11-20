@@ -130,8 +130,12 @@ public final class StatusIconService extends Service {
     }
 
     public static void sync(Context c) {
-        if (Prefs.statusAny(c)) start(c);
-        else stop(c);
+        if (Prefs.statusAny(c)) {
+            start(c);
+        } else {
+            stop(c);
+            cancelNotifications(c);
+        }
     }
 
     public static void cancelNotifications(Context c) {

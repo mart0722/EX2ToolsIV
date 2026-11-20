@@ -788,6 +788,140 @@ public final class Prefs {
         return arr.toString();
     }
 
+    // --- климат-контроль и внешний датчик ---
+
+    /** Показывать тестовый климат-контроль в интерфейсе. По умолчанию скрыт. */
+    public static boolean climateUiVisible(Context c) {
+        return get(c).getBoolean("climate_ui_visible", false);
+    }
+
+    public static void setClimateUiVisible(Context c, boolean value) {
+        get(c).edit().putBoolean("climate_ui_visible", value).apply();
+    }
+
+    public static boolean climateEnabled(Context c) {
+        return get(c).getBoolean("climate_enabled", false);
+    }
+
+    public static void setClimateEnabled(Context c, boolean value) {
+        get(c).edit().putBoolean("climate_enabled", value).apply();
+    }
+
+    /** Желаемая температура салона для климат-контроля. */
+    public static float climateTarget(Context c) {
+        return get(c).getFloat("climate_target", 22f);
+    }
+
+    public static void setClimateTarget(Context c, float value) {
+        float v = Math.max(17f, Math.min(32f, value));
+        get(c).edit().putFloat("climate_target", v).apply();
+    }
+
+    /** Поправка уставки, которую контроллер выставил сам. */
+    public static float climateTrim(Context c) {
+        return get(c).getFloat("climate_trim", 0f);
+    }
+
+    public static void setClimateTrim(Context c, float value) {
+        get(c).edit().putFloat("climate_trim", value).apply();
+    }
+
+    public static long climateActionAt(Context c) {
+        return get(c).getLong("climate_action_at", 0L);
+    }
+
+    public static void setClimateActionAt(Context c, long value) {
+        get(c).edit().putLong("climate_action_at", value).apply();
+    }
+
+    /** Последняя уставка, которую выставил контроллер (для отлова ручной правки). */
+    public static float climateApplied(Context c) {
+        return get(c).getFloat("climate_applied", Float.NaN);
+    }
+
+    public static void setClimateApplied(Context c, float value) {
+        get(c).edit().putFloat("climate_applied", value).apply();
+    }
+
+    // --- сохранение обогревов ---
+
+    // --- окна следуют за дверью ---
+
+    public static boolean windowFollowDoor(Context c) {
+        return get(c).getBoolean("window_follow_door", false);
+    }
+
+    public static void setWindowFollowDoor(Context c, boolean value) {
+        get(c).edit().putBoolean("window_follow_door", value).apply();
+    }
+
+    public static boolean comfortRestore(Context c) {        return get(c).getBoolean("comfort_restore", false);
+    }
+
+    public static void setComfortRestore(Context c, boolean value) {
+        get(c).edit().putBoolean("comfort_restore", value).apply();
+    }
+
+    public static int savedWheelHeat(Context c) {
+        return get(c).getInt("saved_wheel_heat", 0);
+    }
+
+    public static void setSavedWheelHeat(Context c, int value) {
+        get(c).edit().putInt("saved_wheel_heat", Math.max(0, Math.min(3, value))).apply();
+    }
+
+    public static int savedSeatHeat(Context c, int area) {
+        String key = area == 4 ? "saved_seat_heat_4" : "saved_seat_heat_1";
+        return get(c).getInt(key, 0);
+    }
+
+    public static void setSavedSeatHeat(Context c, int area, int value) {
+        String key = area == 4 ? "saved_seat_heat_4" : "saved_seat_heat_1";
+        get(c).edit().putInt(key, Math.max(0, Math.min(3, value))).apply();
+    }
+
+    public static String sensorMac(Context c) {        String value = get(c).getString("sensor_mac", "");
+        return value == null ? "" : value;
+    }
+
+    public static void setSensorMac(Context c, String value) {
+        get(c).edit().putString("sensor_mac", value == null ? "" : value.trim()).apply();
+    }
+
+    public static String sensorKey(Context c) {
+        String value = get(c).getString("sensor_key", "");
+        return value == null ? "" : value;
+    }
+
+    public static void setSensorKey(Context c, String value) {
+        get(c).edit().putString("sensor_key", value == null ? "" : value.trim()).apply();
+    }
+
+    public static void setSensorReading(Context c, float temp, int humidity, int battery, long at) {
+        get(c).edit()
+                .putFloat("sensor_temp", temp)
+                .putInt("sensor_humidity", humidity)
+                .putInt("sensor_battery", battery)
+                .putLong("sensor_at", at)
+                .apply();
+    }
+
+    public static float sensorTemp(Context c) {
+        return get(c).getFloat("sensor_temp", Float.NaN);
+    }
+
+    public static int sensorHumidity(Context c) {
+        return get(c).getInt("sensor_humidity", -1);
+    }
+
+    public static int sensorBattery(Context c) {
+        return get(c).getInt("sensor_battery", -1);
+    }
+
+    public static long sensorAt(Context c) {
+        return get(c).getLong("sensor_at", 0L);
+    }
+
     public static String toJson(Object... pairs) {
         JSONObject o = new JSONObject();
         try {

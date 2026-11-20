@@ -397,6 +397,8 @@
     <string name="widget_clock_color_black">Чёрный</string>
     <string name="widget_name_clock">Часы</string>
     <string name="widget_clock_desc">Часы EX2ToolsIV</string>
+    <string name="widget_name_clock_date">Часы с датой</string>
+    <string name="widget_clock_date_desc">Часы и дата EX2ToolsIV</string>
     <string name="voice_title">Голос. управление</string>
     <string name="voice_enable">Голосовое управление</string>
     <string name="voice_enable_note">Фоновое распознавание команд</string>
@@ -770,4 +772,62 @@
 
     <!-- Виджеты: наши подписи -->
     <string name="wg_temp_short">Температура печки</string>
+    <string name="widgets_pin_over_apps">Поверх приложений</string>
+    <string name="comfort_notification_title">EX2ToolsIV: обогревы</string>
+    <string name="comfort_notification_text">Восстановление настроек обогрева</string>
+    <string name="window_follow_title">Окна следуют за дверью</string>
+    <string name="window_follow_note">При открытии двери на стоянке опускает стекло этой двери, при закрытии возвращает прежнее положение. На ходу не работает.</string>
+    <string name="window_follow_notification">Стекла сопровождают двери</string>
+    <string name="comfort_restore_title">Восстанавливать обогревы</string>
+    <string name="comfort_restore_note">После загрузки и пробуждения возвращать обогрев руля и сидений. Настройки запоминаются при изменении в виджетах.</string>
+
+    <!-- Климат-контроль -->
+    <string name="back">‹ Назад</string>
+    <string name="minus_sign">−</string>
+    <string name="plus_sign">+</string>
+    <string name="climate_title">Климат-контроль</string>
+    <string name="climate_note">Держать заданную температуру салона по внешнему BLE-датчику. Пока режим включён, кнопки температуры меняют желаемую температуру салона.</string>
+    <string name="climate_open">Настройки климат-контроля</string>
+    <string name="climate_notification_title">Климат-контроль</string>
+    <string name="climate_channel">Климат-контроль</string>
+    <string name="climate_on">Климат-контроль</string>
+    <string name="climate_on_note">Приложение смещает уставку штатного климата, пока температура салона не совпадёт с желаемой. Нужен включённый климат и внешний датчик.</string>
+    <string name="climate_off">Режим выключен</string>
+    <string name="climate_target_title">ТЕМПЕРАТУРА САЛОНА</string>
+    <string name="climate_target_note">Поправка уставки — не больше ±2 °C и не чаще одного шага в минуту. При выключении режима уставка вернётся к желаемой.</string>
+    <string name="climate_sensor_title">ДАТЧИК</string>
+    <string name="climate_find_sensor">Найти датчик</string>
+    <string name="climate_key">Ключ расшифровки</string>
+    <string name="climate_widget_title">ВИДЖЕТ</string>
+    <string name="climate_overlay">Оверлей «Климат-контроль»</string>
+    <string name="climate_overlay_note">Плавающий виджет на рабочем столе: температура салона, влажность и желаемая температура. Перетаскивается; размер и прозрачность — в разделе «Виджеты».</string>
+    <string name="climate_sensor_not_set">Датчик не выбран</string>
+    <string name="climate_sensor_status">Салон %1$.1f° · %2$d%% · батарея %3$d%%</string>
+    <string name="climate_sensor_status_short">Салон %1$.1f° · %2$d%%</string>
+    <string name="climate_sensor_age">обновлено %1$d с назад</string>
+    <string name="climate_sensor_waiting">Ожидание пакетов датчика…</string>
+    <string name="climate_scan_title">Датчики рядом</string>
+    <string name="climate_scan_empty">Ничего не найдено. Включите Bluetooth и повторите.</string>
+    <string name="climate_scan_hint">Сканирование… Выберите датчик из списка</string>
+    <string name="climate_key_title">Ключ расшифровки</string>
+    <string name="climate_key_hint">32 hex-символа</string>
+    <string name="climate_mac_hint">AA:BB:CC:DD:EE:FF</string>
+    <string name="climate_save">Сохранить</string>
+    <string name="climate_bad_key">Ключ должен содержать 32 hex-символа</string>
+    <string name="climate_bad_mac">Проверьте MAC-адрес</string>
+    <string name="climate_permission">Нужно разрешение на геолокацию: без него Android не отдаёт результаты BLE-сканирования.</string>
+    <string name="climate_no_data">--</string>
+    <string name="wg_climate_cabin">САЛОН</string>
+    <string name="wg_climate_target">ЦЕЛЬ</string>
+    <string name="wg_climate_auto">АВТО</string>
+    <string name="wg_climate_wait">ДАТЧИК</string>
+    <string name="wg_climate_off">ВЫКЛ</string>
+    <string name="climate_log_title">ЖУРНАЛ</string>
+    <string name="climate_log_export">Экспорт журнала</string>
+    <string name="climate_log_clear">Очистить</string>
+    <string name="climate_log_export_ok">Журнал: %1$s</string>
+    <string name="climate_log_empty">Журнал пуст</string>
+    <string name="climate_log_failed">Не удалось сохранить. Файл приложения: %1$s</string>
+    <string name="climate_log_cleared">Журнал очищен</string>
+    <string name="climate_log_size">Пакетов записано: %1$d, размер %2$d КБ</string>
 </resources>

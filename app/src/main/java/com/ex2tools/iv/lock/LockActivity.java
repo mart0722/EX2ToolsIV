@@ -1,6 +1,7 @@
 package com.ex2tools.iv.lock;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -60,6 +61,9 @@ public final class LockActivity extends Activity {
         super.onCreate(savedInstanceState);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        WindowManager.LayoutParams params = getWindow().getAttributes();
+        params.screenBrightness = 0.02f;
+        getWindow().setAttributes(params);
         getWindow().getDecorView().setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
                         | View.SYSTEM_UI_FLAG_FULLSCREEN
@@ -87,6 +91,12 @@ public final class LockActivity extends Activity {
                     @Override
                     public boolean onDoubleTap(MotionEvent e) {
                         if (SystemClock.elapsedRealtime() - openedAt > 500L) {
+                            try {
+                                startActivity(new Intent(Intent.ACTION_MAIN)
+                                        .addCategory(Intent.CATEGORY_HOME)
+                                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                            } catch (Throwable ignored) {
+                            }
                             finish();
                         }
                         return true;

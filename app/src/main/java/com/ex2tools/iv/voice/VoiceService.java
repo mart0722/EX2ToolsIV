@@ -14,6 +14,7 @@ import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
 import android.media.AudioFormat;
 import android.media.AudioManager;
+import android.media.ToneGenerator;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.media.audiofx.AutomaticGainControl;
@@ -74,6 +75,8 @@ public final class VoiceService extends Service {
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final AtomicInteger mode = new AtomicInteger(MODE_IDLE);
     private final AtomicBoolean listening = new AtomicBoolean(false);
+    private ToneGenerator tones;
+    private volatile long lastBeepAt;
     private final AtomicBoolean shouldRecord = new AtomicBoolean(false);
     private final AtomicBoolean restartRecognition = new AtomicBoolean(false);
     private final AtomicBoolean pendingCommand = new AtomicBoolean(false);
@@ -172,6 +175,10 @@ public final class VoiceService extends Service {
         super.onCreate();
         overlay = new VoiceOverlay(this);
         audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        try {
+            tones = new ToneGenerator(AudioManager.STREAM_MUSIC, 70);
+        } catch (Throwable ignored) {
+        }
         running = true;
         startForegroundSafe();
         registerKeyReceiver();
@@ -266,12 +273,23 @@ public final class VoiceService extends Service {
             overlay.setTitle(getString(R.string.voice_listening));
             overlay.setText(getString(R.string.voice_command_hint));
         }
+        beep(ToneGenerator.TONE_PROP_BEEP, 80);
         requestAudioFocus(true);
         resetTimeout();
         requestRecognizerRestartIfNeeded("command");
         ensureRecognitionRunning();
         if (initial != null && !initial.trim().isEmpty()) {
             handleCommandFinal(initial.trim());
+        }
+    }
+
+    private void beep(int tone, int durationMs) {
+        long now = System.currentTimeMillis();
+        if (now - lastBeepAt < 300L) return;
+        lastBeepAt = now;
+        try {
+            if (tones != null) tones.startTone(tone, durationMs);
+        } catch (Throwable ignored) {
         }
     }
 
@@ -832,6 +850,10 @@ public final class VoiceService extends Service {
         if (overlay != null) {
             overlay.destroy();
             overlay = null;
+        }
+        if (tones != null) {
+            try { tones.release(); } catch (Throwable ignored) {}
+            tones = null;
         }
         AudioRecord record = audioRecord;
         if (record != null) {

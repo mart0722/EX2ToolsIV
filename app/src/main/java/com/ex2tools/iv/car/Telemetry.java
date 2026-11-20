@@ -147,15 +147,10 @@ public final class Telemetry {
     }
 
     public static float hvacTarget(Context c) {
-        CarConnection cc = CarConnection.get();
-        if (!cc.ensure(c)) return Float.NaN;
-        float v = readValidFloat(cc, CarProps.HVAC_TEMP_ADJUST, CarProps.HVAC_AREAS, 5f, 40f);
-        if (!Float.isNaN(v)) return v;
-        v = readValidFloat(cc, CarProps.HVAC_TEMP_AOSP, CarProps.HVAC_AREAS, 5f, 40f);
-        if (!Float.isNaN(v)) return v;
-        v = readValidFloat(cc, CarProps.HVAC_TEMP_SET, CarProps.HVAC_AREAS, 5f, 40f);
-        if (!Float.isNaN(v)) return v;
-        return readValidFloat(cc, CarProps.HVAC_TEMP_SET_AOSP, CarProps.HVAC_AREAS, 5f, 40f);
+        com.ex2tools.iv.state.VehicleState state = com.ex2tools.iv.state.VehicleState.get();
+        if (!state.ensure(c)) return Float.NaN;
+        Float value = com.ex2tools.iv.climate.ClimateController.readTargetTemp(state);
+        return value == null ? Float.NaN : value;
     }
 
     public static float insideTemp(Context c) {

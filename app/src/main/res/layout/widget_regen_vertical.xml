@@ -45,7 +45,7 @@
                 android:text="Средняя"
                 android:textColor="@color/wg_text"
                 android:textSize="17sp"
-                android:textStyle="bold" />
+                android:fontFamily="sans-serif-medium" />
 
             <TextView
                 android:id="@+id/tv_regen_level_footer"

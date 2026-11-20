@@ -16,7 +16,7 @@ import java.util.Locale;
 public final class RangeModel {
 
     private static final String PREFS = "range_model";
-    private static final long MIN_INTERVAL_MS = 30_000L;
+    private static final long MIN_INTERVAL_MS = 10_000L;
     private static final float MIN_LEARN_KM = 20f;
     private static final float WINDOW_KM = 200f;
 
@@ -46,7 +46,7 @@ public final class RangeModel {
                     && now - lastMs >= MIN_INTERVAL_MS) {
                 float dSoc = lastSoc - soc;          // > 0 — расход
                 float dKm = odo - lastOdo;
-                if (dSoc > 0.05f && dKm > 0.2f && dKm < 50f) {
+                if (dSoc > 0.005f && dKm > 0.02f && dKm < 50f) {
                     kmSum += dKm;
                     kwhSum += dSoc * CarProps.CAPACITY_KWH / 100f;
                     if (kmSum > WINDOW_KM) {

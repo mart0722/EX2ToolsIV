@@ -62,6 +62,14 @@ public final class CommandDispatcher {
     }
 
     public Result submit(Command command) {
+        return submit(command, true);
+    }
+
+    /**
+     * @param awaitConfirmation false — не ждать read-back (интерактивные кнопки):
+     *                          состояние подтвердится событием VHAL.
+     */
+    public Result submit(Command command, boolean awaitConfirmation) {
         if (command == null) {
             return new Result(Status.REJECTED, "empty command");
         }
@@ -84,7 +92,7 @@ public final class CommandDispatcher {
         long now = SystemClock.elapsedRealtime();
         String key = command.id + ":" + command.area;
         Long last = lastWrite.get(key);
-        if (last != null && now - last < 120L) {
+        if (last != null && now - last < 40L) {
             return new Result(Status.REJECTED, "rate limit: " + text);
         }
         lastWrite.put(key, now);
@@ -109,11 +117,16 @@ public final class CommandDispatcher {
             return new Result(Status.REJECTED, "write failed: " + text);
         }
 
+        if (!awaitConfirmation) {
+            log("sent: " + text);
+            return new Result(Status.SENT, "sent: " + text);
+        }
+
         Object readBack = null;
-        for (int attempt = 0; attempt < 5; attempt++) {
+        for (int attempt = 0; attempt < 3; attempt++) {
             if (attempt > 0) {
                 try {
-                    Thread.sleep(250L);
+                    Thread.sleep(60L);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     break;

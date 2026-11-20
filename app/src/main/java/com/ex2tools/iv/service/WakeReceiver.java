@@ -21,6 +21,8 @@ public final class WakeReceiver extends BroadcastReceiver {
         lastWake = now;
 
         DriveRegenWatchService.sync(context);
+        ComfortRestoreService.startIfEnabled(context);
+        WindowFollowService.startIfEnabled(context);
         if (Prefs.statusAny(context)) StatusIconService.refresh(context);
         WidgetUpdateService.sync(context);
         ScreenshotButtonService.sync(context);

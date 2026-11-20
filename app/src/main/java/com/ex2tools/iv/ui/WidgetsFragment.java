@@ -36,6 +36,7 @@ import java.util.Map;
 public final class WidgetsFragment extends Fragment {
 
     private static final String[] OVERLAY_KEYS = {
+            WidgetsCommon.SIZE_CLOCK,
             WidgetsCommon.SIZE_DRIVE_REGEN,
             WidgetsCommon.SIZE_DRIVE_MODE,
             WidgetsCommon.SIZE_REGEN,
@@ -46,10 +47,12 @@ public final class WidgetsFragment extends Fragment {
             WidgetsCommon.SIZE_HEATING,
             WidgetsCommon.SIZE_BATTERY_RANGE,
             WidgetsCommon.SIZE_LOCK,
-            WidgetsCommon.SIZE_APPS
+            WidgetsCommon.SIZE_APPS,
+            WidgetsCommon.SIZE_CLIMATE
     };
 
     private static final int[] OVERLAY_LABELS = {
+            R.string.widgets_size_clock,
             R.string.widgets_size_drive_regen,
             R.string.widgets_size_drive_mode,
             R.string.widgets_size_regen,
@@ -60,7 +63,8 @@ public final class WidgetsFragment extends Fragment {
             R.string.widgets_size_heating,
             R.string.widgets_size_battery_range,
             R.string.widgets_size_lock,
-            R.string.widgets_size_apps
+            R.string.widgets_size_apps,
+            R.string.climate_title
     };
 
     private SeekBar opacity;
@@ -349,6 +353,9 @@ public final class WidgetsFragment extends Fragment {
         LayoutInflater inflater = LayoutInflater.from(c);
         for (int i = 0; i < OVERLAY_KEYS.length; i++) {
             final String key = OVERLAY_KEYS[i];
+            if (WidgetsCommon.SIZE_CLIMATE.equals(key) && !Prefs.climateEnabled(c)) {
+                continue;
+            }
             boolean apps = WidgetsCommon.SIZE_APPS.equals(key);
             View card = inflater.inflate(apps
                     ? R.layout.item_overlay_apps
@@ -376,6 +383,17 @@ public final class WidgetsFragment extends Fragment {
                     b.post(this::openAppsPicker);
                 }
             });
+
+            FlymeSwitchRow pin = card.findViewById(R.id.overlayPinned);
+            if (pin != null) {
+                pin.setText(getString(R.string.widgets_pin_over_apps));
+                pin.setChecked(Prefs.overlayPinned(c, key));
+                pin.setOnCheckedChangeListener((b, checked) -> {
+                    if (binding) return;
+                    Prefs.setOverlayPinned(requireContext(), key, checked);
+                    OverlayWidgetService.restart(requireContext());
+                });
+            }
 
             if (apps) {
                 appsModeGroup = card.findViewById(R.id.appsModeGroup);
@@ -652,6 +670,7 @@ public final class WidgetsFragment extends Fragment {
     public void onResume() {
         super.onResume();
         WidgetModes.refreshAuto(requireContext());
+        buildOverlayRows(requireContext());
         OverlayWidgetService.sync(requireContext());
         updateAll();
         requireView().postDelayed(() -> {

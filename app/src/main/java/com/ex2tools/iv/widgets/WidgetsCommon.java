@@ -62,6 +62,35 @@ public final class WidgetsCommon {
     public static final String SIZE_BATTERY_RANGE = "battery_range";
     public static final String SIZE_LOCK = "lock";
     public static final String SIZE_APPS = "apps";
+    public static final String SIZE_CLIMATE = "climate";
+
+    public static final String CLIMATE_TARGET_MINUS = "com.ex2tools.iv.widget.CLIMATE_TARGET_MINUS";
+    public static final String CLIMATE_TARGET_PLUS = "com.ex2tools.iv.widget.CLIMATE_TARGET_PLUS";
+    public static final String CLIMATE_TOGGLE = "com.ex2tools.iv.widget.CLIMATE_TOGGLE";
+
+    /**
+     * Оптимистичные значения после нажатия: UI показывает их сразу, не дожидаясь
+     * подтверждения VHAL. Живут 12 секунд или до совпадения с реальным значением.
+     */
+    private static final long PENDING_MS = 12_000L;
+    private static volatile Integer pendingFan;
+    private static volatile long pendingFanAt;
+    private static volatile Integer pendingVent;
+    private static volatile long pendingVentAt;
+    private static volatile Boolean pendingAc;
+    private static volatile long pendingAcAt;
+    private static volatile Boolean pendingRecirc;
+    private static volatile long pendingRecircAt;
+    private static volatile Integer pendingSeatDriver;
+    private static volatile long pendingSeatDriverAt;
+    private static volatile Integer pendingSeatPassenger;
+    private static volatile long pendingSeatPassengerAt;
+    private static volatile Boolean pendingWheel;
+    private static volatile long pendingWheelAt;
+
+    private static boolean fresh(long at) {
+        return at > 0 && android.os.SystemClock.elapsedRealtime() - at < PENDING_MS;
+    }
 
     private static final int[] DRIVE_ORDER = {CarProps.DRIVE_ECO, CarProps.DRIVE_COMFORT, CarProps.DRIVE_SPORT};
     private static final int[] REGEN_ORDER = {CarProps.REGEN_WEAK, CarProps.REGEN_MEDIUM, CarProps.REGEN_STRONG};
@@ -77,19 +106,17 @@ public final class WidgetsCommon {
     }
 
     public static Integer readFan() {
+        Integer pending = pendingFan;
+        if (pending != null && fresh(pendingFanAt)) return pending;
         return readIntAny(CarProps.HVAC_FAN_SPEED, CarProps.FAN_AREAS);
     }
 
     public static Float readTemp(Context c) {
+        if (Prefs.climateEnabled(c)) return Prefs.climateTarget(c);
         Float pending = ClimateController.pendingTemp();
         if (pending != null) return pending;
-        VehicleState state = state(c);
-        int[] areas = state.areas(CarProps.HVAC_TEMP_SET, CarProps.HVAC_AREAS);
-        Float value = validTemp(state.floatAny(CarProps.HVAC_TEMP_SET, areas));
-        if (value == null) value = validTemp(state.floatAny(CarProps.HVAC_TEMP_SET_AOSP, areas));
-        if (value == null) value = validTemp(state.floatAny(CarProps.HVAC_TEMP_ADJUST, areas));
-        if (value == null) value = validTemp(state.floatAny(CarProps.HVAC_TEMP_AOSP, areas));
-        return adjustTempDisplay(c, value);
+        // Единый источник уставки: AOSP-канал, затем ADJUST/SET как фолбэки.
+        return adjustTempDisplay(c, ClimateController.readTargetTemp(state(c)));
     }
 
     /**
@@ -123,18 +150,30 @@ public final class WidgetsCommon {
     }
 
     public static Integer readVent() {
+        Integer pending = pendingVent;
+        if (pending != null && fresh(pendingVentAt)) return pending;
         return readIntAny(CarProps.HVAC_FAN_DIRECTION, CarProps.FAN_DIRECTION_AREAS);
     }
 
     public static Boolean readAc() {
+        Boolean pending = pendingAc;
+        if (pending != null && fresh(pendingAcAt)) return pending;
         Boolean b = readBoolAny(CarProps.HVAC_AC_ON, CarProps.AC_AREAS);
         if (b != null) return b;
         Integer i = readIntAny(CarProps.HVAC_AC_ON, CarProps.AC_AREAS);
-        return i == null ? null : i != 0;
+        if (i != null) return i != 0;
+        Boolean aosp = readBoolAny(CarProps.HVAC_AC_ON_AOSP, new int[]{117});
+        if (aosp != null) return aosp;
+        Integer power = readIntAny(CarProps.AC_POWER, new int[]{0});
+        return power == null ? null : power != 0;
     }
 
     public static Boolean readRecirc() {
-        return readBoolAny(CarProps.HVAC_RECIRC_ON, CarProps.AC_AREAS);
+        Boolean pending = pendingRecirc;
+        if (pending != null && fresh(pendingRecircAt)) return pending;
+        Integer i = readIntAny(CarProps.HVAC_RECIRC_ON, new int[]{0});
+        if (i != null) return i != 0;
+        return readBoolAny(CarProps.HVAC_RECIRC_ON_AOSP, new int[]{117});
     }
 
     public static Boolean readRearDefrost() {
@@ -150,22 +189,24 @@ public final class WidgetsCommon {
     }
 
     public static Boolean readWheelHeat() {
+        Boolean pending = pendingWheel;
+        if (pending != null && fresh(pendingWheelAt)) return pending;
         Integer v = readIntAny(CarProps.STEERING_WHEEL_HEAT, CarProps.WHEEL_HEAT_AREAS);
         return v == null ? null : v != 0;
     }
 
     public static Integer readWheelHeatLevel() {
-        return readIntAny(CarProps.STEERING_WHEEL_HEAT, CarProps.WHEEL_HEAT_AREAS);
+        Integer v = readIntAny(CarProps.STEERING_WHEEL_HEAT, CarProps.WHEEL_HEAT_AREAS);
+        return v;
     }
 
     public static Integer readSeatHeat(int area) {
-        // Важно: читаем именно эту зону. Общий readIntAny перебирает все зоны
-        // свойства и возвращал уровень водителя для пассажирского сиденья.
-        VehicleState state = state(null);
-        Integer cached = state.intValue(CarProps.SEAT_HEAT, area);
-        if (cached != null) return cached;
+        Integer pending = area == 4 ? pendingSeatPassenger : pendingSeatDriver;
+        long pendingAt = area == 4 ? pendingSeatPassengerAt : pendingSeatDriverAt;
+        if (pending != null && fresh(pendingAt)) return pending;
         int raw = VhalGateway.get().readInt(CarProps.SEAT_HEAT, area);
-        return raw == Integer.MIN_VALUE ? null : raw;
+        if (raw != Integer.MIN_VALUE) return raw;
+        return state(null).intValue(CarProps.SEAT_HEAT, area);
     }
 
     public static Integer readDrive() {
@@ -287,31 +328,67 @@ public final class WidgetsCommon {
     }
 
     public static void adjustFan(int delta) {
-        ClimateController.get().adjustFan(delta);
+        Integer current = readFan();
+        int base = current == null ? 3 : current;
+        setFan(base + delta);
     }
 
     public static void stepTemp(Context c, float direction) {
+        if (Prefs.climateEnabled(c)) {
+            stepClimateTarget(c, direction);
+            return;
+        }
         ClimateController.get().adjustTemp(direction);
     }
 
     public static void setFan(int level) {
-        ClimateController.get().setFan(level);
+        int value = Math.max(0, Math.min(7, level));
+        pendingFan = value;
+        pendingFanAt = android.os.SystemClock.elapsedRealtime();
+        ClimateController.get().setFan(value);
     }
 
     public static void setTemp(Context c, float value) {
+        if (Prefs.climateEnabled(c)) {
+            setClimateTarget(c, value);
+            return;
+        }
         ClimateController.get().setTemp(value);
     }
 
+    // --- климат-контроль ---
+
+    public static void setClimateTarget(Context c, float value) {
+        float target = Math.max(17f, Math.min(32f, value));
+        if (Math.abs(target - Prefs.climateTarget(c)) < 0.05f) return;
+        Prefs.setClimateTarget(c, target);
+        if (Prefs.climateEnabled(c)) {
+            com.ex2tools.iv.climate.Thermostat.onUserTarget(c, target);
+        }
+    }
+
+    public static void stepClimateTarget(Context c, float direction) {
+        setClimateTarget(c, Prefs.climateTarget(c) + direction);
+    }
+
+    public static void toggleClimate(Context c) {
+        boolean enabled = !Prefs.climateEnabled(c);
+        Prefs.setClimateEnabled(c, enabled);
+        if (enabled) {
+            com.ex2tools.iv.climate.Thermostat.applyTargetNow(c);
+        } else {
+            com.ex2tools.iv.climate.Thermostat.restore(c);
+        }
+        com.ex2tools.iv.service.CabinClimateService.sync(c);
+        LogStore.add(c, "climate: " + (enabled ? "on" : "off"));
+    }
+
     public static void adjustTemp(Context c, float delta) {
+        if (Prefs.climateEnabled(c)) {
+            stepClimateTarget(c, delta);
+            return;
+        }
         ClimateController.get().adjustTemp(delta);
-    }
-
-    public static void setAc(Context c, boolean value) {
-        ClimateController.get().setAc(value);
-    }
-
-    public static void setRecirc(Context c, boolean value) {
-        ClimateController.get().setRecirc(value);
     }
 
     public static void setRearDefrost(Context c, boolean value) {
@@ -323,10 +400,15 @@ public final class WidgetsCommon {
     }
 
     public static void setWheelHeat(Context c, boolean value) {
+        pendingWheel = value;
+        pendingWheelAt = android.os.SystemClock.elapsedRealtime();
         ClimateController.get().setWheelHeat(value);
     }
 
     public static void setWheelHeatLevel(Context c, int level) {
+        pendingWheel = level > 0;
+        pendingWheelAt = android.os.SystemClock.elapsedRealtime();
+        Prefs.setSavedWheelHeat(c, level);
         ClimateController.get().setWheelHeatLevel(level);
     }
 
@@ -337,23 +419,54 @@ public final class WidgetsCommon {
     }
 
     public static void setSeatHeat(Context c, int area, int level) {
-        ClimateController.get().setSeatHeat(area, level);
+        int value = Math.max(0, Math.min(3, level));
+        if (area == 4) {
+            pendingSeatPassenger = value;
+            pendingSeatPassengerAt = android.os.SystemClock.elapsedRealtime();
+        } else {
+            pendingSeatDriver = value;
+            pendingSeatDriverAt = android.os.SystemClock.elapsedRealtime();
+        }
+        Prefs.setSavedSeatHeat(c, area, value);
+        ClimateController.get().setSeatHeat(area, value);
     }
 
     public static void stepVent(int direction) {
-        ClimateController.get().stepVent(direction);
+        Integer current = readVent();
+        int base = current == null ? 1 : current;
+        int[] order = {1, 2, 3, 4, 6};
+        int index = 0;
+        for (int i = 0; i < order.length; i++) {
+            if (order[i] == base) { index = i; break; }
+        }
+        int next = order[Math.max(0, Math.min(order.length - 1, index + direction))];
+        setVent(next);
     }
 
     public static void setVent(int value) {
+        pendingVent = value;
+        pendingVentAt = android.os.SystemClock.elapsedRealtime();
         ClimateController.get().setVent(value);
     }
 
+    public static void setAc(Context c, boolean value) {
+        pendingAc = value;
+        pendingAcAt = android.os.SystemClock.elapsedRealtime();
+        ClimateController.get().setAc(value);
+    }
+
     public static void toggleAc(Context c) {
-        ClimateController.get().toggleAc();
+        setAc(c, !Boolean.TRUE.equals(readAc()));
+    }
+
+    public static void setRecirc(Context c, boolean value) {
+        pendingRecirc = value;
+        pendingRecircAt = android.os.SystemClock.elapsedRealtime();
+        ClimateController.get().setRecirc(value);
     }
 
     public static void toggleRecirc(Context c) {
-        ClimateController.get().toggleRecirc();
+        setRecirc(c, !Boolean.TRUE.equals(readRecirc()));
     }
 
     public static void toggleRearDefrost(Context c) {
@@ -422,7 +535,9 @@ public final class WidgetsCommon {
     }
 
     public static void cycleSeat(Context c, int area) {
-        ClimateController.get().cycleSeat(area);
+        Integer current = readSeatHeat(area);
+        int value = current == null ? 0 : Math.max(0, Math.min(3, current));
+        setSeatHeat(c, area, (value + 1) % 4);
     }
 
     public static int ventLabel(int mode) {

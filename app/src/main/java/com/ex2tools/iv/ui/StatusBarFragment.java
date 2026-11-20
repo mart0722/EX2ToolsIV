@@ -120,8 +120,12 @@ public final class StatusBarFragment extends Fragment {
             Context c = requireContext();
             LogStore.add(c, "status toggle " + orderKey + "=" + checked);
             Prefs.setStatus(c, prefKey, checked);
-            if (Prefs.statusAny(c)) StatusIconService.refresh(c);
-            else StatusIconService.sync(c);
+            if (Prefs.statusAny(c)) {
+                StatusIconService.refresh(c);
+            } else {
+                StatusIconService.sync(c);
+            }
+            if (!checked) StatusIconService.cancelNotifications(c);
         });
     }
 

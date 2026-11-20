@@ -35,6 +35,10 @@
     <uses-permission android:name="android.permission.DELETE_PACKAGES" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <uses-permission android:name="android.car.permission.CAR_POWERTRAIN" />
     <uses-permission android:name="android.car.permission.CAR_ENERGY" />
@@ -84,6 +88,7 @@
             android:screenOrientation="landscape"
             android:theme="@style/Theme.EX2ToolsIV.Transparent" />
 
+
         <activity
             android:name=".apps.InstallResultActivity"
             android:excludeFromRecents="true"
@@ -130,6 +135,21 @@
 
         <service
             android:name=".service.DriveRegenService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
+        <service
+            android:name=".service.CabinClimateService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
+        <service
+            android:name=".service.ComfortRestoreService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
+        <service
+            android:name=".service.WindowFollowService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
 
@@ -254,6 +274,13 @@
             </intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_info_clock" />
         </receiver>
+        <receiver android:name=".widgets.ClockDateWidgetProvider" android:exported="true" android:label="@string/widget_name_clock_date">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_info_clock_date" />
+        </receiver>
+
         <receiver android:name=".widgets.SpeedWidgetProvider" android:exported="true" android:label="@string/widget_name_speed">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
