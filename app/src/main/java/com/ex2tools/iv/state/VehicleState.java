@@ -8,6 +8,7 @@ import android.os.Looper;
 import android.os.SystemClock;
 
 import com.ex2tools.iv.LogStore;
+import com.ex2tools.iv.car.CarProps;
 import com.ex2tools.iv.vehicle.CapabilityRegistry;
 import com.ex2tools.iv.vehicle.VhalGateway;
 
@@ -68,11 +69,13 @@ public final class VehicleState {
                 @Override
                 public void onChangeEvent(CarPropertyValue value) {
                     if (value == null) return;
-                    Object raw = value.getValue();
+                    int id = value.getPropertyId();
+                    Object raw = id == CarProps.HVAC_TEMP_AOSP
+                            ? climateSetpoint(value) : value.getValue();
                     if (raw == null) return;
                     long ts = value.getTimestamp() / 1_000_000L;
                     if (ts <= 0L) ts = SystemClock.elapsedRealtime();
-                    put(value.getPropertyId(), value.getAreaId(), raw, ts, true);
+                    put(id, value.getAreaId(), raw, ts, true);
                 }
 
                 @Override
@@ -387,11 +390,22 @@ public final class VehicleState {
         CarPropertyManager manager = cpm;
         if (manager == null) return null;
         try {
+            if (id == CarProps.HVAC_TEMP_AOSP) {
+                // On Flyme the untyped getter returns the MCU step, not degrees.
+                // The typed getter asks the firmware adapter to convert it.
+                return climateSetpoint(manager.getProperty(Float.class, id, area));
+            }
             CarPropertyValue<?> value = manager.getProperty(id, area);
             return value == null ? null : value.getValue();
         } catch (Throwable t) {
             return null;
         }
+    }
+
+    private static Float climateSetpoint(CarPropertyValue<?> value) {
+        if (value == null || value.getStatus() != CarPropertyValue.STATUS_AVAILABLE) return null;
+        Object degrees = value.getValue();
+        return degrees instanceof Float ? (Float) degrees : null;
     }
 
     private CapabilityRegistry capabilities() {
