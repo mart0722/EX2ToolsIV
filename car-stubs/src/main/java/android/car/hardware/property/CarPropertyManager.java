@@ -35,6 +35,10 @@ public final class CarPropertyManager {
         throw new UnsupportedOperationException("stub");
     }
 
+    public <E> CarPropertyValue<E> getProperty(Class<E> type, int propertyId, int area) {
+        throw new UnsupportedOperationException("stub");
+    }
+
     public boolean registerCallback(CarPropertyEventCallback callback, int propertyId, float rateHz) {
         throw new UnsupportedOperationException("stub");
     }
