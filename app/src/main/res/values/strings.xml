@@ -531,8 +531,10 @@
     <string name="wg_heat_wheel">Руль</string>
     <string name="wg_heat_front_max">Макс.</string>
     <string name="wg_heat_windshield">Лобовое</string>
-    <string name="wg_heat_seat_driver">Лев.</string>
-    <string name="wg_heat_seat_passenger">Прав.</string>
+    <string name="wg_heat_front_max_outline">Обдув MAX</string>
+    <string name="wg_heat_windshield_outline">Подогрев лобового</string>
+    <string name="wg_heat_seat_driver">Водитель</string>
+    <string name="wg_heat_seat_passenger">Пассажир</string>
     <string name="wg_footer_drive">РЕЖИМ</string>
     <string name="wg_footer_regen">РЕКУПЕРАЦИЯ</string>
 
@@ -778,6 +780,7 @@
     <string name="settings_fast_widget_response">Быстрый отклик виджетов</string>
     <string name="settings_fast_widget_response_note">Ускоряет кнопки температуры и вентилятора. Показания обновляются по данным автомобиля.</string>
     <string name="widgets_overlay_adapt_climate_size">Подогнать размеры климата</string>
+    <string name="widgets_climate_outline_icons">Контурные иконки климата</string>
     <string name="widgets_vent_presets">5 режимов</string>
     <string name="widgets_vent_directions">3 направления</string>
 </resources>

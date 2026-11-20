@@ -20,6 +20,7 @@ import androidx.fragment.app.Fragment;
 
 import com.ex2tools.iv.Prefs;
 import com.ex2tools.iv.R;
+import com.ex2tools.iv.state.VehicleState;
 import com.ex2tools.iv.widgets.ClockWidgetProvider;
 import com.ex2tools.iv.widgets.OverlayWidgetService;
 import com.ex2tools.iv.widgets.SpeedWidgetProvider;
@@ -93,6 +94,7 @@ public final class WidgetsFragment extends Fragment {
     private FlymeSwitchRow overlayLock;
     private FlymeSwitchRow overlayDocked;
     private FlymeSwitchRow overlayAdaptClimateSize;
+    private FlymeSwitchRow climateOutlineIcons;
     private final Map<String, FlymeSwitchRow> overlayToggles = new LinkedHashMap<>();
     private final Map<String, SeekBar> overlaySizeSeeks = new LinkedHashMap<>();
     private final Map<String, SeekBar> overlayAlphaSeeks = new LinkedHashMap<>();
@@ -144,11 +146,19 @@ public final class WidgetsFragment extends Fragment {
         overlayLock = view.findViewById(R.id.widgetOverlayLock);
         overlayDocked = view.findViewById(R.id.widgetOverlayDocked);
         overlayAdaptClimateSize = view.findViewById(R.id.widgetOverlayAdaptClimateSize);
+        climateOutlineIcons = view.findViewById(R.id.widgetClimateOutlineIcons);
 
         buildOverlayRows(c);
         setupModeControls(c);
         setupSpeedControls(c);
         setupStandardControls(c);
+        climateOutlineIcons.setOnCheckedChangeListener((button, checked) -> {
+            if (binding) return;
+            Context context = requireContext();
+            Prefs.setClimateOutlineIcons(context, checked);
+            VehicleState.get().requestDisplayRefresh();
+            WidgetUpdateService.sync(context);
+        });
         WidgetModes.refreshAuto(c);
         updateAll();
     }
@@ -489,6 +499,7 @@ public final class WidgetsFragment extends Fragment {
         if (overlayLock != null) overlayLock.setChecked(Prefs.overlayLock(c));
         if (overlayDocked != null) overlayDocked.setChecked(Prefs.overlayDocked(c));
         overlayAdaptClimateSize.setChecked(Prefs.overlayAdaptClimateSize(c));
+        climateOutlineIcons.setChecked(Prefs.climateOutlineIcons(c));
         speedEnabled.setChecked(Prefs.overlayEnabled(c, WidgetsCommon.SIZE_SPEED));
         speedPinned.setChecked(Prefs.overlayPinned(c, WidgetsCommon.SIZE_SPEED));
         if (appsModeGroup != null) {

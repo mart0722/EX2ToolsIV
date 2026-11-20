@@ -362,6 +362,8 @@ final class OverlayWidgetViews {
         text(root, R.id.txt_vent_windshield, c.getString(R.string.wg_vent_windshield));
         text(root, R.id.txt_recirc, c.getString(R.string.wg_recirc));
         boolean directions = Prefs.ventDirectionButtons(c);
+        ClimateWidgetIcons.forOverlay(c, root)
+                .ventButtons(vent == null ? 0 : vent, directions);
         text(root, R.id.btn_vent_mode, c.getString(directions
                 ? R.string.widgets_vent_directions : R.string.widgets_vent_presets));
         root.findViewById(R.id.chip_vent_face_floor).setVisibility(directions ? View.GONE : View.VISIBLE);
@@ -381,6 +383,8 @@ final class OverlayWidgetViews {
         Boolean ac = WidgetsCommon.readAc();
         int mode = vent == null ? 1 : vent;
         boolean directions = Prefs.ventDirectionButtons(c);
+        ClimateWidgetIcons.forOverlay(c, root)
+                .ventButtons(vent == null ? 0 : vent, directions);
         text(root, R.id.btn_vent_mode, c.getString(directions
                 ? R.string.widgets_vent_directions : R.string.widgets_vent_presets));
         root.findViewById(R.id.chip_vent_face_floor).setVisibility(directions ? View.GONE : View.VISIBLE);
@@ -463,40 +467,21 @@ final class OverlayWidgetViews {
         Integer seatPassenger = WidgetsCommon.readSeatHeat(4);
 
         text(root, R.id.txt_heat_header, c.getString(R.string.wg_heat_header));
-        boolean night = (c.getResources().getConfiguration().uiMode
-                & android.content.res.Configuration.UI_MODE_NIGHT_MASK)
-                == android.content.res.Configuration.UI_MODE_NIGHT_YES;
-        View windshieldIcon = root.findViewById(R.id.img_windshield_heat);
-        if (windshieldIcon instanceof android.widget.ImageView) {
-            ((android.widget.ImageView) windshieldIcon).setImageResource(
-                    night ? R.drawable.wg_ic_windshield_heat_dark
-                            : R.drawable.wg_ic_windshield_heat_light);
-        }
-        View rearIcon = root.findViewById(R.id.img_front_rear_defrost);
-        if (rearIcon instanceof android.widget.ImageView) {
-            ((android.widget.ImageView) rearIcon).setImageResource(
-                    night ? R.drawable.wg_ic_rear_heat_dark
-                            : R.drawable.wg_ic_rear_heat_light);
-        }
-        View wheelIcon = root.findViewById(R.id.img_wheel_heat);
-        if (wheelIcon instanceof android.widget.ImageView) {
-            ((android.widget.ImageView) wheelIcon).setImageResource(
-                    night ? R.drawable.wg_ic_wheel_heat_dark
-                            : R.drawable.wg_ic_wheel_heat_light);
-        }
+        ClimateWidgetIcons icons = ClimateWidgetIcons.forOverlay(c, root);
+        icons.heating(wheel, rear, front, windshield, seatDriver, seatPassenger);
         toggle(c, root, R.id.chip_wheel_heat, R.id.txt_wheel_heat,
                 Boolean.TRUE.equals(wheel), WidgetsCommon.wheelHeatPending(c),
                 c.getString(R.string.wg_heat_wheel));
         toggle(c, root, R.id.chip_front_rear_defrost, R.id.txt_front_rear_defrost,
                 Boolean.TRUE.equals(rear), c.getString(R.string.wg_heat_rear));
         toggle(c, root, R.id.chip_front_max_defrost, R.id.txt_front_max_defrost,
-                Boolean.TRUE.equals(front), c.getString(R.string.wg_heat_front_max));
+                Boolean.TRUE.equals(front), c.getString(icons.frontAirLabel()));
         toggle(c, root, R.id.chip_windshield_heat, R.id.txt_windshield_heat,
-                Boolean.TRUE.equals(windshield), c.getString(R.string.wg_heat_windshield));
-        seat(c, root, R.id.chip_seat_heat_driver, R.id.txt_seat_heat_driver,
-                seatDriver, c.getString(R.string.wg_heat_seat_driver));
-        seat(c, root, R.id.chip_seat_heat_passenger, R.id.txt_seat_heat_passenger,
-                seatPassenger, c.getString(R.string.wg_heat_seat_passenger));
+                Boolean.TRUE.equals(windshield), c.getString(icons.electricWindshieldLabel()));
+        seat(root, R.id.chip_seat_heat_driver, R.id.txt_seat_heat_driver,
+                seatDriver, c.getString(R.string.wg_heat_seat_driver), icons.usesOutline());
+        seat(root, R.id.chip_seat_heat_passenger, R.id.txt_seat_heat_passenger,
+                seatPassenger, c.getString(R.string.wg_heat_seat_passenger), icons.usesOutline());
     }
 
     private static void text(View root, int id, String value) {
@@ -557,8 +542,8 @@ final class OverlayWidgetViews {
         }
     }
 
-    private static void seat(Context c, View root, int chipId, int textId,
-                             Integer level, String label) {
+    private static void seat(View root, int chipId, int textId,
+                             Integer level, String label, boolean outline) {
         boolean active = level != null && level > 0;
         View chip = root.findViewById(chipId);
         if (chip != null) {
@@ -566,7 +551,12 @@ final class OverlayWidgetViews {
                     ? R.drawable.bg_wg_chip_on_orange : R.drawable.bg_wg_chip);
         }
         String value = level == null ? "—" : String.valueOf(level);
-        text(root, textId, label + " " + value);
+        String labelWithLevel = label + " " + value;
+        TextView caption = root.findViewById(textId);
+        if (caption != null) {
+            caption.setText(outline ? label : labelWithLevel);
+            caption.setContentDescription(outline ? labelWithLevel : null);
+        }
     }
 
     private static void click(Context c, View root, int id, String action) {

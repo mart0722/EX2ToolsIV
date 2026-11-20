@@ -97,6 +97,7 @@
                 android:layout_weight="1">
 
                 <ImageView
+                    android:id="@+id/img_front_max_defrost"
                     style="@style/WgIcon"
                     android:src="@drawable/wg_ic_heat_windshield"
                     android:tint="@color/wg_text" />
@@ -148,6 +149,7 @@
                 android:layout_weight="1">
 
                 <ImageView
+                    android:id="@+id/img_seat_heat_driver"
                     style="@style/WgIcon"
                     android:src="@drawable/wg_ic_seat"
                     android:tint="@color/wg_text" />
@@ -157,7 +159,7 @@
                     style="@style/WgChipLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Лев. 0" />
+                    android:text="@string/wg_heat_seat_driver" />
             </LinearLayout>
 
             <LinearLayout
@@ -168,6 +170,7 @@
                 android:layout_weight="1">
 
                 <ImageView
+                    android:id="@+id/img_seat_heat_passenger"
                     style="@style/WgIcon"
                     android:src="@drawable/wg_ic_seat"
                     android:tint="@color/wg_text" />
@@ -177,7 +180,7 @@
                     style="@style/WgChipLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Прав. 0" />
+                    android:text="@string/wg_heat_seat_passenger" />
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
