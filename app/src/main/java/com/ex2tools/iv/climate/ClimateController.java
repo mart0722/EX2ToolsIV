@@ -64,19 +64,17 @@ public final class ClimateController {
 
     private CommandDispatcher.Result setTemp(float value, boolean awaitConfirmation) {
         int celsius = Math.max(17, Math.min(32, Math.round(value)));
-        pendingTemp = celsius;
-        pendingTempAt = android.os.SystemClock.elapsedRealtime();
-        android.content.Context context = gateway.appContext();
-        if (context != null) com.ex2tools.iv.Prefs.setLastTempSet(context, celsius);
         CommandDispatcher.Result last = null;
         for (int area : TEMP_AREAS) {
-            // Основной setpoint, который использует штатный климат.
-            CommandDispatcher.Result set = dispatcher.submit(new CommandDispatcher.Command(
-                    CarProps.HVAC_TEMP_SET, area, PropertySpec.Type.INT, celsius), awaitConfirmation);
-            // И adjust — его показывает штатный слайдер.
-            dispatcher.submit(new CommandDispatcher.Command(
+            CommandDispatcher.Result result = dispatcher.submit(new CommandDispatcher.Command(
                     CarProps.HVAC_TEMP_ADJUST, area, PropertySpec.Type.INT, celsius), awaitConfirmation);
-            last = set;
+            if (last == null || result.ok()) last = result;
+        }
+        if (last != null && last.ok()) {
+            pendingTempAt = android.os.SystemClock.elapsedRealtime();
+            pendingTemp = celsius;
+            android.content.Context context = gateway.appContext();
+            if (context != null) com.ex2tools.iv.Prefs.setLastTempSet(context, celsius);
         }
         if (awaitConfirmation) logTempState("write " + celsius);
         return last;
@@ -90,19 +88,19 @@ public final class ClimateController {
         return setTemp(base + delta);
     }
 
-    public synchronized CommandDispatcher.Result adjustTempFromSteering(float delta) {
+    public synchronized CommandDispatcher.Result adjustTempInteractive(float delta) {
         Float current = pendingTemp();
         if (current == null) current = readTargetTemp();
         return setTemp((current == null ? 22f : Math.round(current)) + delta, false);
     }
 
-    private Integer steeringFan;
-    private long steeringFanAt;
+    private Integer interactiveFan;
+    private long interactiveFanAt;
 
-    public synchronized CommandDispatcher.Result adjustFanFromSteering(int delta) {
+    public synchronized CommandDispatcher.Result adjustFanInteractive(int delta) {
         long now = android.os.SystemClock.elapsedRealtime();
-        Integer current = steeringFan != null && now - steeringFanAt < 1000L
-                ? steeringFan : readIntAny(CarProps.HVAC_FAN_SPEED, CarProps.FAN_AREAS);
+        Integer current = interactiveFan != null && now - interactiveFanAt < 1000L
+                ? interactiveFan : readIntAny(CarProps.HVAC_FAN_SPEED, CarProps.FAN_AREAS);
         int target = Math.max(0, Math.min(7, (current == null ? 3 : current) + delta));
         CommandDispatcher.Result result = null;
         for (int area : state().areas(CarProps.HVAC_FAN_SPEED, CarProps.FAN_AREAS)) {
@@ -111,9 +109,9 @@ public final class ClimateController {
             if (result.ok()) break;
         }
         if (result != null && result.ok()) {
-            steeringFan = target;
-            steeringFanAt = android.os.SystemClock.elapsedRealtime();
-        } else steeringFan = null;
+            interactiveFan = target;
+            interactiveFanAt = android.os.SystemClock.elapsedRealtime();
+        } else interactiveFan = null;
         return result;
     }
 
@@ -155,9 +153,8 @@ public final class ClimateController {
     private void logTempState(String why) {
         android.content.Context context = gateway.appContext();
         if (context == null) return;
-        int[] ids = {CarProps.HVAC_TEMP_ADJUST, CarProps.HVAC_TEMP_AOSP,
-                CarProps.HVAC_TEMP_SET, CarProps.HVAC_TEMP_SET_AOSP};
-        String[] names = {"adjust", "aosp", "set", "set_aosp"};
+        int[] ids = {CarProps.HVAC_TEMP_ADJUST, CarProps.HVAC_TEMP_AOSP};
+        String[] names = {"adjust", "aosp"};
         StringBuilder sb = new StringBuilder("temp diag ").append(why);
         for (int i = 0; i < ids.length; i++) {
             for (int area : new int[]{1, 4}) {
@@ -413,18 +410,14 @@ public final class ClimateController {
 
     private Float readTargetTemp() {
         VehicleState vs = state();
-        int[] properties = {
-                CarProps.HVAC_TEMP_SET,
-                CarProps.HVAC_TEMP_SET_AOSP,
-                CarProps.HVAC_TEMP_ADJUST,
-                CarProps.HVAC_TEMP_AOSP
-        };
-        for (int id : properties) {
-            Float raw = vs.floatAny(id, vs.areas(id, CarProps.HVAC_AREAS));
-            if (raw == null) continue;
-            float value = raw;
-            if (value > 60f && value <= 400f) value = value / 10f;
-            if (value >= 5f && value <= 40f) return value;
+        for (int id : CarProps.HVAC_TARGET_READ_ORDER) {
+            for (int area : vs.areas(id, CarProps.HVAC_AREAS)) {
+                Float raw = vs.floatValue(id, area);
+                if (raw == null) continue;
+                float value = raw;
+                if (value > 60f && value <= 400f) value /= 10f;
+                if (value >= 5f && value <= 40f) return value;
+            }
         }
         return null;
     }

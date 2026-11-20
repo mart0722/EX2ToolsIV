@@ -29,6 +29,7 @@ public final class WidgetsCommon {
     public static final String FAN_PLUS = "com.ex2tools.iv.widget.FAN_PLUS";
     public static final String TEMP_MINUS = "com.ex2tools.iv.widget.TEMP_MINUS";
     public static final String TEMP_PLUS = "com.ex2tools.iv.widget.TEMP_PLUS";
+    public static final String VENT_WIDGET_MODE = "com.ex2tools.iv.widget.VENT_WIDGET_MODE";
     public static final String VENT_FACE = "com.ex2tools.iv.widget.VENT_FACE";
     public static final String VENT_FLOOR = "com.ex2tools.iv.widget.VENT_FLOOR";
     public static final String VENT_FACE_FLOOR = "com.ex2tools.iv.widget.VENT_FACE_FLOOR";
@@ -84,12 +85,13 @@ public final class WidgetsCommon {
         Float pending = ClimateController.pendingTemp();
         if (pending != null) return pending;
         VehicleState state = state(c);
-        int[] areas = state.areas(CarProps.HVAC_TEMP_SET, CarProps.HVAC_AREAS);
-        Float value = validTemp(state.floatAny(CarProps.HVAC_TEMP_SET, areas));
-        if (value == null) value = validTemp(state.floatAny(CarProps.HVAC_TEMP_SET_AOSP, areas));
-        if (value == null) value = validTemp(state.floatAny(CarProps.HVAC_TEMP_ADJUST, areas));
-        if (value == null) value = validTemp(state.floatAny(CarProps.HVAC_TEMP_AOSP, areas));
-        return adjustTempDisplay(c, value);
+        for (int property : CarProps.HVAC_TARGET_READ_ORDER) {
+            for (int area : state.areas(property, CarProps.HVAC_AREAS)) {
+                Float value = validTemp(state.floatValue(property, area));
+                if (value != null) return adjustTempDisplay(c, value);
+            }
+        }
+        return null;
     }
 
     /**
@@ -239,8 +241,6 @@ public final class WidgetsCommon {
         subscribe(state, CarProps.SEAT_HEAT, CarProps.SEAT_AREAS);
         subscribe(state, CarProps.HVAC_TEMP_ADJUST, CarProps.HVAC_AREAS);
         subscribe(state, CarProps.HVAC_TEMP_AOSP, CarProps.HVAC_AREAS);
-        subscribe(state, CarProps.HVAC_TEMP_SET, CarProps.HVAC_AREAS);
-        subscribe(state, CarProps.HVAC_TEMP_SET_AOSP, CarProps.HVAC_AREAS);
         subscribe(state, CarProps.PERF_VEHICLE_SPEED, new int[]{0});
         subscribe(state, CarProps.ESC_SPEED, new int[]{0});
         subscribe(state, CarProps.SOC, new int[]{0});

@@ -134,6 +134,11 @@ public final class SettingsFragment extends Fragment {
 
         view.findViewById(R.id.applyNow).setOnClickListener(v -> applyFromSelection());
 
+        FlymeSwitchRow fastWidgets = view.findViewById(R.id.switchFastWidgetResponse);
+        fastWidgets.setChecked(Prefs.fastWidgetResponse(c));
+        fastWidgets.setOnCheckedChangeListener((button, checked) ->
+                Prefs.setFastWidgetResponse(c, checked));
+
         switchScreenshotButton.setChecked(Prefs.screenshotButton(c));
         switchScreenshotButton.setOnCheckedChangeListener((b, checked) -> {
             Prefs.setScreenshotButton(c, checked);

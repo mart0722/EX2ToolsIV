@@ -50,13 +50,13 @@ public final class WidgetCatalog {
         add(WidgetsCommon.SIZE_FAN, R.string.widgets_size_fan,
                 R.layout.widget_fan_speed, 240, 150, 40, 40);
         add(WidgetsCommon.SIZE_TEMP, R.string.widgets_size_temp,
-                R.layout.widget_temperature, 420, 150, 300, 40);
+                R.layout.widget_temperature, 260, 150, 300, 40);
         add(WidgetsCommon.SIZE_VENT, R.string.widgets_size_vent,
                 R.layout.widget_hvac_direction, 420, 180, 40, 280);
         add(WidgetsCommon.SIZE_VENT_FAN, R.string.widgets_size_vent_fan,
                 R.layout.widget_hvac_direction_fan, 420, 260, 40, 520);
         add(WidgetsCommon.SIZE_HEATING, R.string.widgets_size_heating,
-                R.layout.widget_heating_test, 420, 240, 480, 520);
+                R.layout.widget_heating_test, 420, 260, 480, 520);
         add(WidgetsCommon.SIZE_BATTERY_RANGE, R.string.widgets_size_battery_range,
                 R.layout.widget_battery_range, 260, 90, 40, 700);
         add(WidgetsCommon.SIZE_LOCK, R.string.widgets_size_lock,

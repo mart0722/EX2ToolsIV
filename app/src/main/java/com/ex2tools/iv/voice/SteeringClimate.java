@@ -89,8 +89,8 @@ final class SteeringClimate {
                 lastCommandAt = SystemClock.elapsedRealtime();
                 try {
                     CommandDispatcher.Result result = key <= 2
-                            ? ClimateController.get().adjustTempFromSteering(key == 1 ? 1f : -1f)
-                            : ClimateController.get().adjustFanFromSteering(key == 3 ? 1 : -1);
+                            ? ClimateController.get().adjustTempInteractive(key == 1 ? 1f : -1f)
+                            : ClimateController.get().adjustFanInteractive(key == 3 ? 1 : -1);
                     handler.post(() -> {
                         if (expiry == 0 || generation != session) return;
                         if (result == null || !result.ok()) {

@@ -21,6 +21,14 @@ public final class Prefs {
     private Prefs() {
     }
 
+    public static boolean fastWidgetResponse(Context c) {
+        return get(c).getBoolean("fast_widget_response", false);
+    }
+
+    public static void setFastWidgetResponse(Context c, boolean enabled) {
+        get(c).edit().putBoolean("fast_widget_response", enabled).apply();
+    }
+
     public static int themeMode(Context c) {
         return get(c).getInt("theme_mode", 0);
     }
@@ -514,6 +522,22 @@ public final class Prefs {
 
     public static void setOverlayPinned(Context c, String key, boolean value) {
         get(c).edit().putBoolean("overlay_" + key + "_pinned", value).apply();
+    }
+
+    public static boolean ventDirectionButtons(Context c) {
+        return get(c).getBoolean("vent_direction_buttons", false);
+    }
+
+    public static void toggleVentDirectionButtons(Context c) {
+        get(c).edit().putBoolean("vent_direction_buttons", !ventDirectionButtons(c)).apply();
+    }
+
+    public static boolean overlayAdaptClimateSize(Context c) {
+        return get(c).getBoolean("overlay_adapt_climate_size", false);
+    }
+
+    public static void setOverlayAdaptClimateSize(Context c, boolean enabled) {
+        get(c).edit().putBoolean("overlay_adapt_climate_size", enabled).apply();
     }
 
     public static boolean overlayDocked(Context c) {

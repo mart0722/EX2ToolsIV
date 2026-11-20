@@ -92,6 +92,7 @@ public final class WidgetsFragment extends Fragment {
     private View speedTripReset;
     private FlymeSwitchRow overlayLock;
     private FlymeSwitchRow overlayDocked;
+    private FlymeSwitchRow overlayAdaptClimateSize;
     private final Map<String, FlymeSwitchRow> overlayToggles = new LinkedHashMap<>();
     private final Map<String, SeekBar> overlaySizeSeeks = new LinkedHashMap<>();
     private final Map<String, SeekBar> overlayAlphaSeeks = new LinkedHashMap<>();
@@ -142,6 +143,7 @@ public final class WidgetsFragment extends Fragment {
         speedTripReset = view.findViewById(R.id.widgetSpeedTripReset);
         overlayLock = view.findViewById(R.id.widgetOverlayLock);
         overlayDocked = view.findViewById(R.id.widgetOverlayDocked);
+        overlayAdaptClimateSize = view.findViewById(R.id.widgetOverlayAdaptClimateSize);
 
         buildOverlayRows(c);
         setupModeControls(c);
@@ -215,6 +217,11 @@ public final class WidgetsFragment extends Fragment {
                                         : R.string.widgets_trip_reset_failed,
                                 android.widget.Toast.LENGTH_SHORT).show();
                     });
+        });
+        overlayAdaptClimateSize.setOnCheckedChangeListener((button, checked) -> {
+            if (binding) return;
+            Prefs.setOverlayAdaptClimateSize(requireContext(), checked);
+            OverlayWidgetService.restart(requireContext());
         });
         if (overlayDocked != null) {
             overlayDocked.setOnCheckedChangeListener((b, checked) -> {
@@ -481,6 +488,7 @@ public final class WidgetsFragment extends Fragment {
         speedTrip.setChecked(Prefs.speedShowTrip(c));
         if (overlayLock != null) overlayLock.setChecked(Prefs.overlayLock(c));
         if (overlayDocked != null) overlayDocked.setChecked(Prefs.overlayDocked(c));
+        overlayAdaptClimateSize.setChecked(Prefs.overlayAdaptClimateSize(c));
         speedEnabled.setChecked(Prefs.overlayEnabled(c, WidgetsCommon.SIZE_SPEED));
         speedPinned.setChecked(Prefs.overlayPinned(c, WidgetsCommon.SIZE_SPEED));
         if (appsModeGroup != null) {

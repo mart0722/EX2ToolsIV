@@ -309,6 +309,15 @@
                             android:textSize="22sp" />
 
                         <com.ex2tools.iv.ui.FlymeSwitchRow
+                            android:id="@+id/widgetOverlayAdaptClimateSize"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:text="@string/widgets_overlay_adapt_climate_size"
+                            android:textColor="@color/flyme_label_level1"
+                            android:textSize="22sp" />
+
+                        <com.ex2tools.iv.ui.FlymeSwitchRow
                             android:id="@+id/widgetOverlayLock"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
