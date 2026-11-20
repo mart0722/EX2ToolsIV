@@ -65,6 +65,7 @@
                 android:layout_weight="1">
 
                 <ImageView
+                    android:id="@+id/img_vent_face"
                     style="@style/WgIcon"
                     android:src="@drawable/wg_ic_vent_face"
                     android:tint="@color/wg_text" />
@@ -86,6 +87,7 @@
                 android:layout_weight="1">
 
                 <ImageView
+                    android:id="@+id/img_vent_floor"
                     style="@style/WgIcon"
                     android:src="@drawable/wg_ic_vent_floor"
                     android:tint="@color/wg_text" />
@@ -107,6 +109,7 @@
                 android:layout_weight="1">
 
                 <ImageView
+                    android:id="@+id/img_vent_face_floor"
                     style="@style/WgIcon"
                     android:src="@drawable/wg_ic_vent_face_floor"
                     android:tint="@color/wg_text" />
@@ -128,6 +131,7 @@
                 android:layout_weight="1">
 
                 <ImageView
+                    android:id="@+id/img_vent_windshield"
                     style="@style/WgIcon"
                     android:src="@drawable/wg_ic_vent_windshield"
                     android:tint="@color/wg_text" />
@@ -149,6 +153,7 @@
                 android:layout_weight="1">
 
                 <ImageView
+                    android:id="@+id/img_vent_floor_windshield"
                     style="@style/WgIcon"
                     android:src="@drawable/wg_ic_vent_floor_windshield"
                     android:tint="@color/wg_text" />

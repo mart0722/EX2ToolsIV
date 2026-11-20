@@ -66,6 +66,22 @@
                     android:textSize="23sp" />
             </LinearLayout>
 
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.EX2.Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp">
+
+                <com.ex2tools.iv.ui.FlymeSwitchRow
+                    android:id="@+id/widgetClimateOutlineIcons"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="@dimen/card_padding"
+                    android:text="@string/widgets_climate_outline_icons"
+                    android:textColor="@color/flyme_label_level1"
+                    android:textSize="22sp" />
+            </com.google.android.material.card.MaterialCardView>
+
             <TextView
                 style="@style/Text.EX2.GroupLabel"
                 android:layout_width="match_parent"

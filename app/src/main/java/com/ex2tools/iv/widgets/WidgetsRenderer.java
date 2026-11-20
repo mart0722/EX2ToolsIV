@@ -135,6 +135,8 @@ public final class WidgetsRenderer {
         v.setTextViewText(R.id.txt_recirc, c.getString(R.string.wg_recirc));
         boolean directions = Prefs.ventDirectionButtons(c);
         int mode = vent == null ? 0 : vent;
+        ClimateWidgetIcons.forRemote(OverlayWidgetViews.themeContext(c), v)
+                .ventButtons(vent == null ? 0 : vent, directions);
         v.setTextViewText(R.id.btn_vent_mode, c.getString(directions
                 ? R.string.widgets_vent_directions : R.string.widgets_vent_presets));
         v.setViewVisibility(R.id.chip_vent_face_floor, directions ? android.view.View.GONE : android.view.View.VISIBLE);
@@ -159,7 +161,7 @@ public final class WidgetsRenderer {
         RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_hvac_direction_vertical);
         bg(v, c);
         int mode = vent == null ? 1 : vent;
-        v.setImageViewResource(R.id.img_vent_mode, WidgetsCommon.ventIcon(mode));
+        ClimateWidgetIcons.forRemote(OverlayWidgetViews.themeContext(c), v).vent(R.id.img_vent_mode, mode, vent != null);
         v.setTextViewText(R.id.tv_vent_mode_label, c.getString(WidgetsCommon.ventLabel(mode)));
         v.setTextViewText(R.id.tv_vent_mode_footer, c.getString(R.string.wg_vent_short));
         v.setTextViewText(R.id.txt_recirc_v, c.getString(R.string.wg_recirc));
@@ -178,6 +180,8 @@ public final class WidgetsRenderer {
         bg(v, c);
         int mode = vent == null ? 1 : vent;
         boolean directions = Prefs.ventDirectionButtons(c);
+        ClimateWidgetIcons.forRemote(OverlayWidgetViews.themeContext(c), v)
+                .ventButtons(vent == null ? 0 : vent, directions);
         v.setTextViewText(R.id.btn_vent_mode, c.getString(directions
                 ? R.string.widgets_vent_directions : R.string.widgets_vent_presets));
         v.setViewVisibility(R.id.chip_vent_face_floor, directions ? android.view.View.GONE : android.view.View.VISIBLE);
@@ -218,34 +222,21 @@ public final class WidgetsRenderer {
                                       boolean wheelPending) {
         RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_heating_test);
         bg(v, c);
-        // Рамка стекла берётся из темы, стрелки всегда оранжевые — поэтому две
-        // версии ассета и выбор по фактической теме приложения.
-        Context tc = OverlayWidgetViews.themeContext(c);
-        boolean night = (tc.getResources().getConfiguration().uiMode
-                & android.content.res.Configuration.UI_MODE_NIGHT_MASK)
-                == android.content.res.Configuration.UI_MODE_NIGHT_YES;
-        v.setImageViewResource(R.id.img_windshield_heat,
-                night ? R.drawable.wg_ic_windshield_heat_dark
-                        : R.drawable.wg_ic_windshield_heat_light);
-        v.setImageViewResource(R.id.img_front_rear_defrost,
-                night ? R.drawable.wg_ic_rear_heat_dark
-                        : R.drawable.wg_ic_rear_heat_light);
-        v.setImageViewResource(R.id.img_wheel_heat,
-                night ? R.drawable.wg_ic_wheel_heat_dark
-                        : R.drawable.wg_ic_wheel_heat_light);
+        ClimateWidgetIcons icons = ClimateWidgetIcons.forRemote(OverlayWidgetViews.themeContext(c), v);
+        icons.heating(wheel, rear, front, windshield, seatDriver, seatPassenger);
         v.setTextViewText(R.id.txt_heat_header, c.getString(R.string.wg_heat_header));
         toggle(v, c, R.id.chip_wheel_heat, R.id.txt_wheel_heat,
                 Boolean.TRUE.equals(wheel), wheelPending, c.getString(R.string.wg_heat_wheel));
         toggle(v, c, R.id.chip_front_rear_defrost, R.id.txt_front_rear_defrost,
                 Boolean.TRUE.equals(rear), c.getString(R.string.wg_heat_rear));
         toggle(v, c, R.id.chip_front_max_defrost, R.id.txt_front_max_defrost,
-                Boolean.TRUE.equals(front), c.getString(R.string.wg_heat_front_max));
+                Boolean.TRUE.equals(front), c.getString(icons.frontAirLabel()));
         toggle(v, c, R.id.chip_windshield_heat, R.id.txt_windshield_heat,
-                Boolean.TRUE.equals(windshield), c.getString(R.string.wg_heat_windshield));
+                Boolean.TRUE.equals(windshield), c.getString(icons.electricWindshieldLabel()));
         seat(v, c, R.id.chip_seat_heat_driver, R.id.txt_seat_heat_driver,
-                seatDriver, c.getString(R.string.wg_heat_seat_driver));
+                seatDriver, c.getString(R.string.wg_heat_seat_driver), icons.usesOutline());
         seat(v, c, R.id.chip_seat_heat_passenger, R.id.txt_seat_heat_passenger,
-                seatPassenger, c.getString(R.string.wg_heat_seat_passenger));
+                seatPassenger, c.getString(R.string.wg_heat_seat_passenger), icons.usesOutline());
         click(v, c, R.id.chip_wheel_heat, WidgetsCommon.WHEEL_HEAT_TOGGLE);
         click(v, c, R.id.chip_front_rear_defrost, WidgetsCommon.REAR_DEFROST_TOGGLE);
         click(v, c, R.id.chip_front_max_defrost, WidgetsCommon.FRONT_MAX_DEFROST_TOGGLE);
@@ -353,13 +344,15 @@ public final class WidgetsRenderer {
     }
 
     private static void seat(RemoteViews v, Context c, int chipId, int textId,
-                             Integer level, String label) {
+                             Integer level, String label, boolean outline) {
         boolean active = level != null && level > 0;
         v.setInt(chipId, "setBackgroundResource",
                 active ? R.drawable.bg_wg_chip_on_orange : R.drawable.bg_wg_chip);
         v.setTextColor(textId, c.getColor(R.color.wg_text));
         String value = level == null ? "—" : String.valueOf(level);
-        v.setTextViewText(textId, label + " " + value);
+        String labelWithLevel = label + " " + value;
+        v.setTextViewText(textId, outline ? label : labelWithLevel);
+        v.setContentDescription(textId, outline ? labelWithLevel : null);
     }
 
     private static void click(RemoteViews v, Context c, int viewId, String action) {

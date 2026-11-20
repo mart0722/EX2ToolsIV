@@ -532,6 +532,14 @@ public final class Prefs {
         get(c).edit().putBoolean("vent_direction_buttons", !ventDirectionButtons(c)).apply();
     }
 
+    public static boolean climateOutlineIcons(Context c) {
+        return get(c).getBoolean("climate_outline_icons", false);
+    }
+
+    public static void setClimateOutlineIcons(Context c, boolean enabled) {
+        get(c).edit().putBoolean("climate_outline_icons", enabled).apply();
+    }
+
     public static boolean overlayAdaptClimateSize(Context c) {
         return get(c).getBoolean("overlay_adapt_climate_size", false);
     }
