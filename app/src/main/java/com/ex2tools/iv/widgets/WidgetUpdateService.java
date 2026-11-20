@@ -54,6 +54,8 @@ public final class WidgetUpdateService extends Service {
     private final AtomicBoolean busy = new AtomicBoolean(false);
     private final ConcurrentLinkedQueue<String> pendingActions = new ConcurrentLinkedQueue<>();
     private final VehicleState.Listener stateListener = this::requestUpdate;
+    private long lastTemperatureActionAt;
+    private long lastFanActionAt;
     private volatile boolean updatePending;
 
     private final Runnable tick = new Runnable() {
@@ -143,7 +145,10 @@ public final class WidgetUpdateService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         String action = intent == null ? null : intent.getAction();
-        if (action != null && !WidgetsCommon.REFRESH_OPACITY.equals(action)) {
+        if (WidgetsCommon.VENT_WIDGET_MODE.equals(action)) {
+            Prefs.toggleVentDirectionButtons(this);
+            VehicleState.get().requestDisplayRefresh();
+        } else if (action != null && !WidgetsCommon.REFRESH_OPACITY.equals(action)) {
             pendingActions.add(action);
         }
         requestUpdate();
@@ -151,10 +156,8 @@ public final class WidgetUpdateService extends Service {
     }
 
     private void requestUpdate() {
-        if (!busy.compareAndSet(false, true)) {
-            updatePending = true;
-            return;
-        }
+        updatePending = true;
+        if (executor.isShutdown() || !busy.compareAndSet(false, true)) return;
         executor.execute(() -> {
             try {
                 do {
@@ -165,6 +168,7 @@ public final class WidgetUpdateService extends Service {
                 LogStore.add(this, "widget update failed: " + t);
             } finally {
                 busy.set(false);
+                if (updatePending && !executor.isShutdown()) requestUpdate();
             }
         });
     }
@@ -356,6 +360,35 @@ public final class WidgetUpdateService extends Service {
         handler.postDelayed(retry, RETRY_MS);
     }
 
+    private void adjustClimate(boolean temperature, int direction) {
+        if (!Prefs.fastWidgetResponse(this)) {
+            if (temperature) WidgetsCommon.stepTemp(this, direction);
+            else WidgetsCommon.stepFan(direction);
+            return;
+        }
+        long previous = temperature ? lastTemperatureActionAt : lastFanActionAt;
+        long delay = 130L - (android.os.SystemClock.elapsedRealtime() - previous);
+        if (delay > 0) {
+            try {
+                Thread.sleep(delay);
+            } catch (InterruptedException interrupted) {
+                Thread.currentThread().interrupt();
+                return;
+            }
+        }
+        com.ex2tools.iv.climate.ClimateController climate =
+                com.ex2tools.iv.climate.ClimateController.get();
+        com.ex2tools.iv.vehicle.CommandDispatcher.Result result;
+        if (temperature) {
+            lastTemperatureActionAt = android.os.SystemClock.elapsedRealtime();
+            result = climate.adjustTempInteractive(direction);
+        } else {
+            lastFanActionAt = android.os.SystemClock.elapsedRealtime();
+            result = climate.adjustFanInteractive(direction);
+        }
+        if (result != null && result.ok()) VehicleState.get().requestDisplayRefresh();
+    }
+
     private void handleAction(String action) {
         switch (action) {
             case WidgetsCommon.DRIVE_ECO:
@@ -389,28 +422,27 @@ public final class WidgetUpdateService extends Service {
                 WidgetsCommon.stepRegen(this, -1);
                 break;
             case WidgetsCommon.FAN_PLUS:
-                WidgetsCommon.stepFan(1);
-                break;
             case WidgetsCommon.FAN_MINUS:
-                WidgetsCommon.stepFan(-1);
+                adjustClimate(false, WidgetsCommon.FAN_PLUS.equals(action) ? 1 : -1);
                 break;
             case WidgetsCommon.TEMP_PLUS:
-                WidgetsCommon.stepTemp(this, 1f);
-                break;
             case WidgetsCommon.TEMP_MINUS:
-                WidgetsCommon.stepTemp(this, -1f);
+                adjustClimate(true, WidgetsCommon.TEMP_PLUS.equals(action) ? 1 : -1);
                 break;
             case WidgetsCommon.VENT_FACE:
-                WidgetsCommon.toggleVent(1);
+                if (Prefs.ventDirectionButtons(this)) WidgetsCommon.toggleVent(1);
+                else WidgetsCommon.setVent(1);
                 break;
             case WidgetsCommon.VENT_FLOOR:
-                WidgetsCommon.toggleVent(2);
+                if (Prefs.ventDirectionButtons(this)) WidgetsCommon.toggleVent(2);
+                else WidgetsCommon.setVent(2);
                 break;
             case WidgetsCommon.VENT_FACE_FLOOR:
                 WidgetsCommon.setVent(3);
                 break;
             case WidgetsCommon.VENT_WINDSHIELD:
-                WidgetsCommon.toggleVent(4);
+                if (Prefs.ventDirectionButtons(this)) WidgetsCommon.toggleVent(4);
+                else WidgetsCommon.setVent(4);
                 break;
             case WidgetsCommon.VENT_FLOOR_WINDSHIELD:
                 WidgetsCommon.setVent(6);

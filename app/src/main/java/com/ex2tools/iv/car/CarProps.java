@@ -23,11 +23,13 @@ public final class CarProps {
     public static final int RANGE = 289407752;
     public static final int AVG_CONSUMPTION = 557885176;
     public static final int AUX_12V = 557875206;
-    public static final int HVAC_TEMP_SET = 557885148;
-    public static final int HVAC_TEMP_SET_AOSP = 354419971;
     public static final int HVAC_TEMP_CURRENT = 358614274;
     public static final int HVAC_TEMP_AOSP = 358614275;
     public static final int HVAC_TEMP_ADJUST = 624955446;
+    // Prefer the setpoint exposed by the stock climate UI.
+    public static final int[] HVAC_TARGET_READ_ORDER = {
+            HVAC_TEMP_AOSP, HVAC_TEMP_ADJUST
+    };
     public static final int HVAC_FAN_SPEED = 356517120;
     public static final int HVAC_FAN_DIRECTION = 356517121;
     public static final int HVAC_AC_ON = 358613145;

@@ -775,4 +775,9 @@
     <string name="steering_climate">Управление климатом</string>
     <string name="steering_climate_hint">Двойное нажатие голосовой кнопки переключает режим климата.</string>
     <string name="steering_help">Громкость +/− — температура на 1 °C.\nСледующий / предыдущий трек — скорость вентилятора.\n\nПовторное двойное нажатие или 15 секунд без нажатий возвращают обычное управление.\n\nДля работы нужен патч штатного сервиса кнопок. Голосовое управление и доступ к микрофону для режима климата не требуются.</string>
+    <string name="settings_fast_widget_response">Быстрый отклик виджетов</string>
+    <string name="settings_fast_widget_response_note">Ускоряет кнопки температуры и вентилятора. Показания обновляются по данным автомобиля.</string>
+    <string name="widgets_overlay_adapt_climate_size">Подогнать размеры климата</string>
+    <string name="widgets_vent_presets">5 режимов</string>
+    <string name="widgets_vent_directions">3 направления</string>
 </resources>

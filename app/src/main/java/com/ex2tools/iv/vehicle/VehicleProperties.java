@@ -34,14 +34,10 @@ public final class VehicleProperties {
         add(CarProps.REGEN_MODE, "drive.regen", PropertySpec.Type.INT,
                 CarProps.REGEN_AREAS, 0f, 10f);
 
-        add(CarProps.HVAC_TEMP_SET, "climate.target_temp", PropertySpec.Type.FLOAT,
-                CarProps.HVAC_AREAS, 5f, 40f);
-        add(CarProps.HVAC_TEMP_SET_AOSP, "climate.target_temp_aosp", PropertySpec.Type.FLOAT,
-                CarProps.HVAC_AREAS, 5f, 40f);
         add(CarProps.HVAC_TEMP_CURRENT, "climate.cabin_temp", PropertySpec.Type.FLOAT,
                 CarProps.CABIN_AREAS, -45f, 65f);
-        add(CarProps.HVAC_TEMP_AOSP, "climate.cabin_temp_aosp", PropertySpec.Type.FLOAT,
-                CarProps.HVAC_AREAS, -45f, 65f);
+        add(CarProps.HVAC_TEMP_AOSP, "climate.target_temp_aosp", PropertySpec.Type.FLOAT,
+                CarProps.HVAC_AREAS, 16f, 32f);
         add(CarProps.HVAC_TEMP_ADJUST, "climate.temp_adjust", PropertySpec.Type.FLOAT,
                 CarProps.HVAC_AREAS, 5f, 40f);
         add(CarProps.HVAC_FAN_SPEED, "climate.fan", PropertySpec.Type.INT,

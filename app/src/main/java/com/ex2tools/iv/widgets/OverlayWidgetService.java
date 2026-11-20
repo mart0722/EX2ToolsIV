@@ -46,7 +46,20 @@ public final class OverlayWidgetService extends Service {
     private int lastThemeSignature = Integer.MIN_VALUE;
     private volatile boolean stateDirty = true;
 
-    private final VehicleState.Listener stateListener = () -> stateDirty = true;
+    private final VehicleState.Listener stateListener = this::onVehicleStateChanged;
+
+    private void onVehicleStateChanged() {
+        if (destroyed) return;
+        stateDirty = true;
+        if (!Prefs.fastWidgetResponse(this)) return;
+        for (OverlaySpec spec : specs) {
+            if (spec.view != null && (WidgetsCommon.SIZE_TEMP.equals(spec.key)
+                    || WidgetsCommon.SIZE_FAN.equals(spec.key)
+                    || WidgetsCommon.SIZE_VENT_FAN.equals(spec.key))) {
+                update(spec);
+            }
+        }
+    }
 
     private final Runnable poll = new Runnable() {
         @Override
@@ -83,7 +96,8 @@ public final class OverlayWidgetService extends Service {
                 }
                 if (show) {
                     boolean created = ensure(spec);
-                    if (render || created) update(spec);
+                    // Retry climate reads even if the ECU emitted no event during boot.
+                    if (render || created || WidgetsCommon.SIZE_TEMP.equals(spec.key)) update(spec);
                 } else {
                     remove(spec);
                 }
@@ -236,6 +250,10 @@ public final class OverlayWidgetService extends Service {
                     : Prefs.overlaySizePct(this, spec.key);
             int baseWidthDp = spec.widthDp;
             int baseHeightDp = spec.heightDp;
+            if (Prefs.overlayAdaptClimateSize(this)) {
+                if (WidgetsCommon.SIZE_TEMP.equals(spec.key)) baseWidthDp = 420;
+                if (WidgetsCommon.SIZE_HEATING.equals(spec.key)) baseHeightDp = 240;
+            }
             if (WidgetsCommon.SIZE_APPS.equals(spec.key)) {
                 int[] dims = AppsOverlay.sizeDp(this);
                 baseWidthDp = dims[0];
@@ -260,6 +278,7 @@ public final class OverlayWidgetService extends Service {
 
             bindDrag(spec, container, content, lp);
             windowManager.addView(container, lp);
+            spec.dragging = false;
             spec.view = container;
             spec.content = content;
             spec.params = lp;
@@ -275,6 +294,9 @@ public final class OverlayWidgetService extends Service {
     // Keep each corner as a vertical stack. Tall stacks continue inward in a new column.
     private void layoutDockedWidgets() {
         if (!Prefs.overlayDocked(this)) return;
+        for (OverlaySpec spec : specs) {
+            if (spec.view != null && spec.dragging) return;
+        }
         int width = getResources().getDisplayMetrics().widthPixels;
         int height = getResources().getDisplayMetrics().heightPixels;
         int gap = dp(8);
@@ -365,6 +387,7 @@ public final class OverlayWidgetService extends Service {
                         float dy = event.getRawY() - downY;
                         if (Math.abs(dx) > dp(5) || Math.abs(dy) > dp(5)) moved = true;
                         if (moved) {
+                            spec.dragging = true;
                             lp.x = startX + Math.round(dx);
                             lp.y = startY + Math.round(dy);
                             try {
@@ -375,6 +398,7 @@ public final class OverlayWidgetService extends Service {
                         return true;
                     case MotionEvent.ACTION_UP:
                     case MotionEvent.ACTION_CANCEL:
+                        spec.dragging = false;
                         if (moved && Prefs.overlayDocked(OverlayWidgetService.this)) {
                             int width = getResources().getDisplayMetrics().widthPixels;
                             int height = getResources().getDisplayMetrics().heightPixels;
@@ -462,6 +486,7 @@ public final class OverlayWidgetService extends Service {
 
     private static final class OverlaySpec {
         final String key;
+        boolean dragging;
         final int widthDp;
         final int heightDp;
         final int defaultX;

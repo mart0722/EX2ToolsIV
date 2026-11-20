@@ -37,6 +37,17 @@
                 android:layout_marginStart="8dp"
                 android:layout_weight="1"
                 android:text="Направление обдува" />
+
+            <TextView
+                android:id="@+id/btn_vent_mode"
+                style="@style/WgChipLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:gravity="center"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:background="@drawable/bg_wg_chip"
+                android:text="@string/widgets_vent_presets" />
         </LinearLayout>
 
         <LinearLayout
@@ -90,6 +101,27 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/chip_vent_face_floor"
+                style="@style/WgChip"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="4dp"
+                android:layout_weight="1">
+
+                <ImageView
+                    style="@style/WgIcon"
+                    android:src="@drawable/wg_ic_vent_face_floor"
+                    android:tint="@color/wg_text" />
+
+                <TextView
+                    android:id="@+id/txt_vent_face_floor"
+                    style="@style/WgChipLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Лицо+ноги" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:id="@+id/chip_vent_windshield"
                 style="@style/WgChip"
                 android:layout_width="0dp"
@@ -108,6 +140,27 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Стекло" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/chip_vent_floor_windshield"
+                style="@style/WgChip"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="4dp"
+                android:layout_weight="1">
+
+                <ImageView
+                    style="@style/WgIcon"
+                    android:src="@drawable/wg_ic_vent_floor_windshield"
+                    android:tint="@color/wg_text" />
+
+                <TextView
+                    android:id="@+id/txt_vent_floor_windshield"
+                    style="@style/WgChipLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Ноги+стекло" />
             </LinearLayout>
 
             <LinearLayout

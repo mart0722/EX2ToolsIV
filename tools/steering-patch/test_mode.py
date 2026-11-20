@@ -28,7 +28,7 @@ sources={
 'com/ex2tools/iv/vehicle/CommandDispatcher.java':'''package com.ex2tools.iv.vehicle;public class CommandDispatcher {public static class Result{public boolean ok(){return true;}}}''',
 'com/ex2tools/iv/climate/ClimateController.java':'''package com.ex2tools.iv.climate;import com.ex2tools.iv.vehicle.CommandDispatcher.Result;
  public class ClimateController {public static ClimateController get(){return new ClimateController();}
- public Result adjustTempFromSteering(float d){return new Result();}public Result adjustFanFromSteering(int d){return new Result();}}''',
+ public Result adjustTempInteractive(float d){return new Result();}public Result adjustFanInteractive(int d){return new Result();}}''',
 'com/ex2tools/iv/voice/ModeCheck.java':'''package com.ex2tools.iv.voice;
  import android.os.*;import android.content.Context;import android.provider.Settings.Global;import com.ex2tools.iv.Prefs;
  public class ModeCheck {

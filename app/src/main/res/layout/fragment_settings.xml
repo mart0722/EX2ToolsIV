@@ -207,6 +207,16 @@
                 android:text="@string/settings_section_floating" />
 
             <com.ex2tools.iv.ui.FlymeSwitchRow
+                android:id="@+id/switchFastWidgetResponse"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/settings_fast_widget_response"
+                android:textColor="@color/flyme_label_level1"
+                android:textSize="22sp"
+                app:rowDescription="@string/settings_fast_widget_response_note" />
+
+            <com.ex2tools.iv.ui.FlymeSwitchRow
                 android:id="@+id/switchScreenshotButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
