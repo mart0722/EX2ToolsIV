@@ -84,14 +84,7 @@ public final class WidgetsCommon {
     public static Float readTemp(Context c) {
         Float pending = ClimateController.pendingTemp();
         if (pending != null) return pending;
-        VehicleState state = state(c);
-        for (int property : CarProps.HVAC_TARGET_READ_ORDER) {
-            for (int area : state.areas(property, CarProps.HVAC_AREAS)) {
-                Float value = validTemp(state.floatValue(property, area));
-                if (value != null) return adjustTempDisplay(c, value);
-            }
-        }
-        return null;
+        return adjustTempDisplay(c, ClimateController.readTargetTemp(state(c)));
     }
 
     /**
@@ -511,10 +504,5 @@ public final class WidgetsCommon {
         return state;
     }
 
-    private static Float validTemp(Float raw) {
-        if (raw == null) return null;
-        float value = raw;
-        if (value > 60f && value <= 400f) value = value / 10f;
-        return (value >= 5f && value <= 40f) ? value : null;
-    }
+
 }
