@@ -81,17 +81,18 @@ public final class ClimateController {
     }
 
     public CommandDispatcher.Result adjustTemp(float delta) {
-        Float current = pendingTemp();
-        if (current == null) current = readTargetTemp();
-        float base = current == null ? 22f : Math.round(current);
-        logTempState("base " + base);
-        return setTemp(base + delta);
+        return adjustTemp(delta, true);
     }
 
     public synchronized CommandDispatcher.Result adjustTempInteractive(float delta) {
+        return adjustTemp(delta, false);
+    }
+
+    private synchronized CommandDispatcher.Result adjustTemp(float delta, boolean awaitConfirmation) {
         Float current = pendingTemp();
-        if (current == null) current = readTargetTemp();
-        return setTemp((current == null ? 22f : Math.round(current)) + delta, false);
+        if (current == null) current = readTargetTemp(state());
+        if (current == null) return CommandDispatcher.Result.unavailable("Climate setpoint unavailable");
+        return setTemp(Math.round(current) + delta, awaitConfirmation);
     }
 
     private Integer interactiveFan;
@@ -408,16 +409,11 @@ public final class ClimateController {
         return readBoolAny(CarProps.HVAC_WINDSHIELD_HEAT, new int[]{117});
     }
 
-    private Float readTargetTemp() {
-        VehicleState vs = state();
-        for (int id : CarProps.HVAC_TARGET_READ_ORDER) {
-            for (int area : vs.areas(id, CarProps.HVAC_AREAS)) {
-                Float raw = vs.floatValue(id, area);
-                if (raw == null) continue;
-                float value = raw;
-                if (value > 60f && value <= 400f) value /= 10f;
-                if (value >= 5f && value <= 40f) return value;
-            }
+    public static Float readTargetTemp(VehicleState state) {
+        int id = CarProps.HVAC_TEMP_AOSP;
+        for (int area : state.areas(id, CarProps.HVAC_AREAS)) {
+            Float value = state.floatValue(id, area);
+            if (value != null && value >= 16f && value <= 32f) return value;
         }
         return null;
     }

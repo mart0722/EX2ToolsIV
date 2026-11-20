@@ -549,9 +549,7 @@ public final class WidgetsFragment extends Fragment {
         binding = false;
 
         boolean stock = mode == Prefs.WIDGET_MODE_STOCK;
-        // Both implementations keep running in both modes. The mode selector
-        // only chooses which settings are shown: overlay settings for the
-        // stock launcher tab, AppWidget settings for the third-party tab.
+        // The selector only changes the settings panel. Both widget types can run together.
         overlayPanel.setVisibility(stock ? View.VISIBLE : View.GONE);
         standardPanel.setVisibility(stock ? View.GONE : View.VISIBLE);
         speedEnabled.setVisibility(stock ? View.VISIBLE : View.GONE);

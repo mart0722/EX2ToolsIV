@@ -46,6 +46,10 @@ public final class CommandDispatcher {
             this.message = message;
         }
 
+        public static Result unavailable(String message) {
+            return new Result(Status.REJECTED, message);
+        }
+
         public boolean ok() {
             return status == Status.APPLIED || status == Status.SENT
                     || status == Status.DRY_RUN;
