@@ -18,6 +18,7 @@ public final class App extends Application {
     public static final String CH_TASKS = "ex2_tasks";
     public static final String CH_WIDGETS = "ex2_widgets";
     public static final String CH_VOICE = "ex2_voice";
+    public static final String CH_CLIMATE = "ex2_climate";
     public static final String CH_CRASH = "ex2_crash";
 
     @Override
@@ -47,6 +48,7 @@ public final class App extends Application {
             nm.createNotificationChannel(channel(CH_TASKS, getString(R.string.task_channel)));
             nm.createNotificationChannel(channel(CH_WIDGETS, getString(R.string.widget_channel)));
             nm.createNotificationChannel(channel(CH_VOICE, getString(R.string.voice_channel)));
+            nm.createNotificationChannel(channel(CH_CLIMATE, getString(R.string.climate_channel)));
             NotificationChannel crash = new NotificationChannel(CH_CRASH, "Ошибки EX2ToolsIV",
                     NotificationManager.IMPORTANCE_HIGH);
             crash.setShowBadge(true);

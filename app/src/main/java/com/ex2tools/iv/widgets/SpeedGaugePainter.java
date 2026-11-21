@@ -157,17 +157,9 @@ final class SpeedGaugePainter {
         Paint number = new Paint(Paint.ANTI_ALIAS_FLAG);
         number.setColor(p.text);
         number.setTextAlign(Paint.Align.CENTER);
-        number.setTypeface(Typeface.create("sans-serif", Typeface.BOLD));
+        number.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         number.setTextSize(size * 0.132f);
 
-        if (maskText) {
-            Paint stroke = new Paint(number);
-            stroke.setStyle(Paint.Style.STROKE);
-            stroke.setStrokeWidth(size * 0.018f);
-            stroke.setColor(p.surface);
-            stroke.setAlpha(238);
-            drawCentered(canvas, text, 0f, y, stroke);
-        }
         drawCentered(canvas, text, 0f, y, number);
 
         Paint unit = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -186,7 +178,7 @@ final class SpeedGaugePainter {
         Paint number = new Paint(Paint.ANTI_ALIAS_FLAG);
         number.setColor(p.text);
         number.setTextAlign(Paint.Align.CENTER);
-        number.setTypeface(Typeface.create("sans-serif", Typeface.BOLD));
+        number.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         number.setTextSize(size * (analog ? 0.158f : 0.26f));
 
         Paint stroke = null;
@@ -199,7 +191,6 @@ final class SpeedGaugePainter {
         }
 
         String text = speed <= 0f ? "0" : String.valueOf(Math.round(speed));
-        if (stroke != null) drawCentered(canvas, text, 0f, numberY, stroke);
         drawCentered(canvas, text, 0f, numberY, number);
 
         Paint unit = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -207,15 +198,6 @@ final class SpeedGaugePainter {
         unit.setTextAlign(Paint.Align.CENTER);
         unit.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL));
         unit.setTextSize(size * (analog ? 0.045f : 0.060f));
-        if (maskText) {
-            unit.setStyle(Paint.Style.STROKE);
-            unit.setStrokeWidth(size * 0.012f);
-            unit.setColor(p.surface);
-            unit.setAlpha(238);
-            drawCentered(canvas, "км/ч", 0f, unitY, unit);
-            unit.setStyle(Paint.Style.FILL);
-            unit.setColor(p.muted);
-        }
         drawCentered(canvas, "км/ч", 0f, unitY, unit);
     }
 

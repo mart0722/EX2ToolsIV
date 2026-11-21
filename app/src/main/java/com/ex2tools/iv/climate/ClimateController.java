@@ -80,6 +80,30 @@ public final class ClimateController {
         return last;
     }
 
+    /**
+     * Запись уставки без отметки «пользователь задал температуру».
+     * Нужна климат-контролю: он двигает уставку относительно базовой,
+     * не подменяя желаемую температуру пользователя.
+     */
+    public CommandDispatcher.Result setTempSilent(float value) {
+        int celsius = Math.max(17, Math.min(32, Math.round(value)));
+        CommandDispatcher.Result last = null;
+        for (int area : TEMP_AREAS) {
+            CommandDispatcher.Result set = dispatcher.submit(new CommandDispatcher.Command(
+                    CarProps.HVAC_TEMP_SET, area, PropertySpec.Type.INT, celsius), false);
+            dispatcher.submit(new CommandDispatcher.Command(
+                    CarProps.HVAC_TEMP_ADJUST, area, PropertySpec.Type.INT, celsius), false);
+            last = set;
+        }
+        logTempState("silent " + celsius);
+        return last;
+    }
+
+    /** Текущая уставка климата, прочитанная из VHAL. */
+    public Float currentTarget() {
+        return readTargetTemp(state());
+    }
+
     public CommandDispatcher.Result adjustTemp(float delta) {
         return adjustTemp(delta, true);
     }
@@ -122,7 +146,7 @@ public final class ClimateController {
      */
     public static Float pendingTemp() {
         if (Float.isNaN(pendingTemp)) return null;
-        if (android.os.SystemClock.elapsedRealtime() - pendingTempAt > 15_000L) {
+        if (android.os.SystemClock.elapsedRealtime() - pendingTempAt > 4_000L) {
             return null;
         }
         return pendingTemp;
@@ -185,7 +209,7 @@ public final class ClimateController {
         CommandDispatcher.Result last = null;
         for (int area : VENT_AREAS) {
             last = dispatcher.submit(new CommandDispatcher.Command(
-                    CarProps.HVAC_FAN_DIRECTION, area, PropertySpec.Type.INT, mode));
+                    CarProps.HVAC_FAN_DIRECTION, area, PropertySpec.Type.INT, mode), false);
         }
         if (last != null && last.ok()) {
             pendingVent = mode;
@@ -217,11 +241,30 @@ public final class ClimateController {
         int type = capabilityType(CarProps.HVAC_AC_ON);
         boolean useBool = type == 0 || (type & 0x00F00000) == 0x00200000;
         CommandDispatcher.Result last = tryAc(value, useBool);
-        if (!DRY_RUN && last != null
-                && (last.status == CommandDispatcher.Status.REJECTED
-                || last.status == CommandDispatcher.Status.UNSUPPORTED)) {
+        if (!DRY_RUN && last != null && !last.ok()) {
             CommandDispatcher.Result alt = tryAc(value, !useBool);
             if (alt != null) last = alt;
+        }
+        if (!DRY_RUN && (last == null || !last.ok())) {
+            last = tryAcId(CarProps.HVAC_AC_ON_AOSP, value, true);
+        }
+        if (!DRY_RUN && (last == null || !last.ok())) {
+            last = tryAcId(CarProps.AC_POWER, value, false);
+        }
+        return last;
+    }
+
+    private CommandDispatcher.Result tryAcId(int id, boolean value, boolean asBool) {
+        int[] areas = state().areas(id, new int[]{117});
+        CommandDispatcher.Result last = null;
+        for (int area : areas) {
+            last = asBool
+                    ? dispatcher.submit(new CommandDispatcher.Command(
+                            id, area, PropertySpec.Type.BOOLEAN, value))
+                    : dispatcher.submit(new CommandDispatcher.Command(
+                            id, area, PropertySpec.Type.INT, value ? 1 : 0));
+            if (last.status == CommandDispatcher.Status.APPLIED
+                    || last.status == CommandDispatcher.Status.SENT) return last;
         }
         return last;
     }
@@ -247,7 +290,15 @@ public final class ClimateController {
     }
 
     public CommandDispatcher.Result setRecirc(boolean value) {
-        return submitBoolAny(CarProps.HVAC_RECIRC_ON, new int[]{117}, value);
+        // 0x21401026 - Integer, поэтому пишем INT; bool-вариант только как fallback.
+        CommandDispatcher.Result last = submitIntAny(CarProps.HVAC_RECIRC_ON,
+                new int[]{0}, value ? 1 : 0);
+        if (!DRY_RUN && (last == null || !last.ok())) {
+            CommandDispatcher.Result alt = submitBoolAny(CarProps.HVAC_RECIRC_ON_AOSP,
+                    new int[]{117}, value);
+            if (alt != null) last = alt;
+        }
+        return last;
     }
 
     public CommandDispatcher.Result toggleRecirc() {
@@ -304,7 +355,7 @@ public final class ClimateController {
     public CommandDispatcher.Result setSeatHeat(int area, int level) {
         return dispatcher.submit(new CommandDispatcher.Command(
                 CarProps.SEAT_HEAT, area, PropertySpec.Type.INT,
-                Math.max(0, Math.min(3, level))));
+                Math.max(0, Math.min(3, level))), false);
     }
 
     public CommandDispatcher.Result cycleSeat(int area) {
@@ -359,7 +410,7 @@ public final class ClimateController {
         CommandDispatcher.Result last = null;
         for (int area : areas) {
             last = dispatcher.submit(new CommandDispatcher.Command(
-                    id, area, PropertySpec.Type.INT, value));
+                    id, area, PropertySpec.Type.INT, value), false);
             if (DRY_RUN
                     || last.status == CommandDispatcher.Status.APPLIED
                     || last.status == CommandDispatcher.Status.SENT) return last;

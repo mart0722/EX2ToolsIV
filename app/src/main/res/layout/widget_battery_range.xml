@@ -31,45 +31,45 @@
                 android:id="@+id/tv_battery_range_percent"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
+                android:layout_weight="0.9"
                 android:ellipsize="end"
                 android:gravity="start"
                 android:includeFontPadding="false"
                 android:maxLines="1"
                 android:text="-"
                 android:textColor="@color/wg_text"
-                android:textSize="28sp"
-                android:textStyle="bold" />
+                android:textSize="22sp"
+                android:fontFamily="sans-serif-medium" />
 
             <TextView
                 android:id="@+id/tv_battery_range_energy"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
-                android:layout_marginEnd="4dp"
-                android:layout_weight="1"
+                android:layout_marginStart="2dp"
+                android:layout_marginEnd="2dp"
+                android:layout_weight="1.25"
                 android:ellipsize="end"
                 android:gravity="center"
                 android:includeFontPadding="false"
                 android:maxLines="1"
                 android:text="-"
-                android:textColor="@color/wg_text"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:textColor="@color/wg_text2"
+                android:textSize="12sp"
+                android:fontFamily="sans-serif-medium" />
 
             <TextView
                 android:id="@+id/tv_battery_range_km"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
+                android:layout_weight="0.9"
                 android:ellipsize="end"
                 android:gravity="end"
                 android:includeFontPadding="false"
                 android:maxLines="1"
                 android:text="-"
-                android:textColor="@color/wg_text2"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:textColor="@color/wg_text"
+                android:textSize="20sp"
+                android:fontFamily="sans-serif-medium" />
         </LinearLayout>
 
         <ProgressBar

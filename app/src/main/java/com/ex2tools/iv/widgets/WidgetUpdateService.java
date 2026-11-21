@@ -27,12 +27,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class WidgetUpdateService extends Service {
 
     private static final long POLL_MS = 3000L;
-    private static final long SPEED_POLL_MS = 1000L;
+    private static final long SPEED_POLL_MS = 500L;
     private static final long RETRY_MS = 6000L;
     private static final long CACHE_TTL_MS = 60000L;
 
     private static final Class<?>[] PROVIDERS = {
             ClockWidgetProvider.class,
+            ClockDateWidgetProvider.class,
             DriveRegenWidgetProvider.class,
             DriveModeVerticalWidgetProvider.class,
             RegenVerticalWidgetProvider.class,
@@ -189,6 +190,7 @@ public final class WidgetUpdateService extends Service {
                     LogStore.add(this, "widget action failed " + action + ": " + t);
                 }
             }
+            OverlayWidgetService.requestUpdate(this);
         }
 
         if (!hasAnyWidget(this)) {
@@ -284,6 +286,10 @@ public final class WidgetUpdateService extends Service {
         any |= update(awm, lockIds, WidgetsRenderer.lock(this));
         if (ids(awm, ClockWidgetProvider.class).length > 0) {
             ClockWidgetProvider.refreshAll(this);
+            any = true;
+        }
+        if (ids(awm, ClockDateWidgetProvider.class).length > 0) {
+            ClockDateWidgetProvider.refreshAll(this);
             any = true;
         }
 
@@ -428,6 +434,15 @@ public final class WidgetUpdateService extends Service {
             case WidgetsCommon.TEMP_PLUS:
             case WidgetsCommon.TEMP_MINUS:
                 adjustClimate(true, WidgetsCommon.TEMP_PLUS.equals(action) ? 1 : -1);
+                break;
+            case WidgetsCommon.CLIMATE_TARGET_PLUS:
+                WidgetsCommon.stepClimateTarget(this, 1f);
+                break;
+            case WidgetsCommon.CLIMATE_TARGET_MINUS:
+                WidgetsCommon.stepClimateTarget(this, -1f);
+                break;
+            case WidgetsCommon.CLIMATE_TOGGLE:
+                WidgetsCommon.toggleClimate(this);
                 break;
             case WidgetsCommon.VENT_FACE:
                 if (Prefs.ventDirectionButtons(this)) WidgetsCommon.toggleVent(1);

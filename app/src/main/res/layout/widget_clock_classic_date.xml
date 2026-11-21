@@ -32,8 +32,7 @@
             android:includeFontPadding="false"
             android:textColor="@color/wg_text"
             android:textSize="42sp"
-            android:textStyle="bold" />
-
+/>
         <TextView
             android:id="@+id/clockDate"
             android:layout_width="match_parent"

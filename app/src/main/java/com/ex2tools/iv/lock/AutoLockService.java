@@ -9,6 +9,8 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.PowerManager;
 import android.os.SystemClock;
+import android.media.AudioManager;
+import android.telecom.TelecomManager;
 
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
@@ -109,6 +111,26 @@ public final class AutoLockService extends Service {
         return null;
     }
 
+    /** Не закрываем экран вызова блокировкой. */
+    private boolean inCall() {
+        try {
+            TelecomManager tm = (TelecomManager) getSystemService(TELECOM_SERVICE);
+            if (tm != null && tm.isInCall()) return true;
+        } catch (Throwable ignored) {
+        }
+        try {
+            AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+            if (am != null) {
+                int mode = am.getMode();
+                return mode == AudioManager.MODE_IN_CALL
+                        || mode == AudioManager.MODE_IN_COMMUNICATION
+                        || mode == AudioManager.MODE_RINGTONE;
+            }
+        } catch (Throwable ignored) {
+        }
+        return false;
+    }
+
     private void check() {
         try {
             if (!Prefs.autoLock(this)) {
@@ -116,6 +138,7 @@ public final class AutoLockService extends Service {
                 return;
             }
             if (LockActivity.isShowing()) return;
+            if (inCall()) return;
 
             PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
             if (pm != null && !pm.isInteractive()) return;

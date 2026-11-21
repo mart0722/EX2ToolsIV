@@ -33,6 +33,7 @@ import androidx.lifecycle.Lifecycle;
 
 import com.ex2tools.iv.apps.AppsFragment;
 import com.ex2tools.iv.car.Telemetry;
+import com.ex2tools.iv.ui.ClimateFragment;
 import com.ex2tools.iv.ui.InfoFragment;
 import com.ex2tools.iv.ui.OverviewFragment;
 import com.ex2tools.iv.ui.ServiceModeFragment;
@@ -63,28 +64,31 @@ public final class MainActivity extends AppCompatActivity {
     private int current = -1;
     private Runnable carTick;
     private final List<View> navViews = new ArrayList<>();
+    private View climateNav;
 
-    private final Fragment[] fragments = new Fragment[10];
-    private final Drawable[] heroDrawables = new Drawable[10];
+    private final Fragment[] fragments = new Fragment[11];
+    private final Drawable[] heroDrawables = new Drawable[11];
     private static final String[] TAGS = {"overview", "settings", "status", "voice", "widgets",
-            "sounds", "apps", "service", "steering", "info"};
+            "sounds", "apps", "service", "steering", "info", "climate"};
 
     private static final int[] HERO_BG = {
             R.drawable.hero_overview, R.drawable.hero_settings, R.drawable.hero_status,
             R.drawable.hero_voice, R.drawable.hero_status, R.drawable.hero_sounds,
-            0, 0, 0, 0
+            0, 0, 0, 0, 0
     };
 
     private static final int[] ICONS = {
             R.drawable.ic_dashboard, R.drawable.ic_settings, R.drawable.ic_status,
             R.drawable.ic_voice, R.drawable.ic_widgets, R.drawable.ic_widget_volume,
-            R.drawable.ic_apps, R.drawable.ic_service, R.drawable.ic_climate_wheel_heat, R.drawable.ic_info
+            R.drawable.ic_apps, R.drawable.ic_service, R.drawable.ic_climate_wheel_heat, R.drawable.ic_info,
+            R.drawable.ic_tile_temp
     };
 
     private static final int[] TITLES = {
             R.string.overview_title, R.string.settings_title, R.string.status_bar_title,
             R.string.voice_title, R.string.widgets_title, R.string.sounds_title,
-            R.string.apps_page_title, R.string.service_title, R.string.steering_title, R.string.info_title
+            R.string.apps_page_title, R.string.service_title, R.string.steering_title, R.string.info_title,
+            R.string.climate_title
     };
 
     @Override
@@ -190,7 +194,28 @@ public final class MainActivity extends AppCompatActivity {
             applyPressAnimation(item);
             navContainer.addView(item);
             navViews.add(item);
+            if ("climate".equals(TAGS[i])) climateNav = item;
         }
+        refreshClimateNav();
+    }
+
+    /** Пункт «Климат-контроль» виден только при включённом режиме. */
+    public void refreshClimateNav() {
+        if (climateNav == null) return;
+        boolean enabled = Prefs.climateEnabled(this) && Prefs.climateUiVisible(this);
+        climateNav.setVisibility(enabled ? View.VISIBLE : View.GONE);
+        if (!enabled && current == 10) show(0);
+    }
+
+    public void openClimate() {
+        if (!Prefs.climateEnabled(this)) return;
+        show(10);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        refreshClimateNav();
     }
 
     private void applyWindowBackground(int index) {
@@ -217,6 +242,9 @@ public final class MainActivity extends AppCompatActivity {
         if (isFinishing() || isDestroyed()) return;
         try {
             com.ex2tools.iv.status.StatusIconService.sync(this);
+            if (!Prefs.statusAny(this)) {
+                com.ex2tools.iv.status.StatusIconService.cancelNotifications(this);
+            }
             com.ex2tools.iv.screenshot.ScreenshotButtonService.sync(this);
             com.ex2tools.iv.tasks.TaskManagerButtonService.sync(this);
             com.ex2tools.iv.widgets.WidgetUpdateService.sync(this);
@@ -328,6 +356,8 @@ public final class MainActivity extends AppCompatActivity {
                 return new com.ex2tools.iv.ui.SteeringFragment();
             case 9:
                 return new InfoFragment();
+            case 10:
+                return new ClimateFragment();
             case 0:
             default:
                 return new OverviewFragment();
@@ -371,6 +401,7 @@ public final class MainActivity extends AppCompatActivity {
                                     ContextCompat.getColor(MainActivity.this,
                                             ok ? R.color.flyme_green : R.color.flyme_label_level3)));
                             lastUpdated.setText(time);
+                            refreshClimateNav();
                         });
                     });
                 }

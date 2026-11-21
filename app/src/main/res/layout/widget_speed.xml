@@ -25,7 +25,7 @@
             android:text="--"
             android:textColor="@color/wg_text"
             android:textSize="66sp"
-            android:textStyle="bold" />
+            android:fontFamily="sans-serif-medium" />
 
         <TextView
             android:id="@+id/speed_unit"
@@ -46,11 +46,12 @@
         android:visibility="gone" />
 
     <!-- Прозрачная зона внизу по центру: тап по пробегу открывает подтверждение сброса. -->
-    <View
+    <TextView
         android:id="@+id/speed_trip_tap"
         android:layout_width="150dp"
         android:layout_height="40dp"
         android:layout_gravity="bottom|center_horizontal"
         android:background="@android:color/transparent"
+        android:text=""
         android:visibility="gone" />
 </FrameLayout>
