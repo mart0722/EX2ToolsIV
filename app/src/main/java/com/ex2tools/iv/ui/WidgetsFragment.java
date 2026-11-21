@@ -98,7 +98,7 @@ public final class WidgetsFragment extends Fragment {
     private FlymeSwitchRow overlayLock;
     private FlymeSwitchRow overlayDocked;
     private FlymeSwitchRow overlayAdaptClimateSize;
-    private FlymeSwitchRow climateOutlineIcons;
+    private FlymeSegmentedGroup climateIconStyle;
     private final Map<String, FlymeSwitchRow> overlayToggles = new LinkedHashMap<>();
     private final Map<String, SeekBar> overlaySizeSeeks = new LinkedHashMap<>();
     private final Map<String, SeekBar> overlayAlphaSeeks = new LinkedHashMap<>();
@@ -150,16 +150,19 @@ public final class WidgetsFragment extends Fragment {
         overlayLock = view.findViewById(R.id.widgetOverlayLock);
         overlayDocked = view.findViewById(R.id.widgetOverlayDocked);
         overlayAdaptClimateSize = view.findViewById(R.id.widgetOverlayAdaptClimateSize);
-        climateOutlineIcons = view.findViewById(R.id.widgetClimateOutlineIcons);
+        climateIconStyle = view.findViewById(R.id.widgetClimateIconStyle);
 
         buildOverlayRows(c);
         setupModeControls(c);
         setupSpeedControls(c);
         setupStandardControls(c);
-        climateOutlineIcons.setOnCheckedChangeListener((button, checked) -> {
-            if (binding) return;
+        climateIconStyle.addOnButtonCheckedListener((group, checkedId, checked) -> {
+            if (binding || !checked) return;
             Context context = requireContext();
-            Prefs.setClimateOutlineIcons(context, checked);
+            Prefs.ClimateIconStyle style = checkedId == R.id.widgetClimateIconStandard
+                    ? Prefs.ClimateIconStyle.STANDARD : checkedId == R.id.widgetClimateIconThin
+                    ? Prefs.ClimateIconStyle.THIN : Prefs.ClimateIconStyle.CHROME;
+            Prefs.setClimateIconStyle(context, style);
             VehicleState.get().requestDisplayRefresh();
             WidgetUpdateService.sync(context);
         });
@@ -517,7 +520,11 @@ public final class WidgetsFragment extends Fragment {
         if (overlayLock != null) overlayLock.setChecked(Prefs.overlayLock(c));
         if (overlayDocked != null) overlayDocked.setChecked(Prefs.overlayDocked(c));
         overlayAdaptClimateSize.setChecked(Prefs.overlayAdaptClimateSize(c));
-        climateOutlineIcons.setChecked(Prefs.climateOutlineIcons(c));
+        climateIconStyle.check(switch (Prefs.climateIconStyle(c)) {
+            case STANDARD -> R.id.widgetClimateIconStandard;
+            case THIN -> R.id.widgetClimateIconThin;
+            case CHROME -> R.id.widgetClimateIconChrome;
+        });
         speedEnabled.setChecked(Prefs.overlayEnabled(c, WidgetsCommon.SIZE_SPEED));
         speedPinned.setChecked(Prefs.overlayPinned(c, WidgetsCommon.SIZE_SPEED));
         if (appsModeGroup != null) {

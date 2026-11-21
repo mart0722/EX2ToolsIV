@@ -57,7 +57,7 @@ final class ClimateWidgetIcons {
     private final Context context;
     private final Target target;
     private final Resources resources;
-    private final boolean outline;
+    private final Prefs.ClimateIconStyle style;
     private final boolean night;
     private final int ink;
     private final int neutral;
@@ -71,7 +71,7 @@ final class ClimateWidgetIcons {
         context = c;
         this.target = target;
         resources = c.getResources();
-        outline = Prefs.climateOutlineIcons(c);
+        style = Prefs.climateIconStyle(c);
         night = (resources.getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK)
                 == Configuration.UI_MODE_NIGHT_YES;
         ink = c.getColor(R.color.wg_text);
@@ -145,19 +145,19 @@ final class ClimateWidgetIcons {
     }
 
     int frontAirLabel() {
-        return outline ? R.string.wg_heat_front_max_outline : R.string.wg_heat_front_max;
+        return usesOutline() ? R.string.wg_heat_front_max_outline : R.string.wg_heat_front_max;
     }
 
     int electricWindshieldLabel() {
-        return outline ? R.string.wg_heat_windshield_outline : R.string.wg_heat_windshield;
+        return usesOutline() ? R.string.wg_heat_windshield_outline : R.string.wg_heat_windshield;
     }
 
     boolean usesOutline() {
-        return outline;
+        return style != Prefs.ClimateIconStyle.STANDARD;
     }
 
     int buttonBackground(boolean transparent, boolean active, boolean pending, boolean airflow) {
-        if (!outline) {
+        if (!usesOutline()) {
             if (active) return airflow ? R.drawable.bg_wg_chip_on : R.drawable.bg_wg_chip_on_orange;
             return pending ? R.drawable.bg_wg_chip_pending : R.drawable.bg_wg_chip;
         }
@@ -169,12 +169,12 @@ final class ClimateWidgetIcons {
     }
 
     static int controlBackground(Context c, boolean transparent, int standard) {
-        if (!Prefs.climateOutlineIcons(c)) return standard;
+        if (Prefs.climateIconStyle(c) == Prefs.ClimateIconStyle.STANDARD) return standard;
         return transparent ? android.R.color.transparent : R.drawable.bg_wg_climate_glass;
     }
 
     int buttonTextColor(boolean active, boolean airflow) {
-        if (!active || !outline) return ink;
+        if (!active || !usesOutline()) return ink;
         return airflow ? airflowColor() : amber;
     }
 
@@ -192,7 +192,7 @@ final class ClimateWidgetIcons {
 
     private void set(int id, int resource, boolean tinted, Shape shape, int level) {
         target.set(id, resource, tinted ? ink : Color.TRANSPARENT,
-                outline ? bitmap(shape, level) : null);
+                usesOutline() ? bitmap(shape, level) : null);
     }
 
     private Bitmap bitmap(Shape shape, int level) {
@@ -200,7 +200,7 @@ final class ClimateWidgetIcons {
             case FRONT_AIR, FACE, FLOOR, FACE_FLOOR, FLOOR_GLASS -> airflowColor();
             default -> amber;
         };
-        String key = shape.name() + ':' + level + ':' + night + ':' + accent;
+        String key = shape.name() + ':' + style + ':' + level + ':' + night + ':' + accent;
         Bitmap cached = CACHE.get(key);
         if (cached != null) return cached;
 
@@ -212,6 +212,7 @@ final class ClimateWidgetIcons {
         Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         paint.setStrokeCap(Paint.Cap.ROUND);
         paint.setStrokeJoin(Paint.Join.ROUND);
+        boolean chrome = style == Prefs.ClimateIconStyle.CHROME;
         boolean multiLevelHeat = shape == Shape.SEAT || shape == Shape.WHEEL;
         for (int layer = 0; layer < data.length; layer++) {
             Path path = PathParser.createPathFromPathData(data[layer]);
@@ -221,10 +222,14 @@ final class ClimateWidgetIcons {
             paint.setShader(null);
             paint.setColor(active || (waves && level > 0) ? accent
                     : multiLevelHeat && layer > 0 ? inactiveHeat : neutral);
-            float width = waves ? 1.2f : active ? 1.89f : multiLevelHeat && layer > 0 ? 1.02f : 1.64f;
+            float width;
+            if (waves) width = chrome ? 1.2f : 1.06f;
+            else if (active) width = chrome ? 1.89f : 1.25f;
+            else if (multiLevelHeat && layer > 0) width = chrome ? 1.02f : 0.56f;
+            else width = chrome ? 1.64f : 1f;
             paint.setStrokeWidth(width * FIGMA_TO_VIEWPORT);
 
-            if (layer == 0) {
+            if (chrome && layer == 0) {
                 RectF bounds = new RectF();
                 path.computeBounds(bounds, true);
                 paint.setShader(new LinearGradient(0, bounds.top, 0, bounds.bottom,
