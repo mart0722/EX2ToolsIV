@@ -476,7 +476,25 @@
                                 android:layout_weight="1"
                                 android:minWidth="0dp"
                                 android:text="@string/widgets_overlay_placement_grid" />
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/widgetOverlayPlacementAutoGrid"
+                                style="@style/Widget.EX2.Toggle"
+                                android:layout_width="0dp"
+                                android:layout_height="56dp"
+                                android:layout_weight="1"
+                                android:minWidth="0dp"
+                                android:text="@string/widgets_overlay_placement_auto_grid" />
                         </com.ex2tools.iv.ui.FlymeSegmentedGroup>
+
+                        <TextView
+                            android:id="@+id/widgetOverlayAutoGridHint"
+                            style="@style/Text.EX2.ListMeta"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:text="@string/widgets_overlay_auto_grid_hint"
+                            android:visibility="gone" />
 
                         <com.ex2tools.iv.ui.FlymeSwitchRow
                             android:id="@+id/widgetOverlayLock"

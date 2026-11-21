@@ -646,7 +646,7 @@ public final class Prefs {
     }
 
     public enum OverlayPlacement {
-        FREE, CORNERS, GRID
+        FREE, CORNERS, GRID, AUTO_GRID
     }
 
     public static OverlayPlacement overlayPlacement(Context c) {
@@ -655,6 +655,7 @@ public final class Prefs {
             case "FREE" -> OverlayPlacement.FREE;
             case "CORNERS" -> OverlayPlacement.CORNERS;
             case "GRID" -> OverlayPlacement.GRID;
+            case "AUTO_GRID" -> OverlayPlacement.AUTO_GRID;
             default -> prefs.getBoolean("overlay_docked", false)
                     ? OverlayPlacement.CORNERS : OverlayPlacement.FREE;
         };
@@ -662,6 +663,14 @@ public final class Prefs {
 
     public static void setOverlayPlacement(Context c, OverlayPlacement placement) {
         get(c).edit().putString("overlay_placement", placement.name()).apply();
+    }
+
+    public static List<String> overlayAutoGridOrder(Context c) {
+        return readList(get(c).getString("overlay_auto_grid_order", "[]"));
+    }
+
+    public static void setOverlayAutoGridOrder(Context c, List<String> order) {
+        get(c).edit().putString("overlay_auto_grid_order", writeList(order)).apply();
     }
 
     public static int overlayCorner(Context c, String key) {
