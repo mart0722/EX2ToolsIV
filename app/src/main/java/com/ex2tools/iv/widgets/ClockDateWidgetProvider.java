@@ -4,13 +4,20 @@ import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.ComponentName;
 import android.content.Context;
+import android.os.Bundle;
 
-/** Часы с датой для штатного лаунчера: дата включена всегда. */
+/** Часы с датой: дата включена всегда. */
 public final class ClockDateWidgetProvider extends AppWidgetProvider {
 
     @Override
     public void onUpdate(Context context, AppWidgetManager manager, int[] ids) {
         ClockWidgetProvider.update(context, manager, ids, true);
+    }
+
+    @Override
+    public void onAppWidgetOptionsChanged(Context context, AppWidgetManager manager,
+                                          int appWidgetId, Bundle options) {
+        ClockWidgetProvider.update(context, manager, new int[]{appWidgetId}, true);
     }
 
     public static void refreshAll(Context context) {

@@ -65,7 +65,8 @@ public final class OverlayWidgetService extends Service {
                     || WidgetsCommon.SIZE_FAN.equals(key)
                     || WidgetsCommon.SIZE_VENT.equals(key)
                     || WidgetsCommon.SIZE_VENT_FAN.equals(key)
-                    || WidgetsCommon.SIZE_HEATING.equals(key)) {
+                    || WidgetsCommon.SIZE_HEATING.equals(key)
+                    || WidgetsCommon.SIZE_WINDSHIELD_HEAT.equals(key)) {
                 update(spec);
             }
         }
@@ -233,6 +234,7 @@ public final class OverlayWidgetService extends Service {
     public void onCreate() {
         super.onCreate();
         running = true;
+        instance = this;
         startForeground(NotificationHelper.ID_OVERLAY, NotificationHelper.overlay(this));
         windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
         LogStore.add(this, "overlay service created");
@@ -272,6 +274,7 @@ public final class OverlayWidgetService extends Service {
     @Override
     public void onDestroy() {
         destroyed = true;
+        instance = null;
         running = false;
         LogStore.add(this, "overlay service destroyed");
         VehicleState.get().removeListener(stateListener);
@@ -303,7 +306,7 @@ public final class OverlayWidgetService extends Service {
                 float scale = WidgetsCommon.SIZE_APPS.equals(spec.key)
                         ? 1f : Prefs.overlaySizePct(this, spec.key) / 100f;
                 content = OverlayWidgetViews.create(this, spec.key, scale);
-                OverlayWidgetViews.update(this, content, spec.key);
+                OverlayWidgetViews.update(content, spec.key);
             }
             if (WidgetsCommon.SIZE_SPEED.equals(spec.key)) {
                 container.addView(content, new FrameLayout.LayoutParams(
@@ -408,7 +411,7 @@ public final class OverlayWidgetService extends Service {
             if (WidgetsCommon.SIZE_SPEED.equals(spec.key) && spec.speedView != null) {
                 spec.speedView.update(this, WidgetsCommon.readSpeed(this), WidgetsCommon.readTripKm(this));
             } else {
-                OverlayWidgetViews.update(this, spec.content, spec.key);
+                OverlayWidgetViews.update(spec.content, spec.key);
             }
             spec.view.setAlpha(1f);
         } catch (Throwable t) {
@@ -614,6 +617,7 @@ public final class OverlayWidgetService extends Service {
 
         static String[] keys() {
             return new String[]{
+                    WidgetsCommon.SIZE_CLOCK,
                     WidgetsCommon.SIZE_SPEED,
                     WidgetsCommon.SIZE_DRIVE_REGEN,
                     WidgetsCommon.SIZE_DRIVE_MODE,
@@ -623,6 +627,7 @@ public final class OverlayWidgetService extends Service {
                     WidgetsCommon.SIZE_VENT,
                     WidgetsCommon.SIZE_VENT_FAN,
                     WidgetsCommon.SIZE_HEATING,
+                    WidgetsCommon.SIZE_WINDSHIELD_HEAT,
                     WidgetsCommon.SIZE_BATTERY_RANGE,
                     WidgetsCommon.SIZE_LOCK,
                     WidgetsCommon.SIZE_APPS

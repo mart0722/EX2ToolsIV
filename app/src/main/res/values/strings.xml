@@ -380,7 +380,7 @@
     <string name="lock_date_format">EEEE, d MMMM</string>
     <string name="lock_hint">Двойной тап — выход</string>
     <string name="lock_temp">%1$s °C</string>
-    <string name="widgets_opacity">Прозрачность фона AppWidget</string>
+    <string name="widgets_opacity">Непрозрачность фона AppWidget</string>
     <string name="widgets_opacity_note">Для всех AppWidget EX2ToolsIV</string>
     <string name="widgets_clock">Часы</string>
     <string name="widgets_clock_note">Время и дата под часами. Формат зависит от региона</string>
@@ -532,6 +532,7 @@
     <string name="wg_heat_header">Обогревы</string>
     <string name="wg_heat_wheel">Руль</string>
     <string name="wg_heat_front_max">Макс.</string>
+    <string name="widget_name_windshield_heat">Электрообогрев лобового</string>
     <string name="wg_heat_windshield">Лобовое</string>
     <string name="wg_heat_front_max_outline">Обдув MAX</string>
     <string name="wg_heat_windshield_outline">Подогрев лобового</string>
@@ -782,6 +783,9 @@
     <string name="settings_fast_widget_response">Быстрый отклик виджетов</string>
     <string name="settings_fast_widget_response_note">Ускоряет кнопки температуры и вентилятора. Показания обновляются по данным автомобиля.</string>
     <string name="widgets_overlay_adapt_climate_size">Подогнать размеры климата</string>
+    <string name="widgets_climate_icon_size">Размер иконок</string>
+    <string name="widgets_show_titles">Заголовки виджетов</string>
+    <string name="widgets_climate_icon_labels">Подписи к иконкам</string>
     <string name="widgets_accent_boost">Усиленный акцент</string>
     <string name="widgets_climate_icons_title">Стиль виджетов</string>
     <string name="widgets_climate_icons_standard">Стандарт</string>

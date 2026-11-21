@@ -58,10 +58,14 @@ final class OverlayWidgetViews {
         return root;
     }
 
-    static void update(Context context, View root, String key) {
-        Context c = themeContext(context);
+    static void update(View root, String key) {
+        Context c = root.getContext();
         View bg = root.findViewById(R.id.widget_bg_layer);
         if (bg != null) bg.setBackground(OverlayBackground.create(c, key));
+        int titleVisibility = Prefs.widgetTitles(c) ? View.VISIBLE : View.GONE;
+        visibility(root, R.id.widget_title, titleVisibility);
+        visibility(root, R.id.txt_drive_header, titleVisibility);
+        visibility(root, R.id.txt_regen_header, titleVisibility);
 
         switch (key) {
             case WidgetsCommon.SIZE_DRIVE_REGEN:
@@ -84,6 +88,9 @@ final class OverlayWidgetViews {
                 break;
             case WidgetsCommon.SIZE_VENT_FAN:
                 updateVentFan(c, root);
+                break;
+            case WidgetsCommon.SIZE_WINDSHIELD_HEAT:
+                updateWindshieldHeat(c, root);
                 break;
             case WidgetsCommon.SIZE_HEATING:
                 updateHeating(c, root);
@@ -132,6 +139,11 @@ final class OverlayWidgetViews {
         } catch (Throwable ignored) {
             return c;
         }
+    }
+
+    private static void visibility(View root, int id, int visibility) {
+        View view = root.findViewById(id);
+        if (view != null) view.setVisibility(visibility);
     }
 
     private static int layout(String key) {
@@ -183,6 +195,9 @@ final class OverlayWidgetViews {
                 click(c, root, R.id.chip_recirc, WidgetsCommon.RECIRC_TOGGLE);
                 click(c, root, R.id.btn_fan_minus, WidgetsCommon.FAN_MINUS);
                 click(c, root, R.id.btn_fan_plus, WidgetsCommon.FAN_PLUS);
+                break;
+            case WidgetsCommon.SIZE_WINDSHIELD_HEAT:
+                click(c, root, R.id.chip_windshield_heat, WidgetsCommon.WINDSHIELD_HEAT_TOGGLE);
                 break;
             case WidgetsCommon.SIZE_HEATING:
                 click(c, root, R.id.chip_wheel_heat, WidgetsCommon.WHEEL_HEAT_TOGGLE);
@@ -318,7 +333,7 @@ final class OverlayWidgetViews {
         }
         image(root, R.id.img_drive_mode, icon);
         text(root, R.id.tv_drive_mode_label, c.getString(label));
-        text(root, R.id.tv_drive_mode_footer, c.getString(R.string.wg_footer_drive));
+        text(root, R.id.widget_title, c.getString(R.string.wg_footer_drive));
     }
 
     private static void updateRegen(Context c, View root) {
@@ -340,7 +355,7 @@ final class OverlayWidgetViews {
         }
         image(root, R.id.img_regen_level, icon);
         text(root, R.id.tv_regen_level_label, c.getString(label));
-        text(root, R.id.tv_regen_level_footer, c.getString(R.string.wg_footer_regen));
+        text(root, R.id.widget_title, c.getString(R.string.wg_footer_regen));
     }
 
     private static void updateFan(Context c, View root) {
@@ -497,6 +512,20 @@ final class OverlayWidgetViews {
                 seatPassenger, c.getString(R.string.wg_heat_seat_passenger), icons.usesOutline());
     }
 
+    private static void updateWindshieldHeat(Context c, View root) {
+        Boolean state = WidgetsCommon.readWindshieldHeat();
+        ClimateWidgetIcons icons = ClimateWidgetIcons.forOverlay(c, root);
+        icons.windshieldHeat(state);
+        boolean active = Boolean.TRUE.equals(state);
+        boolean transparent = OverlayBackground.isTransparent(c, WidgetsCommon.SIZE_WINDSHIELD_HEAT);
+        root.findViewById(R.id.chip_windshield_heat).setBackgroundResource(
+                icons.buttonBackground(transparent, active, false, false));
+        TextView caption = root.findViewById(R.id.txt_windshield_heat);
+        climateCaption(root, icons, R.id.chip_windshield_heat, caption,
+                icons.caption(c.getString(R.string.widget_name_windshield_heat)));
+        caption.setTextColor(icons.buttonTextColor(active, false));
+    }
+
     private static void updateClock(Context c, View root) {
         int color = Prefs.clockColor(c) == 1 ? android.graphics.Color.WHITE
                 : Prefs.clockColor(c) == 2 ? android.graphics.Color.BLACK
@@ -520,6 +549,7 @@ final class OverlayWidgetViews {
         }
         View date = root.findViewById(R.id.clockDate);
         if (date instanceof TextView) {
+            date.setVisibility(Prefs.clockDate(c) ? View.VISIBLE : View.GONE);
             ((TextView) date).setText(dateText);
             ((TextView) date).setTextColor(color);
             ((TextView) date).setTypeface(android.graphics.Typeface.create(
@@ -606,7 +636,7 @@ final class OverlayWidgetViews {
         root.findViewById(chipId).setBackgroundResource(
                 icons.buttonBackground(transparent, active, false, true));
         TextView caption = root.findViewById(textId);
-        caption.setText(icons.ventCaption(textId));
+        climateCaption(root, icons, chipId, caption, icons.ventCaption(textId));
         caption.setTextColor(icons.buttonTextColor(active, true));
     }
 
@@ -622,7 +652,7 @@ final class OverlayWidgetViews {
         root.findViewById(chipId).setBackgroundResource(
                 icons.buttonBackground(transparent, active, pending, airflow));
         TextView caption = root.findViewById(textId);
-        caption.setText(icons.caption(label));
+        climateCaption(root, icons, chipId, caption, icons.caption(label));
         caption.setTextColor(pending && !active
                 ? c.getColor(R.color.wg_blue_light)
                 : icons.buttonTextColor(active, airflow));
@@ -639,9 +669,24 @@ final class OverlayWidgetViews {
         TextView caption = root.findViewById(textId);
         if (caption != null) {
             caption.setTextColor(icons.buttonTextColor(active, false));
-            caption.setText(icons.caption(outline ? label : labelWithLevel));
-            caption.setContentDescription(outline ? labelWithLevel : null);
+            climateCaption(root, icons, chipId, caption, icons.caption(outline ? label : labelWithLevel),
+                    labelWithLevel);
+            caption.setContentDescription(outline && icons.showsLabels()
+                    ? labelWithLevel : null);
         }
+    }
+
+    private static void climateCaption(View root, ClimateWidgetIcons icons, int chipId,
+                                       TextView view, CharSequence caption) {
+        climateCaption(root, icons, chipId, view, caption, caption);
+    }
+
+    private static void climateCaption(View root, ClimateWidgetIcons icons, int chipId,
+                                       TextView view, CharSequence caption, CharSequence description) {
+        boolean hideLabel = !icons.showsLabels();
+        view.setVisibility(hideLabel ? View.GONE : View.VISIBLE);
+        view.setText(caption);
+        root.findViewById(chipId).setContentDescription(hideLabel ? description : null);
     }
 
     private static void click(Context c, View root, int id, String action) {

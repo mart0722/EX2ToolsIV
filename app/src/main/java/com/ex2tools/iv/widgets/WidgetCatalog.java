@@ -59,6 +59,8 @@ public final class WidgetCatalog {
                 R.layout.widget_hvac_direction_fan, 420, 260, 40, 520);
         add(WidgetsCommon.SIZE_HEATING, R.string.widgets_size_heating,
                 R.layout.widget_heating_test, 420, 260, 480, 520);
+        add(WidgetsCommon.SIZE_WINDSHIELD_HEAT, R.string.widget_name_windshield_heat,
+                R.layout.widget_windshield_heat, 160, 100, 480, 420);
         add(WidgetsCommon.SIZE_BATTERY_RANGE, R.string.widgets_size_battery_range,
                 R.layout.widget_battery_range, 300, 96, 40, 700);
         add(WidgetsCommon.SIZE_LOCK, R.string.widgets_size_lock,

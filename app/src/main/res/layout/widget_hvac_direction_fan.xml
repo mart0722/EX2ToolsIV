@@ -19,23 +19,31 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
+            android:gravity="end|center_vertical"
             android:orientation="horizontal">
 
-            <ImageView
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:importantForAccessibility="no"
-                android:src="@drawable/wg_ic_vent"
-                android:tint="@color/wg_text" />
-
-            <TextView
-                style="@style/WgTitle"
+            <LinearLayout
+                android:id="@+id/widget_title"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
                 android:layout_weight="1"
-                android:text="Обдув и вентилятор" />
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/wg_ic_vent"
+                    android:tint="@color/wg_text" />
+
+                <TextView
+                    style="@style/WgTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="Обдув и вентилятор" />
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/btn_vent_mode"
@@ -67,9 +75,8 @@
 
                 <ImageView
                     android:id="@+id/img_vent_face"
-                    style="@style/WgIcon"
-                    android:src="@drawable/wg_ic_vent_face"
-                    android:tint="@color/wg_text" />
+                    style="@style/WgClimateIcon"
+                    android:src="@drawable/wg_ic_vent_face" />
 
                 <TextView
                     android:id="@+id/txt_vent_face"
@@ -89,9 +96,8 @@
 
                 <ImageView
                     android:id="@+id/img_vent_floor"
-                    style="@style/WgIcon"
-                    android:src="@drawable/wg_ic_vent_floor"
-                    android:tint="@color/wg_text" />
+                    style="@style/WgClimateIcon"
+                    android:src="@drawable/wg_ic_vent_floor" />
 
                 <TextView
                     android:id="@+id/txt_vent_floor"
@@ -111,9 +117,8 @@
 
                 <ImageView
                     android:id="@+id/img_vent_face_floor"
-                    style="@style/WgIcon"
-                    android:src="@drawable/wg_ic_vent_face_floor"
-                    android:tint="@color/wg_text" />
+                    style="@style/WgClimateIcon"
+                    android:src="@drawable/wg_ic_vent_face_floor" />
 
                 <TextView
                     android:id="@+id/txt_vent_face_floor"
@@ -133,9 +138,8 @@
 
                 <ImageView
                     android:id="@+id/img_vent_windshield"
-                    style="@style/WgIcon"
-                    android:src="@drawable/wg_ic_vent_windshield"
-                    android:tint="@color/wg_text" />
+                    style="@style/WgClimateIcon"
+                    android:src="@drawable/wg_ic_vent_windshield" />
 
                 <TextView
                     android:id="@+id/txt_vent_windshield"
@@ -155,9 +159,8 @@
 
                 <ImageView
                     android:id="@+id/img_vent_floor_windshield"
-                    style="@style/WgIcon"
-                    android:src="@drawable/wg_ic_vent_floor_windshield"
-                    android:tint="@color/wg_text" />
+                    style="@style/WgClimateIcon"
+                    android:src="@drawable/wg_ic_vent_floor_windshield" />
 
                 <TextView
                     android:id="@+id/txt_vent_floor_windshield"
@@ -175,9 +178,9 @@
                 android:layout_weight="1">
 
                 <ImageView
-                    style="@style/WgIcon"
-                    android:src="@drawable/wg_ic_recirc"
-                    android:tint="@color/wg_text" />
+                    android:id="@+id/img_recirc"
+                    style="@style/WgClimateIcon"
+                    android:src="@drawable/wg_ic_recirc" />
 
                 <TextView
                     android:id="@+id/txt_recirc"

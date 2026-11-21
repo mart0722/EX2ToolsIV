@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/widget_bg_layer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_wg_card_100" />
+
+    <LinearLayout
+        android:id="@+id/chip_windshield_heat"
+        style="@style/WgChip"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_margin="6dp">
+
+        <ImageView
+            android:id="@+id/img_windshield_heat"
+            style="@style/WgClimateIcon"
+            android:src="@drawable/wg_ic_windshield_heat_light" />
+
+        <TextView
+            android:id="@+id/txt_windshield_heat"
+            style="@style/WgClimateChipLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/widget_name_windshield_heat" />
+    </LinearLayout>
+</FrameLayout>

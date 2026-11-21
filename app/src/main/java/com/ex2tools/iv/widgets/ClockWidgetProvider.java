@@ -5,6 +5,7 @@ import android.appwidget.AppWidgetProvider;
 import android.content.ComponentName;
 import android.content.Context;
 import android.graphics.Color;
+import android.os.Bundle;
 import android.widget.RemoteViews;
 
 import androidx.core.content.ContextCompat;
@@ -21,6 +22,12 @@ public class ClockWidgetProvider extends AppWidgetProvider {
     @Override
     public void onUpdate(Context context, AppWidgetManager manager, int[] ids) {
         update(context, manager, ids, false);
+    }
+
+    @Override
+    public void onAppWidgetOptionsChanged(Context context, AppWidgetManager manager,
+                                          int appWidgetId, Bundle options) {
+        update(context, manager, new int[]{appWidgetId}, false);
     }
 
     public static void refreshAll(Context context) {
@@ -45,9 +52,9 @@ public class ClockWidgetProvider extends AppWidgetProvider {
         }
         String dateText = dateText(context);
         for (int id : ids) {
-            RemoteViews views = new RemoteViews(context.getPackageName(), layout);
-            int background = WidgetAppearance.usesGlass(context)
-                    ? WidgetsCommon.bgDrawableResForPct(context) : R.drawable.bg_wg_card_100;
+            int size = SizedWidgetViews.size(context, manager, id, manager.getAppWidgetOptions(id));
+            RemoteViews views = SizedWidgetViews.create(SizedWidgetViews.context(context, size), layout);
+            int background = WidgetsCommon.bgDrawableResForPct(context);
             views.setInt(R.id.widget_bg_layer, "setBackgroundResource", background);
             views.setTextColor(R.id.clockTime, color);
             if (date) {

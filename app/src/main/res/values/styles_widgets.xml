@@ -64,6 +64,13 @@
         <item name="android:importantForAccessibility">no</item>
     </style>
 
+    <style name="WgClimateIcon">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:adjustViewBounds">true</item>
+        <item name="android:importantForAccessibility">no</item>
+    </style>
+
     <style name="WgRoundButton">
         <item name="android:background">@drawable/bg_wg_round</item>
         <item name="android:gravity">center</item>

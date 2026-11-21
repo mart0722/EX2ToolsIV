@@ -26,7 +26,8 @@ final class OverlayBackground {
         GradientDrawable d = new GradientDrawable();
         d.setColor(Color.argb(alpha, Color.red(base), Color.green(base), Color.blue(base)));
         d.setCornerRadius(dp(c, 22));
-        d.setStroke(Math.max(1, dp(c, 1)), alpha == 0 ? Color.TRANSPARENT : c.getColor(R.color.wg_stroke_100));
+        d.setStroke(Math.max(1, dp(c, 1)), androidx.core.graphics.ColorUtils.setAlphaComponent(
+                c.getColor(R.color.wg_stroke_100), alpha));
         return d;
     }
 
@@ -35,7 +36,7 @@ final class OverlayBackground {
     }
 
     private static int alpha(Context c, String key) {
-        return Math.round(255f * Prefs.overlayAlphaPct(c, key) * Prefs.widgetBgOpacity(c) / 10000f);
+        return Math.round(255f * Prefs.overlayAlphaPct(c, key) / 100f);
     }
 
     private static int dp(Context c, int value) {

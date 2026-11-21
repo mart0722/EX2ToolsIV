@@ -73,7 +73,7 @@
                 android:progressDrawable="@drawable/wg_progress" />
 
             <TextView
-                android:id="@+id/tv_temp_label"
+                android:id="@+id/widget_title"
                 style="@style/WgSection"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

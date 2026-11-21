@@ -17,6 +17,7 @@
         android:padding="14dp">
 
         <LinearLayout
+            android:id="@+id/widget_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
@@ -57,7 +58,7 @@
 
                 <ImageView
                     android:id="@+id/img_wheel_heat"
-                    style="@style/WgIcon"
+                    style="@style/WgClimateIcon"
                     android:src="@drawable/wg_ic_wheel_heat_light" />
 
                 <TextView
@@ -78,7 +79,7 @@
 
                 <ImageView
                     android:id="@+id/img_front_rear_defrost"
-                    style="@style/WgIcon"
+                    style="@style/WgClimateIcon"
                     android:src="@drawable/wg_ic_rear_heat_light" />
 
                 <TextView
@@ -98,9 +99,8 @@
 
                 <ImageView
                     android:id="@+id/img_front_max_defrost"
-                    style="@style/WgIcon"
-                    android:src="@drawable/wg_ic_heat_windshield"
-                    android:tint="@color/wg_text" />
+                    style="@style/WgClimateIcon"
+                    android:src="@drawable/wg_ic_heat_windshield" />
 
                 <TextView
                     android:id="@+id/txt_front_max_defrost"
@@ -120,6 +120,27 @@
             android:orientation="horizontal">
 
             <LinearLayout
+                android:id="@+id/chip_seat_heat_driver"
+                style="@style/WgChip"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="6dp"
+                android:layout_weight="1">
+
+                <ImageView
+                    android:id="@+id/img_seat_heat_driver"
+                    style="@style/WgClimateIcon"
+                    android:src="@drawable/wg_ic_seat" />
+
+                <TextView
+                    android:id="@+id/txt_seat_heat_driver"
+                    style="@style/WgClimateChipLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/wg_heat_seat_driver" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:id="@+id/chip_windshield_heat"
                 style="@style/WgChip"
                 android:layout_width="0dp"
@@ -129,7 +150,7 @@
 
                 <ImageView
                     android:id="@+id/img_windshield_heat"
-                    style="@style/WgIcon"
+                    style="@style/WgClimateIcon"
                     android:src="@drawable/wg_ic_windshield_heat_light" />
 
                 <TextView
@@ -141,28 +162,6 @@
             </LinearLayout>
 
             <LinearLayout
-                android:id="@+id/chip_seat_heat_driver"
-                style="@style/WgChip"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_marginEnd="6dp"
-                android:layout_weight="1">
-
-                <ImageView
-                    android:id="@+id/img_seat_heat_driver"
-                    style="@style/WgIcon"
-                    android:src="@drawable/wg_ic_seat"
-                    android:tint="@color/wg_text" />
-
-                <TextView
-                    android:id="@+id/txt_seat_heat_driver"
-                    style="@style/WgClimateChipLabel"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/wg_heat_seat_driver" />
-            </LinearLayout>
-
-            <LinearLayout
                 android:id="@+id/chip_seat_heat_passenger"
                 style="@style/WgChip"
                 android:layout_width="0dp"
@@ -171,9 +170,8 @@
 
                 <ImageView
                     android:id="@+id/img_seat_heat_passenger"
-                    style="@style/WgIcon"
-                    android:src="@drawable/wg_ic_seat"
-                    android:tint="@color/wg_text" />
+                    style="@style/WgClimateIcon"
+                    android:src="@drawable/wg_ic_seat" />
 
                 <TextView
                     android:id="@+id/txt_seat_heat_passenger"

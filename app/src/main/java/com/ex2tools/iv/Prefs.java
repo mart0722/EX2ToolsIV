@@ -553,6 +553,37 @@ public final class Prefs {
         get(c).edit().putString("climate_icon_style", style.name()).apply();
     }
 
+    public static final int CLIMATE_ICON_MIN_PCT = 80;
+    public static final int CLIMATE_ICON_MAX_PCT = 150;
+
+    public static int climateIconSizePct(Context c) {
+        return clampClimateIconSize(get(c).getInt("climate_icon_size_pct", 100));
+    }
+
+    public static void setClimateIconSizePct(Context c, int pct) {
+        get(c).edit().putInt("climate_icon_size_pct", clampClimateIconSize(pct)).apply();
+    }
+
+    private static int clampClimateIconSize(int pct) {
+        return Math.max(CLIMATE_ICON_MIN_PCT, Math.min(CLIMATE_ICON_MAX_PCT, pct));
+    }
+
+    public static boolean widgetTitles(Context c) {
+        return get(c).getBoolean("widget_titles", true);
+    }
+
+    public static void setWidgetTitles(Context c, boolean enabled) {
+        get(c).edit().putBoolean("widget_titles", enabled).apply();
+    }
+
+    public static boolean climateIconLabels(Context c) {
+        return get(c).getBoolean("climate_icon_labels", true);
+    }
+
+    public static void setClimateIconLabels(Context c, boolean enabled) {
+        get(c).edit().putBoolean("climate_icon_labels", enabled).apply();
+    }
+
     public static boolean widgetAccentBoost(Context c) {
         return get(c).getBoolean("widget_accent_boost", false);
     }
@@ -646,13 +677,13 @@ public final class Prefs {
 
     public static int widgetSizePct(Context c, String key) {
         int fallback = widgetSizePct(c);
-        return Math.max(50, Math.min(250,
+        return Math.max(50, Math.min(300,
                 get(c).getInt("widget_size_" + key + "_pct", fallback)));
     }
 
     public static void setWidgetSizePct(Context c, String key, int value) {
         get(c).edit().putInt("widget_size_" + key + "_pct",
-                Math.max(50, Math.min(250, value))).apply();
+                Math.max(50, Math.min(300, value))).apply();
     }
 
     public static int widgetFanCache(Context c) {

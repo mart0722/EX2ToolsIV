@@ -46,6 +46,7 @@ public final class WidgetsFragment extends Fragment {
             WidgetsCommon.SIZE_VENT,
             WidgetsCommon.SIZE_VENT_FAN,
             WidgetsCommon.SIZE_HEATING,
+            WidgetsCommon.SIZE_WINDSHIELD_HEAT,
             WidgetsCommon.SIZE_BATTERY_RANGE,
             WidgetsCommon.SIZE_LOCK,
             WidgetsCommon.SIZE_APPS,
@@ -62,6 +63,7 @@ public final class WidgetsFragment extends Fragment {
             R.string.widgets_size_vent,
             R.string.widgets_size_vent_fan,
             R.string.widgets_size_heating,
+            R.string.widget_name_windshield_heat,
             R.string.widgets_size_battery_range,
             R.string.widgets_size_lock,
             R.string.widgets_size_apps,
@@ -100,6 +102,10 @@ public final class WidgetsFragment extends Fragment {
     private FlymeSwitchRow overlayAdaptClimateSize;
     private FlymeSegmentedGroup climateIconStyle;
     private FlymeSwitchRow widgetAccentBoost;
+    private SeekBar climateIconSize;
+    private TextView climateIconSizeValue;
+    private FlymeSwitchRow climateIconLabels;
+    private FlymeSwitchRow widgetShowTitles;
     private final Map<String, FlymeSwitchRow> overlayToggles = new LinkedHashMap<>();
     private final Map<String, SeekBar> overlaySizeSeeks = new LinkedHashMap<>();
     private final Map<String, SeekBar> overlayAlphaSeeks = new LinkedHashMap<>();
@@ -153,6 +159,18 @@ public final class WidgetsFragment extends Fragment {
         overlayAdaptClimateSize = view.findViewById(R.id.widgetOverlayAdaptClimateSize);
         climateIconStyle = view.findViewById(R.id.widgetClimateIconStyle);
         widgetAccentBoost = view.findViewById(R.id.widgetAccentBoost);
+        climateIconSize = view.findViewById(R.id.widgetClimateIconSize);
+        climateIconSizeValue = view.findViewById(R.id.widgetClimateIconSizeValue);
+        climateIconLabels = view.findViewById(R.id.widgetClimateIconLabels);
+        widgetShowTitles = view.findViewById(R.id.widgetShowTitles);
+        widgetShowTitles.setOnCheckedChangeListener((button, checked) -> {
+            if (binding) return;
+            Context context = requireContext();
+            Prefs.setWidgetTitles(context, checked);
+            VehicleState.get().requestDisplayRefresh();
+            WidgetUpdateService.sync(context);
+        });
+        setupClimateIconControls();
 
         buildOverlayRows(c);
         setupModeControls(c);
@@ -186,6 +204,37 @@ public final class WidgetsFragment extends Fragment {
         });
         WidgetModes.refreshAuto(c);
         updateAll();
+    }
+
+    private void setupClimateIconControls() {
+        climateIconSize.setMin(Prefs.CLIMATE_ICON_MIN_PCT);
+        climateIconSize.setMax(Prefs.CLIMATE_ICON_MAX_PCT);
+        climateIconSize.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int pct, boolean fromUser) {
+                climateIconSizeValue.setText(getString(R.string.widgets_percent_fmt, pct));
+                if (!fromUser || binding) return;
+                Context c = requireContext();
+                Prefs.setClimateIconSizePct(c, pct);
+                VehicleState.get().requestDisplayRefresh();
+                WidgetUpdateService.sync(c);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+            }
+        });
+        climateIconLabels.setOnCheckedChangeListener((button, checked) -> {
+            if (binding) return;
+            Context c = requireContext();
+            Prefs.setClimateIconLabels(c, checked);
+            VehicleState.get().requestDisplayRefresh();
+            WidgetUpdateService.sync(c);
+        });
     }
 
     private void updateAccentControl(Context c) {
@@ -286,7 +335,6 @@ public final class WidgetsFragment extends Fragment {
                 }
                 if (fromUser) {
                     Prefs.setWidgetSizePct(requireContext(), WidgetsCommon.SIZE_SPEED, pct);
-                    SpeedWidgetProvider.refreshAll(requireContext());
                 }
             }
 
@@ -296,7 +344,6 @@ public final class WidgetsFragment extends Fragment {
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-                refreshSpeed();
                 OverlayWidgetService.restart(requireContext());
             }
         });
@@ -374,6 +421,7 @@ public final class WidgetsFragment extends Fragment {
             Prefs.setClockFont(requireContext(), checkedId == R.id.clockFontCondensed ? 1 : 0);
             updateClockPreview();
             ClockWidgetProvider.refreshAll(requireContext());
+            OverlayWidgetService.requestUpdate(requireContext());
         });
 
         colorGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
@@ -383,6 +431,7 @@ public final class WidgetsFragment extends Fragment {
             Prefs.setClockColor(requireContext(), mode);
             updateClockPreview();
             ClockWidgetProvider.refreshAll(requireContext());
+            OverlayWidgetService.requestUpdate(requireContext());
         });
 
         date.setChecked(Prefs.clockDate(c));
@@ -391,6 +440,7 @@ public final class WidgetsFragment extends Fragment {
             Prefs.setClockDate(requireContext(), checked);
             updateClockPreview();
             ClockWidgetProvider.refreshAll(requireContext());
+            OverlayWidgetService.requestUpdate(requireContext());
             WidgetUpdateService.refreshOpacity(requireContext());
         });
     }
@@ -553,6 +603,11 @@ public final class WidgetsFragment extends Fragment {
         });
         updateAccentControl(c);
         widgetAccentBoost.setChecked(Prefs.widgetAccentBoost(c));
+        int iconSize = Prefs.climateIconSizePct(c);
+        climateIconSize.setProgress(iconSize);
+        climateIconSizeValue.setText(getString(R.string.widgets_percent_fmt, iconSize));
+        climateIconLabels.setChecked(Prefs.climateIconLabels(c));
+        widgetShowTitles.setChecked(Prefs.widgetTitles(c));
         speedEnabled.setChecked(Prefs.overlayEnabled(c, WidgetsCommon.SIZE_SPEED));
         speedPinned.setChecked(Prefs.overlayPinned(c, WidgetsCommon.SIZE_SPEED));
         if (appsModeGroup != null) {
