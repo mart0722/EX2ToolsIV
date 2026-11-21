@@ -533,7 +533,7 @@ public final class Prefs {
     }
 
     public static boolean climateOutlineIcons(Context c) {
-        return get(c).getBoolean("climate_outline_icons", false);
+        return get(c).getBoolean("climate_outline_icons", true);
     }
 
     public static void setClimateOutlineIcons(Context c, boolean enabled) {

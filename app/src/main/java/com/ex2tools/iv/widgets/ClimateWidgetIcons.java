@@ -4,40 +4,49 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.LinearGradient;
 import android.graphics.Paint;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffColorFilter;
-import android.graphics.Rect;
+import android.graphics.Path;
+import android.graphics.RectF;
+import android.graphics.Shader;
 import android.util.LruCache;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.RemoteViews;
+
+import androidx.core.graphics.PathParser;
 
 import com.ex2tools.iv.Prefs;
 import com.ex2tools.iv.R;
 
 /** Shared icon artwork and state for launcher and overlay climate widgets. */
 final class ClimateWidgetIcons {
+    private static final int VIEWPORT = 96;
+    private static final int BITMAP_SIZE = 144;
+    private static final float FIGMA_TO_VIEWPORT = VIEWPORT / 44f;
+    private static final int[] STEEL = {0xFF24384C, 0xFF60788F, 0xFF324A60, 0xFF30495F};
+    private static final int[] TITANIUM = {0xFFA6BED5, 0xFFF7FAFF, 0xFF8AA4C0, 0xFFCAD8E9};
+    private static final float[] STEEL_STOPS = {0f, .27f, .47f, 1f};
+    private static final float[] TITANIUM_STOPS = {0f, .27f, .52f, 1f};
     private static final LruCache<String, Bitmap> CACHE = new LruCache<>(64);
 
     private enum Shape {
-        SEAT(R.drawable.wg_ref_climate_seat),
-        WHEEL(R.drawable.wg_ref_climate_wheel),
-        FRONT_AIR(R.drawable.wg_ref_climate_front_air),
-        REAR(R.drawable.wg_ref_climate_rear),
-        FRONT_ELECTRIC(R.drawable.wg_ref_climate_front_heat),
-        FACE(R.drawable.wg_ref_climate_face),
-        FLOOR(R.drawable.wg_ref_climate_floor),
-        FACE_FLOOR(R.drawable.wg_ref_climate_face_floor),
-        FLOOR_GLASS(R.drawable.wg_ref_climate_floor_glass);
+        SEAT(R.array.wg_chrome_seat),
+        WHEEL(R.array.wg_chrome_wheel),
+        FRONT_AIR(R.array.wg_chrome_front_air),
+        REAR(R.array.wg_chrome_rear),
+        FRONT_ELECTRIC(R.array.wg_chrome_front_heat),
+        FACE(R.array.wg_chrome_face),
+        FLOOR(R.array.wg_chrome_floor),
+        FACE_FLOOR(R.array.wg_chrome_face_floor),
+        FLOOR_GLASS(R.array.wg_chrome_floor_glass);
 
-        final int maskResource;
+        final int pathResource;
 
-        Shape(int maskResource) {
-            this.maskResource = maskResource;
+        Shape(int pathResource) {
+            this.pathResource = pathResource;
         }
     }
 
@@ -45,21 +54,37 @@ final class ClimateWidgetIcons {
         void set(int id, int legacyResource, int legacyTint, Bitmap outline);
     }
 
+    private final Context context;
     private final Target target;
     private final Resources resources;
     private final boolean outline;
     private final boolean night;
     private final int ink;
+    private final int neutral;
     private final int amber;
+    private final int blue;
+    private final int coral;
+    private final int inactiveHeat;
+    private Boolean warmAirflow;
 
     private ClimateWidgetIcons(Context c, Target target) {
+        context = c;
         this.target = target;
         resources = c.getResources();
         outline = Prefs.climateOutlineIcons(c);
         night = (resources.getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK)
                 == Configuration.UI_MODE_NIGHT_YES;
         ink = c.getColor(R.color.wg_text);
+        neutral = c.getColor(R.color.wg_climate_neutral);
         amber = c.getColor(R.color.wg_climate_amber);
+        blue = c.getColor(R.color.wg_climate_blue);
+        coral = c.getColor(R.color.wg_climate_coral);
+        inactiveHeat = c.getColor(R.color.wg_climate_inactive);
+    }
+
+    private boolean showsWarmAirflow() {
+        if (warmAirflow == null) warmAirflow = WidgetsCommon.isWarmAirflow(context);
+        return warmAirflow;
     }
 
     static ClimateWidgetIcons forRemote(Context c, RemoteViews views) {
@@ -131,6 +156,32 @@ final class ClimateWidgetIcons {
         return outline;
     }
 
+    int buttonBackground(boolean transparent, boolean active, boolean pending, boolean airflow) {
+        if (!outline) {
+            if (active) return airflow ? R.drawable.bg_wg_chip_on : R.drawable.bg_wg_chip_on_orange;
+            return pending ? R.drawable.bg_wg_chip_pending : R.drawable.bg_wg_chip;
+        }
+        if (pending && !active) return R.drawable.bg_wg_climate_pending;
+        if (transparent) return android.R.color.transparent;
+        if (!active) return R.drawable.bg_wg_climate_glass;
+        if (!airflow) return R.drawable.bg_wg_climate_heat;
+        return showsWarmAirflow() ? R.drawable.bg_wg_climate_warm_air : R.drawable.bg_wg_climate_air;
+    }
+
+    static int controlBackground(Context c, boolean transparent, int standard) {
+        if (!Prefs.climateOutlineIcons(c)) return standard;
+        return transparent ? android.R.color.transparent : R.drawable.bg_wg_climate_glass;
+    }
+
+    int buttonTextColor(boolean active, boolean airflow) {
+        if (!active || !outline) return ink;
+        return airflow ? airflowColor() : amber;
+    }
+
+    private int airflowColor() {
+        return showsWarmAirflow() ? coral : blue;
+    }
+
     private static boolean on(Boolean value) {
         return Boolean.TRUE.equals(value);
     }
@@ -145,27 +196,49 @@ final class ClimateWidgetIcons {
     }
 
     private Bitmap bitmap(Shape shape, int level) {
-        String key = shape.name() + ':' + level + ':' + ink + ':' + amber;
-        Bitmap icon = CACHE.get(key);
-        if (icon != null) return icon;
-        Bitmap masks = BitmapFactory.decodeResource(resources, shape.maskResource);
-        int size = masks.getHeight();
-        int layers = masks.getWidth() / size;
-        icon = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
+        int accent = level == 0 ? neutral : switch (shape) {
+            case FRONT_AIR, FACE, FLOOR, FACE_FLOOR, FLOOR_GLASS -> airflowColor();
+            default -> amber;
+        };
+        String key = shape.name() + ':' + level + ':' + night + ':' + accent;
+        Bitmap cached = CACHE.get(key);
+        if (cached != null) return cached;
+
+        String[] data = resources.getStringArray(shape.pathResource);
+        Bitmap icon = Bitmap.createBitmap(BITMAP_SIZE, BITMAP_SIZE, Bitmap.Config.ARGB_8888);
         icon.setDensity(Bitmap.DENSITY_NONE);
         Canvas canvas = new Canvas(icon);
-        Paint paint = new Paint(Paint.FILTER_BITMAP_FLAG);
-        Rect destination = new Rect(0, 0, size, size);
-        Rect source = new Rect();
-        // Horizontal mask strip: silhouette first, then one cell per indicator.
-        // Seats and wheel have three individual cells; the others have one.
-        for (int layer = 0; layer < layers; layer++) {
+        canvas.scale(BITMAP_SIZE / (float) VIEWPORT, BITMAP_SIZE / (float) VIEWPORT);
+        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        paint.setStrokeCap(Paint.Cap.ROUND);
+        paint.setStrokeJoin(Paint.Join.ROUND);
+        boolean multiLevelHeat = shape == Shape.SEAT || shape == Shape.WHEEL;
+        for (int layer = 0; layer < data.length; layer++) {
+            Path path = PathParser.createPathFromPathData(data[layer]);
+            path.setFillType(Path.FillType.EVEN_ODD);
+            boolean waves = shape == Shape.FLOOR_GLASS && layer == 2;
             boolean active = layer > 0 && layer <= level;
-            paint.setColorFilter(new PorterDuffColorFilter(active ? amber : ink, PorterDuff.Mode.SRC_IN));
-            paint.setAlpha(layers > 2 && layer > 0 && !active ? 100 : 255);
-            source.set(layer * size, 0, (layer + 1) * size, size);
-            canvas.drawBitmap(masks, source, destination, paint);
+            paint.setShader(null);
+            paint.setColor(active || (waves && level > 0) ? accent
+                    : multiLevelHeat && layer > 0 ? inactiveHeat : neutral);
+            float width = waves ? 1.2f : active ? 1.89f : multiLevelHeat && layer > 0 ? 1.02f : 1.64f;
+            paint.setStrokeWidth(width * FIGMA_TO_VIEWPORT);
+
+            if (layer == 0) {
+                RectF bounds = new RectF();
+                path.computeBounds(bounds, true);
+                paint.setShader(new LinearGradient(0, bounds.top, 0, bounds.bottom,
+                        night ? TITANIUM : STEEL, night ? TITANIUM_STOPS : STEEL_STOPS,
+                        Shader.TileMode.CLAMP));
+            }
+            if (!waves) {
+                paint.setStyle(Paint.Style.FILL);
+                canvas.drawPath(path, paint);
+            }
+            paint.setStyle(Paint.Style.STROKE);
+            canvas.drawPath(path, paint);
         }
+
         CACHE.put(key, icon);
         return icon;
     }
