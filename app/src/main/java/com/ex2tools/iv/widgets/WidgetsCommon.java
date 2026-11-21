@@ -121,9 +121,10 @@ public final class WidgetsCommon {
         return adjustTempDisplay(c, ClimateController.readTargetTemp(state(c)));
     }
 
-    static boolean isWarmAirflow(Context c) {
+    static float airflowSetpointDelta(Context c) {
         Float setpoint = readTemp(c);
-        return setpoint != null && Float.isFinite(setpoint) && setpoint > WARM_AIRFLOW_THRESHOLD_C;
+        return setpoint != null && Float.isFinite(setpoint)
+                ? setpoint - WARM_AIRFLOW_THRESHOLD_C : 0f;
     }
 
     /**

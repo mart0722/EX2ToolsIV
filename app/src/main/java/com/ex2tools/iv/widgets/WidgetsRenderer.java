@@ -171,6 +171,8 @@ public final class WidgetsRenderer {
         v.setTextViewText(R.id.tv_vent_mode_label, icons.ventModeCaption(mode));
         v.setTextViewText(R.id.tv_vent_mode_footer, c.getString(R.string.wg_vent_short));
         boolean transparent = Prefs.widgetBgOpacity(c) < 10;
+        v.setInt(R.id.chip_vent_current, "setBackgroundResource",
+                icons.ventModeBackground(transparent, vent != null));
         int controlBackground = WidgetAppearance.controlBackground(c, transparent, R.drawable.bg_wg_round);
         v.setInt(R.id.btn_vent_next, "setBackgroundResource", controlBackground);
         v.setInt(R.id.btn_vent_prev, "setBackgroundResource", controlBackground);

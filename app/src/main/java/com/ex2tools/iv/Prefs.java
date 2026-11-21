@@ -553,6 +553,14 @@ public final class Prefs {
         get(c).edit().putString("climate_icon_style", style.name()).apply();
     }
 
+    public static boolean widgetAccentBoost(Context c) {
+        return get(c).getBoolean("widget_accent_boost", false);
+    }
+
+    public static void setWidgetAccentBoost(Context c, boolean enabled) {
+        get(c).edit().putBoolean("widget_accent_boost", enabled).apply();
+    }
+
     public static boolean overlayAdaptClimateSize(Context c) {
         return get(c).getBoolean("overlay_adapt_climate_size", false);
     }

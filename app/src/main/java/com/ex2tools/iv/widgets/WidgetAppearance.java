@@ -60,6 +60,13 @@ final class WidgetAppearance {
         }
         if (transparent) return android.R.color.transparent;
         if (!active) return R.drawable.bg_wg_climate_glass;
+        if (Prefs.widgetAccentBoost(c)) {
+            return switch (accent) {
+                case 1 -> R.drawable.bg_wg_glass_accent_green;
+                case 2 -> R.drawable.bg_wg_glass_accent_red;
+                default -> R.drawable.bg_wg_glass_accent_air;
+            };
+        }
         return switch (accent) {
             case 1 -> R.drawable.bg_wg_glass_green;
             case 2 -> R.drawable.bg_wg_glass_red;
