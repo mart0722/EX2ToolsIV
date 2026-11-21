@@ -27,23 +27,26 @@ public final class RangeModel {
         return c.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
     }
 
-    /** Накопить дельту SOC/одометра. Вызывать периодически (раз в 30 с и реже). */
-    public static void sample(Context c) {
+    /** Накопить дельту SOC/одометра, сохраняя точку отсчёта между замерами. */
+    public static synchronized void sample(Context c) {
         try {
-            float soc = Telemetry.socRaw(c);
-            float odo = Telemetry.odometerKm(c);
-            if (Float.isNaN(soc) || Float.isNaN(odo)) return;
-
             long now = System.currentTimeMillis();
             SharedPreferences p = prefs(c);
             float lastSoc = p.getFloat("last_soc", Float.NaN);
             float lastOdo = p.getFloat("last_odo", Float.NaN);
             long lastMs = p.getLong("last_ms", 0L);
+            boolean hasBaseline = lastMs > 0L && now >= lastMs
+                    && !Float.isNaN(lastSoc) && !Float.isNaN(lastOdo);
+            if (hasBaseline && now - lastMs < MIN_INTERVAL_MS) return;
+
+            float soc = Telemetry.socRaw(c);
+            float odo = Telemetry.odometerKm(c);
+            if (Float.isNaN(soc) || Float.isNaN(odo)) return;
+
             float kmSum = p.getFloat("km", 0f);
             float kwhSum = p.getFloat("kwh", 0f);
 
-            if (!Float.isNaN(lastSoc) && !Float.isNaN(lastOdo)
-                    && now - lastMs >= MIN_INTERVAL_MS) {
+            if (hasBaseline) {
                 float dSoc = lastSoc - soc;          // > 0 — расход
                 float dKm = odo - lastOdo;
                 if (dSoc > 0.005f && dKm > 0.02f && dKm < 50f) {
@@ -93,7 +96,7 @@ public final class RangeModel {
         }
     }
 
-    public static void reset(Context c) {
+    public static synchronized void reset(Context c) {
         prefs(c).edit().clear().apply();
     }
 
