@@ -11,6 +11,11 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.graphics.Shader;
+import android.graphics.Typeface;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.style.StyleSpan;
+import android.text.style.TypefaceSpan;
 import android.util.LruCache;
 import android.view.View;
 import android.widget.ImageView;
@@ -173,6 +178,34 @@ final class ClimateWidgetIcons {
         return transparent ? android.R.color.transparent : R.drawable.bg_wg_climate_glass;
     }
 
+    CharSequence ventCaption(int textId) {
+        int label = R.string.wg_recirc;
+        if (textId == R.id.txt_vent_face) label = R.string.wg_vent_face;
+        else if (textId == R.id.txt_vent_floor) label = R.string.wg_vent_floor;
+        else if (textId == R.id.txt_vent_face_floor) label = R.string.wg_vent_face_floor;
+        else if (textId == R.id.txt_vent_windshield) label = R.string.wg_vent_windshield;
+        else if (textId == R.id.txt_vent_floor_windshield) label = R.string.wg_vent_floor_windshield;
+        return caption(context.getString(label));
+    }
+
+    CharSequence ventModeCaption(int mode) {
+        String text = context.getString(WidgetsCommon.ventLabel(mode));
+        return usesOutline() ? caption(text) : text;
+    }
+
+    CharSequence caption(String text) {
+        SpannableString caption = new SpannableString(text);
+        // Framework spans survive RemoteViews parceling to the launcher.
+        Object font = switch (style) {
+            case STANDARD -> new StyleSpan(Typeface.BOLD);
+            case CHROME_THIN -> new TypefaceSpan("sans-serif-light");
+            case THIN -> new TypefaceSpan("sans-serif");
+            case CHROME -> new TypefaceSpan("sans-serif-medium");
+        };
+        caption.setSpan(font, 0, caption.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        return caption;
+    }
+
     int buttonTextColor(boolean active, boolean airflow) {
         if (!active || !usesOutline()) return ink;
         return airflow ? airflowColor() : amber;
@@ -212,7 +245,8 @@ final class ClimateWidgetIcons {
         Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         paint.setStrokeCap(Paint.Cap.ROUND);
         paint.setStrokeJoin(Paint.Join.ROUND);
-        boolean chrome = style == Prefs.ClimateIconStyle.CHROME;
+        boolean thick = style == Prefs.ClimateIconStyle.CHROME;
+        boolean thinChrome = style == Prefs.ClimateIconStyle.CHROME_THIN;
         boolean multiLevelHeat = shape == Shape.SEAT || shape == Shape.WHEEL;
         for (int layer = 0; layer < data.length; layer++) {
             Path path = PathParser.createPathFromPathData(data[layer]);
@@ -223,13 +257,14 @@ final class ClimateWidgetIcons {
             paint.setColor(active || (waves && level > 0) ? accent
                     : multiLevelHeat && layer > 0 ? inactiveHeat : neutral);
             float width;
-            if (waves) width = chrome ? 1.2f : 1.06f;
-            else if (active) width = chrome ? 1.89f : 1.25f;
-            else if (multiLevelHeat && layer > 0) width = chrome ? 1.02f : 0.56f;
-            else width = chrome ? 1.64f : 1f;
+            if (thinChrome) width = 0.75f;
+            else if (waves) width = thick ? 1.2f : 1.06f;
+            else if (active) width = thick ? 1.89f : 1.25f;
+            else if (multiLevelHeat && layer > 0) width = thick ? 1.02f : 0.56f;
+            else width = thick ? 1.64f : 1f;
             paint.setStrokeWidth(width * FIGMA_TO_VIEWPORT);
 
-            if (chrome && layer == 0) {
+            if ((thick || thinChrome) && layer == 0) {
                 RectF bounds = new RectF();
                 path.computeBounds(bounds, true);
                 paint.setShader(new LinearGradient(0, bounds.top, 0, bounds.bottom,

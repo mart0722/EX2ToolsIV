@@ -533,7 +533,7 @@ public final class Prefs {
     }
 
     public enum ClimateIconStyle {
-        STANDARD, THIN, CHROME
+        STANDARD, THIN, CHROME_THIN, CHROME
     }
 
     public static ClimateIconStyle climateIconStyle(Context c) {
@@ -541,6 +541,7 @@ public final class Prefs {
         return switch (prefs.getString("climate_icon_style", "")) {
             case "STANDARD" -> ClimateIconStyle.STANDARD;
             case "THIN" -> ClimateIconStyle.THIN;
+            case "CHROME_THIN" -> ClimateIconStyle.CHROME_THIN;
             case "CHROME" -> ClimateIconStyle.CHROME;
             default -> prefs.getBoolean("climate_outline_icons", true)
                     ? ClimateIconStyle.CHROME : ClimateIconStyle.STANDARD;

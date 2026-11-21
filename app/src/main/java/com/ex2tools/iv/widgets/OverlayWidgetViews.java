@@ -369,10 +369,6 @@ final class OverlayWidgetViews {
         Boolean recirc = WidgetsCommon.readRecirc();
         int mode = vent == null ? 1 : vent;
         text(root, R.id.txt_vent_header, c.getString(R.string.wg_vent_header));
-        text(root, R.id.txt_vent_face, c.getString(R.string.wg_vent_face));
-        text(root, R.id.txt_vent_floor, c.getString(R.string.wg_vent_floor));
-        text(root, R.id.txt_vent_windshield, c.getString(R.string.wg_vent_windshield));
-        text(root, R.id.txt_recirc, c.getString(R.string.wg_recirc));
         boolean directions = Prefs.ventDirectionButtons(c);
         boolean transparent = OverlayBackground.isTransparent(c, WidgetsCommon.SIZE_VENT);
         ClimateWidgetIcons icons = ClimateWidgetIcons.forOverlay(c, root);
@@ -602,6 +598,7 @@ final class OverlayWidgetViews {
         root.findViewById(chipId).setBackgroundResource(
                 icons.buttonBackground(transparent, active, false, true));
         TextView caption = root.findViewById(textId);
+        caption.setText(icons.ventCaption(textId));
         caption.setTextColor(icons.buttonTextColor(active, true));
     }
 
@@ -617,7 +614,7 @@ final class OverlayWidgetViews {
         root.findViewById(chipId).setBackgroundResource(
                 icons.buttonBackground(transparent, active, pending, airflow));
         TextView caption = root.findViewById(textId);
-        caption.setText(label);
+        caption.setText(icons.caption(label));
         caption.setTextColor(pending && !active
                 ? c.getColor(R.color.wg_blue_light)
                 : icons.buttonTextColor(active, airflow));
@@ -634,7 +631,7 @@ final class OverlayWidgetViews {
         TextView caption = root.findViewById(textId);
         if (caption != null) {
             caption.setTextColor(icons.buttonTextColor(active, false));
-            caption.setText(outline ? label : labelWithLevel);
+            caption.setText(icons.caption(outline ? label : labelWithLevel));
             caption.setContentDescription(outline ? labelWithLevel : null);
         }
     }
