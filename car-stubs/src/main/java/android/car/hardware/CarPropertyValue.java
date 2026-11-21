@@ -2,6 +2,8 @@ package android.car.hardware;
 
 /** Compile-only stub for the Automotive Car API. */
 public final class CarPropertyValue<T> {
+    public static final int STATUS_AVAILABLE = 0;
+
     public CarPropertyValue() {
     }
 
@@ -10,6 +12,10 @@ public final class CarPropertyValue<T> {
     }
 
     public int getAreaId() {
+        throw new UnsupportedOperationException("stub");
+    }
+
+    public int getStatus() {
         throw new UnsupportedOperationException("stub");
     }
 
