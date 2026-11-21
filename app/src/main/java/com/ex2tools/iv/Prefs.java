@@ -617,6 +617,14 @@ public final class Prefs {
         return get(c).getBoolean("widget_power_off_without_confirmation", false);
     }
 
+    public static boolean wipersOnLock(Context c) {
+        return get(c).getBoolean("wipers_on_lock", false);
+    }
+
+    public static void setWipersOnLock(Context c, boolean enabled) {
+        get(c).edit().putBoolean("wipers_on_lock", enabled).apply();
+    }
+
     public static void setWidgetPowerOffWithoutConfirmation(Context c, boolean enabled) {
         get(c).edit().putBoolean("widget_power_off_without_confirmation", enabled).apply();
     }
@@ -646,7 +654,7 @@ public final class Prefs {
     }
 
     public enum OverlayPlacement {
-        FREE, CORNERS, GRID, AUTO_GRID
+        FREE, CORNERS, GRID, NEIGHBORS
     }
 
     public static OverlayPlacement overlayPlacement(Context c) {
@@ -655,7 +663,7 @@ public final class Prefs {
             case "FREE" -> OverlayPlacement.FREE;
             case "CORNERS" -> OverlayPlacement.CORNERS;
             case "GRID" -> OverlayPlacement.GRID;
-            case "AUTO_GRID" -> OverlayPlacement.AUTO_GRID;
+            case "AUTO_GRID", "NEIGHBORS" -> OverlayPlacement.NEIGHBORS;
             default -> prefs.getBoolean("overlay_docked", false)
                     ? OverlayPlacement.CORNERS : OverlayPlacement.FREE;
         };
@@ -663,14 +671,6 @@ public final class Prefs {
 
     public static void setOverlayPlacement(Context c, OverlayPlacement placement) {
         get(c).edit().putString("overlay_placement", placement.name()).apply();
-    }
-
-    public static List<String> overlayAutoGridOrder(Context c) {
-        return readList(get(c).getString("overlay_auto_grid_order", "[]"));
-    }
-
-    public static void setOverlayAutoGridOrder(Context c, List<String> order) {
-        get(c).edit().putString("overlay_auto_grid_order", writeList(order)).apply();
     }
 
     public static int overlayCorner(Context c, String key) {
@@ -715,6 +715,14 @@ public final class Prefs {
     public static int overlaySizePct(Context c, String key) {
         return Math.max(50, Math.min(200,
                 get(c).getInt("overlay_" + key + "_size_pct", 100)));
+    }
+
+    public static boolean overlayWideTemperature(Context c) {
+        return get(c).getBoolean("overlay_adapt_climate_size", false);
+    }
+
+    public static void setOverlayWideTemperature(Context c, boolean enabled) {
+        get(c).edit().putBoolean("overlay_adapt_climate_size", enabled).apply();
     }
 
     public static void setOverlaySizePct(Context c, String key, int value) {

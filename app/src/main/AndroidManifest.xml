@@ -172,6 +172,11 @@
             android:foregroundServiceType="dataSync" />
 
         <service
+            android:name=".body.WipersOnLockService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
+        <service
             android:name=".servicemode.RestoreTriggerService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />

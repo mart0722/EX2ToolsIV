@@ -38,6 +38,7 @@ public final class BootReceiver extends BroadcastReceiver {
         ScreenshotButtonService.sync(context);
         com.ex2tools.iv.tasks.TaskManagerButtonService.sync(context);
         if (isUserUnlocked(context)) {
+            com.ex2tools.iv.body.WipersOnLockService.sync(context);
             com.ex2tools.iv.widgets.WidgetUpdateService.sync(context);
             com.ex2tools.iv.widgets.OverlayWidgetService.sync(context);
             if (Prefs.rvcBlackBackground(context)) {
