@@ -151,35 +151,6 @@
                             android:text="@string/widgets_climate_icons_chrome" />
                     </com.ex2tools.iv.ui.FlymeSegmentedGroup>
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            style="@style/Text.EX2.ListTitle"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/widgets_climate_icon_size" />
-
-                        <TextView
-                            android:id="@+id/widgetClimateIconSizeValue"
-                            style="@style/Text.EX2.Caption"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content" />
-                    </LinearLayout>
-
-                    <SeekBar
-                        android:id="@+id/widgetClimateIconSize"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:contentDescription="@string/widgets_climate_icon_size"
-                        android:progressTint="@color/flyme_blue"
-                        android:thumbTint="@color/flyme_blue" />
-
                     <com.ex2tools.iv.ui.FlymeSwitchRow
                         android:id="@+id/widgetClimateIconLabels"
                         android:layout_width="match_parent"
@@ -362,7 +333,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:max="250"
+                        android:max="200"
                         android:progressTint="@color/flyme_blue"
                         android:thumbTint="@color/flyme_blue" />
 
@@ -451,15 +422,6 @@
                             android:textSize="22sp" />
 
                         <com.ex2tools.iv.ui.FlymeSwitchRow
-                            android:id="@+id/widgetOverlayAdaptClimateSize"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:text="@string/widgets_overlay_adapt_climate_size"
-                            android:textColor="@color/flyme_label_level1"
-                            android:textSize="22sp" />
-
-                        <com.ex2tools.iv.ui.FlymeSwitchRow
                             android:id="@+id/widgetOverlayLock"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -491,6 +453,14 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="30dp"
                     android:text="@string/widgets_standard_group" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/widgetIndividualIconSizes"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:minHeight="56dp"
+                    android:text="@string/widgets_individual_icon_sizes" />
 
                 <com.google.android.material.card.MaterialCardView
                     style="@style/Widget.EX2.Card"

@@ -100,12 +100,12 @@ final class ClimateWidgetIcons {
     private Float airflowDelta;
     private Integer airflowGradient;
 
-    private ClimateWidgetIcons(Context c, float widgetScale, Target target) {
+    private ClimateWidgetIcons(Context c, int iconSizePct, Target target) {
         context = c;
         this.target = target;
         resources = c.getResources();
         style = Prefs.climateIconStyle(c);
-        iconScale = widgetScale * Prefs.climateIconSizePct(c) / 100f;
+        iconScale = iconSizePct / 100f;
         showLabels = Prefs.climateIconLabels(c);
         accentBoost = usesOutline() && Prefs.widgetAccentBoost(c);
         night = (resources.getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK)
@@ -148,12 +148,12 @@ final class ClimateWidgetIcons {
     }
 
     static ClimateWidgetIcons forRemote(Context widgetContext, Context theme, RemoteViews views) {
-        return new ClimateWidgetIcons(theme, SizedWidgetViews.scale(widgetContext),
+        return new ClimateWidgetIcons(theme, WidgetIconSizes.appWidgetSize(widgetContext),
                 views::setImageViewBitmap);
     }
 
-    static ClimateWidgetIcons forOverlay(Context c, View root) {
-        return new ClimateWidgetIcons(c, 1f, (id, bitmap) -> {
+    static ClimateWidgetIcons forOverlay(Context c, View root, String key) {
+        return new ClimateWidgetIcons(c, Prefs.climateIconSizePct(c, key), (id, bitmap) -> {
             ImageView image = root.findViewById(id);
             image.setImageBitmap(bitmap);
         });
@@ -188,15 +188,13 @@ final class ClimateWidgetIcons {
         set(id, WidgetsCommon.ventIcon(mode), true, shape, active ? 1 : 0);
     }
 
-    void heating(Boolean wheel, Boolean rear, Boolean front, Boolean windshield,
+    void heating(Boolean wheel, Boolean rear, Boolean windshield,
                  Integer driver, Integer passenger) {
         set(R.id.img_wheel_heat, night ? R.drawable.wg_ic_wheel_heat_dark
                 : R.drawable.wg_ic_wheel_heat_light, false, Shape.WHEEL, on(wheel) ? 3 : 0);
         set(R.id.img_front_rear_defrost, night ? R.drawable.wg_ic_rear_heat_dark
                 : R.drawable.wg_ic_rear_heat_light, false, Shape.REAR, on(rear) ? 1 : 0);
         windshieldHeat(windshield);
-        set(R.id.img_front_max_defrost, R.drawable.wg_ic_heat_windshield, true,
-                Shape.FRONT_AIR, on(front) ? 1 : 0);
         set(R.id.img_seat_heat_driver, R.drawable.wg_ic_seat, true, Shape.SEAT, seatLevel(driver));
         set(R.id.img_seat_heat_passenger, R.drawable.wg_ic_seat, true, Shape.SEAT, seatLevel(passenger));
     }
@@ -204,6 +202,11 @@ final class ClimateWidgetIcons {
     void windshieldHeat(Boolean windshield) {
         set(R.id.img_windshield_heat, night ? R.drawable.wg_ic_windshield_heat_dark
                 : R.drawable.wg_ic_windshield_heat_light, false, Shape.FRONT_ELECTRIC, on(windshield) ? 1 : 0);
+    }
+
+    void frontMaxDefrost(boolean active) {
+        set(R.id.img_front_max_defrost, R.drawable.wg_ic_heat_windshield, true,
+                Shape.FRONT_AIR, active ? 1 : 0);
     }
 
     int frontAirLabel() {

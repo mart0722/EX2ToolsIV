@@ -782,7 +782,10 @@
     <string name="steering_help">Громкость +/− — температура на 1 °C.\nСледующий / предыдущий трек — скорость вентилятора.\n\nПовторное двойное нажатие или 15 секунд без нажатий возвращают обычное управление.\n\nДля работы нужен патч штатного сервиса кнопок. Голосовое управление и доступ к микрофону для режима климата не требуются.</string>
     <string name="settings_fast_widget_response">Быстрый отклик виджетов</string>
     <string name="settings_fast_widget_response_note">Ускоряет кнопки температуры и вентилятора. Показания обновляются по данным автомобиля.</string>
-    <string name="widgets_overlay_adapt_climate_size">Подогнать размеры климата</string>
+    <string name="widgets_heating_single_row">Обогревы в один ряд</string>
+    <string name="widgets_individual_icon_sizes">Настройки обдува и обогревов</string>
+    <string name="widgets_individual_icon_sizes_empty">Добавьте виджет обдува или обогрева на рабочий стол</string>
+    <string name="widgets_icon_size_instance">%1$s · №%2$d</string>
     <string name="widgets_climate_icon_size">Размер иконок</string>
     <string name="widgets_show_titles">Заголовки виджетов</string>
     <string name="widgets_climate_icon_labels">Подписи к иконкам</string>

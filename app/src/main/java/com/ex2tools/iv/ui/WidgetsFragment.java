@@ -1,9 +1,12 @@
 package com.ex2tools.iv.ui;
 
+import android.appwidget.AppWidgetManager;
+import android.appwidget.AppWidgetProviderInfo;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.os.Process;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,10 +28,15 @@ import com.ex2tools.iv.widgets.ClockWidgetProvider;
 import com.ex2tools.iv.widgets.OverlayWidgetService;
 import com.ex2tools.iv.widgets.SpeedWidgetProvider;
 import com.ex2tools.iv.widgets.WidgetModes;
+import com.ex2tools.iv.widgets.WidgetIconSizes;
 import com.ex2tools.iv.widgets.WidgetUpdateService;
 import com.ex2tools.iv.widgets.WidgetsCommon;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Locale;
@@ -99,13 +107,11 @@ public final class WidgetsFragment extends Fragment {
     private View speedTripReset;
     private FlymeSwitchRow overlayLock;
     private FlymeSwitchRow overlayDocked;
-    private FlymeSwitchRow overlayAdaptClimateSize;
     private FlymeSegmentedGroup climateIconStyle;
     private FlymeSwitchRow widgetAccentBoost;
-    private SeekBar climateIconSize;
-    private TextView climateIconSizeValue;
     private FlymeSwitchRow climateIconLabels;
     private FlymeSwitchRow widgetShowTitles;
+    private FlymeSwitchRow overlayHeatingSingleRow;
     private final Map<String, FlymeSwitchRow> overlayToggles = new LinkedHashMap<>();
     private final Map<String, SeekBar> overlaySizeSeeks = new LinkedHashMap<>();
     private final Map<String, SeekBar> overlayAlphaSeeks = new LinkedHashMap<>();
@@ -139,6 +145,7 @@ public final class WidgetsFragment extends Fragment {
         modeGroup = view.findViewById(R.id.widgetModeGroup);
         overlayPanel = view.findViewById(R.id.widgetOverlayPanel);
         standardPanel = view.findViewById(R.id.widgetStandardPanel);
+        view.findViewById(R.id.widgetIndividualIconSizes).setOnClickListener(v -> showAppWidgetIconSizes());
         overlayList = view.findViewById(R.id.widgetOverlayList);
         speedEnabled = view.findViewById(R.id.widgetSpeedOverlayEnabled);
         speedPinned = view.findViewById(R.id.widgetSpeedOverlayPinned);
@@ -156,11 +163,8 @@ public final class WidgetsFragment extends Fragment {
         speedTripReset = view.findViewById(R.id.widgetSpeedTripReset);
         overlayLock = view.findViewById(R.id.widgetOverlayLock);
         overlayDocked = view.findViewById(R.id.widgetOverlayDocked);
-        overlayAdaptClimateSize = view.findViewById(R.id.widgetOverlayAdaptClimateSize);
         climateIconStyle = view.findViewById(R.id.widgetClimateIconStyle);
         widgetAccentBoost = view.findViewById(R.id.widgetAccentBoost);
-        climateIconSize = view.findViewById(R.id.widgetClimateIconSize);
-        climateIconSizeValue = view.findViewById(R.id.widgetClimateIconSizeValue);
         climateIconLabels = view.findViewById(R.id.widgetClimateIconLabels);
         widgetShowTitles = view.findViewById(R.id.widgetShowTitles);
         widgetShowTitles.setOnCheckedChangeListener((button, checked) -> {
@@ -206,28 +210,94 @@ public final class WidgetsFragment extends Fragment {
         updateAll();
     }
 
-    private void setupClimateIconControls() {
-        climateIconSize.setMin(Prefs.CLIMATE_ICON_MIN_PCT);
-        climateIconSize.setMax(Prefs.CLIMATE_ICON_MAX_PCT);
-        climateIconSize.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+    private void showAppWidgetIconSizes() {
+        Context c = requireContext();
+        AppWidgetManager manager = AppWidgetManager.getInstance(c);
+        List<Integer> ids = new ArrayList<>();
+        List<CharSequence> labels = new ArrayList<>();
+        for (AppWidgetProviderInfo provider : manager.getInstalledProvidersForPackage(
+                c.getPackageName(), Process.myUserHandle())) {
+            if (!WidgetIconSizes.supportsLayout(provider.initialLayout)) continue;
+            int[] instances = manager.getAppWidgetIds(provider.provider);
+            CharSequence name = provider.loadLabel(c.getPackageManager());
+            for (int id : instances) {
+                ids.add(id);
+                labels.add(instances.length == 1 ? name
+                        : getString(R.string.widgets_icon_size_instance, name, id));
+            }
+        }
+        MaterialAlertDialogBuilder dialog = new MaterialAlertDialogBuilder(c)
+                .setTitle(R.string.widgets_individual_icon_sizes)
+                .setNegativeButton(android.R.string.cancel, null);
+        if (ids.isEmpty()) {
+            dialog.setMessage(R.string.widgets_individual_icon_sizes_empty).show();
+            return;
+        }
+        dialog.setItems(labels.toArray(new CharSequence[0]), (d, which) -> {
+            int id = ids.get(which);
+            AppWidgetProviderInfo provider = manager.getAppWidgetInfo(id);
+            if (provider == null) return;
+            String key = WidgetIconSizes.appWidgetKey(id);
+            LinearLayout row = (LinearLayout) getLayoutInflater().inflate(
+                    R.layout.item_widget_icon_size, null);
+            FlymeSwitchRow singleRow = provider.initialLayout == R.layout.widget_heating_test
+                    ? heatingLayoutSwitch(c) : null;
+            if (singleRow != null) row.addView(singleRow);
+            int padding = getResources().getDimensionPixelSize(R.dimen.card_padding);
+            row.setPadding(padding, padding, padding, 0);
+            SeekBar size = bindIconSize(row, Prefs.climateIconSizePct(c, key), pct -> {});
+            new MaterialAlertDialogBuilder(c)
+                    .setTitle(labels.get(which))
+                    .setView(row)
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .setPositiveButton(android.R.string.ok, (sizeDialog, button) -> {
+                        if (manager.getAppWidgetInfo(id) == null) return;
+                        Prefs.setClimateIconSizePct(c, key, size.getProgress());
+                        if (singleRow != null) setHeatingLayout(c, singleRow.isChecked());
+                        WidgetUpdateService.sync(c);
+                    })
+                    .show();
+        }).show();
+    }
+
+    private FlymeSwitchRow heatingLayoutSwitch(Context c) {
+        FlymeSwitchRow row = new FlymeSwitchRow(c);
+        row.setText(getString(R.string.widgets_heating_single_row));
+        row.setChecked(Prefs.heatingSingleRow(c));
+        return row;
+    }
+
+    private void setHeatingLayout(Context c, boolean singleRow) {
+        if (Prefs.heatingSingleRow(c) == singleRow) return;
+        Prefs.setHeatingSingleRow(c, singleRow);
+        if (overlayHeatingSingleRow != null) overlayHeatingSingleRow.setChecked(singleRow);
+        OverlayWidgetService.restart(c);
+    }
+
+    private SeekBar bindIconSize(View row, int pct, java.util.function.IntConsumer onChange) {
+        SeekBar size = row.findViewById(R.id.widgetIconSize);
+        TextView value = row.findViewById(R.id.widgetIconSizeValue);
+        size.setMin(Prefs.CLIMATE_ICON_MIN_PCT);
+        size.setMax(Prefs.CLIMATE_ICON_MAX_PCT);
+        size.setProgress(pct);
+        value.setText(getString(R.string.widgets_percent_fmt, pct));
+        size.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
-            public void onProgressChanged(SeekBar seekBar, int pct, boolean fromUser) {
-                climateIconSizeValue.setText(getString(R.string.widgets_percent_fmt, pct));
-                if (!fromUser || binding) return;
-                Context c = requireContext();
-                Prefs.setClimateIconSizePct(c, pct);
-                VehicleState.get().requestDisplayRefresh();
-                WidgetUpdateService.sync(c);
+            public void onProgressChanged(SeekBar bar, int progress, boolean fromUser) {
+                value.setText(getString(R.string.widgets_percent_fmt, progress));
+                if (fromUser) onChange.accept(progress);
             }
 
             @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-            }
+            public void onStartTrackingTouch(SeekBar bar) {}
 
             @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-            }
+            public void onStopTrackingTouch(SeekBar bar) {}
         });
+        return size;
+    }
+
+    private void setupClimateIconControls() {
         climateIconLabels.setOnCheckedChangeListener((button, checked) -> {
             if (binding) return;
             Context c = requireContext();
@@ -306,11 +376,6 @@ public final class WidgetsFragment extends Fragment {
                                         : R.string.widgets_trip_reset_failed,
                                 android.widget.Toast.LENGTH_SHORT).show();
                     });
-        });
-        overlayAdaptClimateSize.setOnCheckedChangeListener((button, checked) -> {
-            if (binding) return;
-            Prefs.setOverlayAdaptClimateSize(requireContext(), checked);
-            OverlayWidgetService.restart(requireContext());
         });
         if (overlayDocked != null) {
             overlayDocked.setOnCheckedChangeListener((b, checked) -> {
@@ -448,6 +513,7 @@ public final class WidgetsFragment extends Fragment {
     private void buildOverlayRows(Context c) {
         if (overlayList == null) return;
         overlayList.removeAllViews();
+        overlayHeatingSingleRow = null;
         overlayToggles.clear();
         overlaySizeSeeks.clear();
         overlayAlphaSeeks.clear();
@@ -468,6 +534,25 @@ public final class WidgetsFragment extends Fragment {
             SeekBar alphaSeek = card.findViewById(R.id.overlayAlphaSeek);
             TextView sizeValue = card.findViewById(R.id.overlaySizeValue);
             TextView alphaValue = card.findViewById(R.id.overlayAlphaValue);
+
+            if (WidgetIconSizes.supportsOverlay(key)) {
+                LinearLayout controls = card.findViewById(R.id.overlayWidgetControls);
+                View iconSize = inflater.inflate(R.layout.item_widget_icon_size, controls, false);
+                controls.addView(iconSize, controls.indexOfChild(sizeSeek) + 1);
+                if (WidgetsCommon.SIZE_HEATING.equals(key)) {
+                    overlayHeatingSingleRow = heatingLayoutSwitch(c);
+                    controls.addView(overlayHeatingSingleRow, controls.indexOfChild(iconSize) + 1);
+                    overlayHeatingSingleRow.setOnCheckedChangeListener((button, checked) -> {
+                        if (binding || Prefs.heatingSingleRow(c) == checked) return;
+                        setHeatingLayout(c, checked);
+                        WidgetUpdateService.sync(c);
+                    });
+                }
+                bindIconSize(iconSize, Prefs.climateIconSizePct(c, key), pct -> {
+                    Prefs.setClimateIconSizePct(c, key, pct);
+                    OverlayWidgetService.requestUpdate(c);
+                });
+            }
 
             toggle.setText(getString(OVERLAY_LABELS[i]));
             int size = Prefs.overlaySizePct(c, key);
@@ -593,7 +678,6 @@ public final class WidgetsFragment extends Fragment {
         speedTrip.setChecked(Prefs.speedShowTrip(c));
         if (overlayLock != null) overlayLock.setChecked(Prefs.overlayLock(c));
         if (overlayDocked != null) overlayDocked.setChecked(Prefs.overlayDocked(c));
-        overlayAdaptClimateSize.setChecked(Prefs.overlayAdaptClimateSize(c));
         climateIconStyle.check(switch (Prefs.climateIconStyle(c)) {
             case STANDARD -> R.id.widgetClimateIconStandard;
             case THIN -> R.id.widgetClimateIconThin;
@@ -603,9 +687,6 @@ public final class WidgetsFragment extends Fragment {
         });
         updateAccentControl(c);
         widgetAccentBoost.setChecked(Prefs.widgetAccentBoost(c));
-        int iconSize = Prefs.climateIconSizePct(c);
-        climateIconSize.setProgress(iconSize);
-        climateIconSizeValue.setText(getString(R.string.widgets_percent_fmt, iconSize));
         climateIconLabels.setChecked(Prefs.climateIconLabels(c));
         widgetShowTitles.setChecked(Prefs.widgetTitles(c));
         speedEnabled.setChecked(Prefs.overlayEnabled(c, WidgetsCommon.SIZE_SPEED));

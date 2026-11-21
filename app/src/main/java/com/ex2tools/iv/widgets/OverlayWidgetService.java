@@ -320,11 +320,8 @@ public final class OverlayWidgetService extends Service {
                     ? Prefs.widgetSizePct(this, spec.key)
                     : Prefs.overlaySizePct(this, spec.key);
             int baseWidthDp = spec.widthDp;
-            int baseHeightDp = spec.heightDp;
-            if (Prefs.overlayAdaptClimateSize(this)) {
-                if (WidgetsCommon.SIZE_TEMP.equals(spec.key)) baseWidthDp = 420;
-                if (WidgetsCommon.SIZE_HEATING.equals(spec.key)) baseHeightDp = 240;
-            }
+            int baseHeightDp = WidgetsCommon.SIZE_HEATING.equals(spec.key) && Prefs.heatingSingleRow(this)
+                    ? 180 : spec.heightDp;
             if (WidgetsCommon.SIZE_APPS.equals(spec.key)) {
                 int[] dims = AppsOverlay.sizeDp(this);
                 baseWidthDp = dims[0];

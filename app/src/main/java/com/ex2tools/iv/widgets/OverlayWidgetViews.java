@@ -53,7 +53,7 @@ final class OverlayWidgetViews {
      * вместе с карточкой увеличивались иконки, отступы и текст.
      */
     static View create(Context c, String key, float scale) {
-        View root = LayoutInflater.from(themeContext(c, scale)).inflate(layout(key), null);
+        View root = LayoutInflater.from(themeContext(c, scale)).inflate(layout(c, key), null);
         bindClicks(c, root, key);
         return root;
     }
@@ -146,7 +146,10 @@ final class OverlayWidgetViews {
         if (view != null) view.setVisibility(visibility);
     }
 
-    private static int layout(String key) {
+    private static int layout(Context c, String key) {
+        if (WidgetsCommon.SIZE_HEATING.equals(key) && Prefs.heatingSingleRow(c)) {
+            return R.layout.widget_heating_single_row;
+        }
         return WidgetCatalog.layout(key);
     }
 
@@ -200,9 +203,9 @@ final class OverlayWidgetViews {
                 click(c, root, R.id.chip_windshield_heat, WidgetsCommon.WINDSHIELD_HEAT_TOGGLE);
                 break;
             case WidgetsCommon.SIZE_HEATING:
+                click(c, root, R.id.chip_front_max_defrost, WidgetsCommon.FRONT_MAX_DEFROST_TOGGLE);
                 click(c, root, R.id.chip_wheel_heat, WidgetsCommon.WHEEL_HEAT_TOGGLE);
                 click(c, root, R.id.chip_front_rear_defrost, WidgetsCommon.REAR_DEFROST_TOGGLE);
-                click(c, root, R.id.chip_front_max_defrost, WidgetsCommon.FRONT_MAX_DEFROST_TOGGLE);
                 click(c, root, R.id.chip_windshield_heat, WidgetsCommon.WINDSHIELD_HEAT_TOGGLE);
                 click(c, root, R.id.chip_seat_heat_driver, WidgetsCommon.SEAT_DRIVER_CYCLE);
                 click(c, root, R.id.chip_seat_heat_passenger, WidgetsCommon.SEAT_PASSENGER_CYCLE);
@@ -394,7 +397,7 @@ final class OverlayWidgetViews {
         text(root, R.id.txt_vent_header, c.getString(R.string.wg_vent_header));
         boolean directions = Prefs.ventDirectionButtons(c);
         boolean transparent = OverlayBackground.isTransparent(c, WidgetsCommon.SIZE_VENT);
-        ClimateWidgetIcons icons = ClimateWidgetIcons.forOverlay(c, root);
+        ClimateWidgetIcons icons = ClimateWidgetIcons.forOverlay(c, root, WidgetsCommon.SIZE_VENT);
         icons.ventButtons(vent == null ? 0 : vent, directions);
         root.findViewById(R.id.btn_vent_mode).setBackgroundResource(
                 WidgetAppearance.controlBackground(c, transparent, R.drawable.bg_wg_chip));
@@ -417,7 +420,7 @@ final class OverlayWidgetViews {
         int mode = vent == null ? 1 : vent;
         boolean directions = Prefs.ventDirectionButtons(c);
         boolean transparent = OverlayBackground.isTransparent(c, WidgetsCommon.SIZE_VENT_FAN);
-        ClimateWidgetIcons icons = ClimateWidgetIcons.forOverlay(c, root);
+        ClimateWidgetIcons icons = ClimateWidgetIcons.forOverlay(c, root, WidgetsCommon.SIZE_VENT_FAN);
         icons.ventButtons(vent == null ? 0 : vent, directions);
         root.findViewById(R.id.btn_vent_mode).setBackgroundResource(
                 WidgetAppearance.controlBackground(c, transparent, R.drawable.bg_wg_chip));
@@ -489,21 +492,24 @@ final class OverlayWidgetViews {
     private static void updateHeating(Context c, View root) {
         Boolean wheel = WidgetsCommon.readWheelHeat();
         Boolean rear = WidgetsCommon.readRearDefrost();
-        Boolean front = WidgetsCommon.readFrontMaxDefrost();
         Boolean windshield = WidgetsCommon.readWindshieldHeat();
         Integer seatDriver = WidgetsCommon.readSeatHeat(1);
         Integer seatPassenger = WidgetsCommon.readSeatHeat(4);
 
         text(root, R.id.txt_heat_header, c.getString(R.string.wg_heat_header));
-        ClimateWidgetIcons icons = ClimateWidgetIcons.forOverlay(c, root);
-        icons.heating(wheel, rear, front, windshield, seatDriver, seatPassenger);
+        ClimateWidgetIcons icons = ClimateWidgetIcons.forOverlay(c, root, WidgetsCommon.SIZE_HEATING);
+        icons.heating(wheel, rear, windshield, seatDriver, seatPassenger);
+        if (root.findViewById(R.id.chip_front_max_defrost) != null) {
+            boolean front = Boolean.TRUE.equals(WidgetsCommon.readFrontMaxDefrost());
+            icons.frontMaxDefrost(front);
+            toggle(c, root, icons, R.id.chip_front_max_defrost, R.id.txt_front_max_defrost,
+                    front, c.getString(icons.frontAirLabel()));
+        }
         toggle(c, root, icons, R.id.chip_wheel_heat, R.id.txt_wheel_heat,
                 Boolean.TRUE.equals(wheel), WidgetsCommon.wheelHeatPending(c),
                 c.getString(R.string.wg_heat_wheel));
         toggle(c, root, icons, R.id.chip_front_rear_defrost, R.id.txt_front_rear_defrost,
                 Boolean.TRUE.equals(rear), c.getString(R.string.wg_heat_rear));
-        toggle(c, root, icons, R.id.chip_front_max_defrost, R.id.txt_front_max_defrost,
-                Boolean.TRUE.equals(front), c.getString(icons.frontAirLabel()));
         toggle(c, root, icons, R.id.chip_windshield_heat, R.id.txt_windshield_heat,
                 Boolean.TRUE.equals(windshield), c.getString(icons.electricWindshieldLabel()));
         seat(c, root, icons, R.id.chip_seat_heat_driver, R.id.txt_seat_heat_driver,
@@ -514,7 +520,7 @@ final class OverlayWidgetViews {
 
     private static void updateWindshieldHeat(Context c, View root) {
         Boolean state = WidgetsCommon.readWindshieldHeat();
-        ClimateWidgetIcons icons = ClimateWidgetIcons.forOverlay(c, root);
+        ClimateWidgetIcons icons = ClimateWidgetIcons.forOverlay(c, root, WidgetsCommon.SIZE_WINDSHIELD_HEAT);
         icons.windshieldHeat(state);
         boolean active = Boolean.TRUE.equals(state);
         boolean transparent = OverlayBackground.isTransparent(c, WidgetsCommon.SIZE_WINDSHIELD_HEAT);

@@ -244,7 +244,6 @@ public final class WidgetUpdateService extends Service {
         float rangeKm = needBatteryRange ? WidgetsCommon.readRangeKm() : Float.NaN;
 
         Boolean rear = null;
-        Boolean front = null;
         Boolean windshield = needHeating || windshieldIds.length > 0
                 ? WidgetsCommon.readWindshieldHeat() : null;
         Boolean wheel = null;
@@ -252,7 +251,6 @@ public final class WidgetUpdateService extends Service {
         Integer seatPassenger = null;
         if (needHeating) {
             rear = WidgetsCommon.readRearDefrost();
-            front = WidgetsCommon.readFrontMaxDefrost();
             wheel = WidgetsCommon.readWheelHeat();
             seatDriver = WidgetsCommon.readSeatHeat(1);
             seatPassenger = WidgetsCommon.readSeatHeat(4);
@@ -260,7 +258,6 @@ public final class WidgetUpdateService extends Service {
 
         Boolean wheelHeat = wheel;
         Boolean rearDefrost = rear;
-        Boolean frontDefrost = front;
         Integer driverHeat = seatDriver;
         Integer passengerHeat = seatPassenger;
         boolean any = false;
@@ -278,7 +275,7 @@ public final class WidgetUpdateService extends Service {
         any |= update(awm, ventFanIds,
                 c -> WidgetsRenderer.ventFan(c, vent, recirc, fan, ac));
         any |= update(awm, heatingIds,
-                c -> WidgetsRenderer.heating(c, wheelHeat, rearDefrost, frontDefrost, windshield,
+                c -> WidgetsRenderer.heating(c, wheelHeat, rearDefrost, windshield,
                         driverHeat, passengerHeat, WidgetsCommon.wheelHeatPending(this)));
         if (speedIds.length > 0) {
             SpeedWidgetProvider.update(this, awm, speedIds);
@@ -367,13 +364,14 @@ public final class WidgetUpdateService extends Service {
     private boolean update(AppWidgetManager awm, int[] ids,
                            java.util.function.Function<Context, RemoteViews> build) {
         if (ids.length == 0) return false;
-        android.util.SparseArray<RemoteViews> bySize = new android.util.SparseArray<>();
+        android.util.SparseArray<RemoteViews> byIconSize = new android.util.SparseArray<>();
         for (int id : ids) {
-            int size = SizedWidgetViews.size(this, awm, id, awm.getAppWidgetOptions(id));
-            RemoteViews views = bySize.get(size);
+            Context widget = WidgetIconSizes.appWidgetContext(this, id);
+            int size = WidgetIconSizes.appWidgetSize(widget);
+            RemoteViews views = byIconSize.get(size);
             if (views == null) {
-                views = build.apply(SizedWidgetViews.context(this, size));
-                bySize.put(size, views);
+                views = build.apply(widget);
+                byIconSize.put(size, views);
             }
             awm.updateAppWidget(id, views);
         }

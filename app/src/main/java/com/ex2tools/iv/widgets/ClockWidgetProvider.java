@@ -52,8 +52,7 @@ public class ClockWidgetProvider extends AppWidgetProvider {
         }
         String dateText = dateText(context);
         for (int id : ids) {
-            int size = SizedWidgetViews.size(context, manager, id, manager.getAppWidgetOptions(id));
-            RemoteViews views = SizedWidgetViews.create(SizedWidgetViews.context(context, size), layout);
+            RemoteViews views = new RemoteViews(context.getPackageName(), layout);
             int background = WidgetsCommon.bgDrawableResForPct(context);
             views.setInt(R.id.widget_bg_layer, "setBackgroundResource", background);
             views.setTextColor(R.id.clockTime, color);
