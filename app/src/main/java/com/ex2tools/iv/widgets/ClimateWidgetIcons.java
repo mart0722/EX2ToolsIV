@@ -37,6 +37,15 @@ final class ClimateWidgetIcons {
     private static final float[] TITANIUM_STOPS = {0f, .27f, .52f, 1f};
     private static final LruCache<String, Bitmap> CACHE = new LruCache<>(64);
 
+    private static final int[] COOL_GRADIENTS = {R.drawable.bg_wg_climate_air,
+            R.drawable.bg_wg_climate_air_medium, R.drawable.bg_wg_climate_air_high};
+    private static final int[] WARM_GRADIENTS = {R.drawable.bg_wg_climate_warm_air,
+            R.drawable.bg_wg_climate_warm_air_medium, R.drawable.bg_wg_climate_warm_air_high};
+    private static final int[] COOL_ACCENTS = {R.drawable.bg_wg_glass_accent_air,
+            R.drawable.bg_wg_glass_accent_air_medium, R.drawable.bg_wg_glass_accent_air_high};
+    private static final int[] WARM_ACCENTS = {R.drawable.bg_wg_glass_accent_warm_air,
+            R.drawable.bg_wg_glass_accent_warm_air_medium, R.drawable.bg_wg_glass_accent_warm_air_high};
+
     private enum Shape {
         SEAT(R.array.wg_chrome_seat),
         WHEEL(R.array.wg_chrome_wheel),
@@ -72,7 +81,7 @@ final class ClimateWidgetIcons {
     private final int inactiveHeat;
     private final boolean accentBoost;
     private Float airflowDelta;
-    private Integer airflowAccentBackground;
+    private Integer airflowGradient;
 
     private ClimateWidgetIcons(Context c, Target target) {
         context = c;
@@ -99,30 +108,24 @@ final class ClimateWidgetIcons {
         return airflowDelta() > 0f;
     }
 
-    private int boostedAirflowBackground() {
-        if (airflowAccentBackground == null) {
+    private int airflowBackground() {
+        if (airflowGradient == null) {
             Integer fan = WidgetsCommon.readFan();
             float fanFraction = fan == null ? 0f : Math.max(0, Math.min(7, fan)) / 7f;
             float temperatureFraction = Math.min(1f, Math.abs(airflowDelta()) / 8f);
             float strength = .60f * fanFraction + .65f * temperatureFraction;
-            boolean warm = showsWarmAirflow();
-            if (strength >= .74f) {
-                airflowAccentBackground = warm ? R.drawable.bg_wg_glass_accent_warm_air_high
-                        : R.drawable.bg_wg_glass_accent_air_high;
-            } else if (strength >= .34f) {
-                airflowAccentBackground = warm ? R.drawable.bg_wg_glass_accent_warm_air_medium
-                        : R.drawable.bg_wg_glass_accent_air_medium;
-            } else {
-                airflowAccentBackground = warm ? R.drawable.bg_wg_glass_accent_warm_air
-                        : R.drawable.bg_wg_glass_accent_air;
-            }
+            int level = strength >= .74f ? 2 : strength >= .34f ? 1 : 0;
+            int[] gradients = showsWarmAirflow()
+                    ? (accentBoost ? WARM_ACCENTS : WARM_GRADIENTS)
+                    : (accentBoost ? COOL_ACCENTS : COOL_GRADIENTS);
+            airflowGradient = gradients[level];
         }
-        return airflowAccentBackground;
+        return airflowGradient;
     }
 
     int ventModeBackground(boolean transparent, boolean active) {
-        return accentBoost && !transparent && active
-                ? boostedAirflowBackground() : android.R.color.transparent;
+        return usesOutline() && !transparent && active
+                ? airflowBackground() : android.R.color.transparent;
     }
 
     static ClimateWidgetIcons forRemote(Context c, RemoteViews views) {
@@ -204,8 +207,7 @@ final class ClimateWidgetIcons {
         if (!active) return R.drawable.bg_wg_climate_glass;
         if (!airflow) return accentBoost
                 ? R.drawable.bg_wg_glass_accent_heat : R.drawable.bg_wg_climate_heat;
-        if (accentBoost) return boostedAirflowBackground();
-        return showsWarmAirflow() ? R.drawable.bg_wg_climate_warm_air : R.drawable.bg_wg_climate_air;
+        return airflowBackground();
     }
 
     CharSequence ventCaption(int textId) {
