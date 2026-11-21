@@ -374,18 +374,21 @@ final class OverlayWidgetViews {
         text(root, R.id.txt_vent_windshield, c.getString(R.string.wg_vent_windshield));
         text(root, R.id.txt_recirc, c.getString(R.string.wg_recirc));
         boolean directions = Prefs.ventDirectionButtons(c);
-        ClimateWidgetIcons.forOverlay(c, root)
-                .ventButtons(vent == null ? 0 : vent, directions);
+        boolean transparent = OverlayBackground.isTransparent(c, WidgetsCommon.SIZE_VENT);
+        ClimateWidgetIcons icons = ClimateWidgetIcons.forOverlay(c, root);
+        icons.ventButtons(vent == null ? 0 : vent, directions);
+        root.findViewById(R.id.btn_vent_mode).setBackgroundResource(
+                ClimateWidgetIcons.controlBackground(c, transparent, R.drawable.bg_wg_chip));
         text(root, R.id.btn_vent_mode, c.getString(directions
                 ? R.string.widgets_vent_directions : R.string.widgets_vent_presets));
         root.findViewById(R.id.chip_vent_face_floor).setVisibility(directions ? View.GONE : View.VISIBLE);
-        chip(c, root, R.id.chip_vent_face_floor, R.id.txt_vent_face_floor, mode == 3);
+        ventChip(icons, root, transparent, R.id.chip_vent_face_floor, R.id.txt_vent_face_floor, mode == 3);
         root.findViewById(R.id.chip_vent_floor_windshield).setVisibility(directions ? View.GONE : View.VISIBLE);
-        chip(c, root, R.id.chip_vent_floor_windshield, R.id.txt_vent_floor_windshield, mode == 6);
-        chip(c, root, R.id.chip_vent_face, R.id.txt_vent_face, directions ? (mode & 1) != 0 : mode == 1);
-        chip(c, root, R.id.chip_vent_floor, R.id.txt_vent_floor, directions ? (mode & 2) != 0 : mode == 2);
-        chip(c, root, R.id.chip_vent_windshield, R.id.txt_vent_windshield, directions ? (mode & 4) != 0 : mode == 4);
-        chip(c, root, R.id.chip_recirc, R.id.txt_recirc, Boolean.TRUE.equals(recirc));
+        ventChip(icons, root, transparent, R.id.chip_vent_floor_windshield, R.id.txt_vent_floor_windshield, mode == 6);
+        ventChip(icons, root, transparent, R.id.chip_vent_face, R.id.txt_vent_face, directions ? (mode & 1) != 0 : mode == 1);
+        ventChip(icons, root, transparent, R.id.chip_vent_floor, R.id.txt_vent_floor, directions ? (mode & 2) != 0 : mode == 2);
+        ventChip(icons, root, transparent, R.id.chip_vent_windshield, R.id.txt_vent_windshield, directions ? (mode & 4) != 0 : mode == 4);
+        ventChip(icons, root, transparent, R.id.chip_recirc, R.id.txt_recirc, Boolean.TRUE.equals(recirc));
     }
 
     private static void updateVentFan(Context c, View root) {
@@ -394,18 +397,24 @@ final class OverlayWidgetViews {
         Integer fan = WidgetsCommon.readFan();
         int mode = vent == null ? 1 : vent;
         boolean directions = Prefs.ventDirectionButtons(c);
-        ClimateWidgetIcons.forOverlay(c, root)
-                .ventButtons(vent == null ? 0 : vent, directions);
+        boolean transparent = OverlayBackground.isTransparent(c, WidgetsCommon.SIZE_VENT_FAN);
+        ClimateWidgetIcons icons = ClimateWidgetIcons.forOverlay(c, root);
+        icons.ventButtons(vent == null ? 0 : vent, directions);
+        root.findViewById(R.id.btn_vent_mode).setBackgroundResource(
+                ClimateWidgetIcons.controlBackground(c, transparent, R.drawable.bg_wg_chip));
         text(root, R.id.btn_vent_mode, c.getString(directions
                 ? R.string.widgets_vent_directions : R.string.widgets_vent_presets));
         root.findViewById(R.id.chip_vent_face_floor).setVisibility(directions ? View.GONE : View.VISIBLE);
-        chip(c, root, R.id.chip_vent_face_floor, R.id.txt_vent_face_floor, mode == 3);
+        ventChip(icons, root, transparent, R.id.chip_vent_face_floor, R.id.txt_vent_face_floor, mode == 3);
         root.findViewById(R.id.chip_vent_floor_windshield).setVisibility(directions ? View.GONE : View.VISIBLE);
-        chip(c, root, R.id.chip_vent_floor_windshield, R.id.txt_vent_floor_windshield, mode == 6);
-        chip(c, root, R.id.chip_vent_face, R.id.txt_vent_face, directions ? (mode & 1) != 0 : mode == 1);
-        chip(c, root, R.id.chip_vent_floor, R.id.txt_vent_floor, directions ? (mode & 2) != 0 : mode == 2);
-        chip(c, root, R.id.chip_vent_windshield, R.id.txt_vent_windshield, directions ? (mode & 4) != 0 : mode == 4);
-        chip(c, root, R.id.chip_recirc, R.id.txt_recirc, Boolean.TRUE.equals(recirc));
+        ventChip(icons, root, transparent, R.id.chip_vent_floor_windshield, R.id.txt_vent_floor_windshield, mode == 6);
+        ventChip(icons, root, transparent, R.id.chip_vent_face, R.id.txt_vent_face, directions ? (mode & 1) != 0 : mode == 1);
+        ventChip(icons, root, transparent, R.id.chip_vent_floor, R.id.txt_vent_floor, directions ? (mode & 2) != 0 : mode == 2);
+        ventChip(icons, root, transparent, R.id.chip_vent_windshield, R.id.txt_vent_windshield, directions ? (mode & 4) != 0 : mode == 4);
+        ventChip(icons, root, transparent, R.id.chip_recirc, R.id.txt_recirc, Boolean.TRUE.equals(recirc));
+        int controlBackground = ClimateWidgetIcons.controlBackground(c, transparent, R.drawable.bg_wg_round);
+        root.findViewById(R.id.btn_fan_minus).setBackgroundResource(controlBackground);
+        root.findViewById(R.id.btn_fan_plus).setBackgroundResource(controlBackground);
         text(root, R.id.tv_fan_value, fan == null ? "—" : String.valueOf(fan));
         for (int i = 0; i < FAN_DOTS.length; i++) {
             View dot = root.findViewById(FAN_DOTS[i]);
@@ -469,18 +478,18 @@ final class OverlayWidgetViews {
         text(root, R.id.txt_heat_header, c.getString(R.string.wg_heat_header));
         ClimateWidgetIcons icons = ClimateWidgetIcons.forOverlay(c, root);
         icons.heating(wheel, rear, front, windshield, seatDriver, seatPassenger);
-        toggle(c, root, R.id.chip_wheel_heat, R.id.txt_wheel_heat,
+        toggle(c, root, icons, R.id.chip_wheel_heat, R.id.txt_wheel_heat,
                 Boolean.TRUE.equals(wheel), WidgetsCommon.wheelHeatPending(c),
                 c.getString(R.string.wg_heat_wheel));
-        toggle(c, root, R.id.chip_front_rear_defrost, R.id.txt_front_rear_defrost,
+        toggle(c, root, icons, R.id.chip_front_rear_defrost, R.id.txt_front_rear_defrost,
                 Boolean.TRUE.equals(rear), c.getString(R.string.wg_heat_rear));
-        toggle(c, root, R.id.chip_front_max_defrost, R.id.txt_front_max_defrost,
+        toggle(c, root, icons, R.id.chip_front_max_defrost, R.id.txt_front_max_defrost,
                 Boolean.TRUE.equals(front), c.getString(icons.frontAirLabel()));
-        toggle(c, root, R.id.chip_windshield_heat, R.id.txt_windshield_heat,
+        toggle(c, root, icons, R.id.chip_windshield_heat, R.id.txt_windshield_heat,
                 Boolean.TRUE.equals(windshield), c.getString(icons.electricWindshieldLabel()));
-        seat(root, R.id.chip_seat_heat_driver, R.id.txt_seat_heat_driver,
+        seat(c, root, icons, R.id.chip_seat_heat_driver, R.id.txt_seat_heat_driver,
                 seatDriver, c.getString(R.string.wg_heat_seat_driver), icons.usesOutline());
-        seat(root, R.id.chip_seat_heat_passenger, R.id.txt_seat_heat_passenger,
+        seat(c, root, icons, R.id.chip_seat_heat_passenger, R.id.txt_seat_heat_passenger,
                 seatPassenger, c.getString(R.string.wg_heat_seat_passenger), icons.usesOutline());
     }
 
@@ -588,39 +597,43 @@ final class OverlayWidgetViews {
         }
     }
 
-    private static void toggle(Context c, View root, int chipId, int textId,
+    private static void ventChip(ClimateWidgetIcons icons, View root, boolean transparent,
+                                 int chipId, int textId, boolean active) {
+        root.findViewById(chipId).setBackgroundResource(
+                icons.buttonBackground(transparent, active, false, true));
+        TextView caption = root.findViewById(textId);
+        caption.setTextColor(icons.buttonTextColor(active, true));
+    }
+
+    private static void toggle(Context c, View root, ClimateWidgetIcons icons, int chipId, int textId,
                                boolean active, String label) {
-        toggle(c, root, chipId, textId, active, false, label);
+        toggle(c, root, icons, chipId, textId, active, false, label);
     }
 
-    private static void toggle(Context c, View root, int chipId, int textId,
+    private static void toggle(Context c, View root, ClimateWidgetIcons icons, int chipId, int textId,
                                boolean active, boolean pending, String label) {
-        View chip = root.findViewById(chipId);
-        if (chip != null) {
-            chip.setBackgroundResource(active
-                    ? R.drawable.bg_wg_chip_on_orange
-                    : pending ? R.drawable.bg_wg_chip_pending : R.drawable.bg_wg_chip);
-        }
-        text(root, textId, label);
-        View t = root.findViewById(textId);
-        if (t instanceof TextView) {
-            ((TextView) t).setTextColor(c.getColor(
-                    pending && !active ? R.color.wg_blue_light : R.color.wg_text));
-        }
+        boolean airflow = chipId == R.id.chip_front_max_defrost && icons.usesOutline();
+        boolean transparent = OverlayBackground.isTransparent(c, WidgetsCommon.SIZE_HEATING);
+        root.findViewById(chipId).setBackgroundResource(
+                icons.buttonBackground(transparent, active, pending, airflow));
+        TextView caption = root.findViewById(textId);
+        caption.setText(label);
+        caption.setTextColor(pending && !active
+                ? c.getColor(R.color.wg_blue_light)
+                : icons.buttonTextColor(active, airflow));
     }
 
-    private static void seat(View root, int chipId, int textId,
+    private static void seat(Context c, View root, ClimateWidgetIcons icons, int chipId, int textId,
                              Integer level, String label, boolean outline) {
         boolean active = level != null && level > 0;
-        View chip = root.findViewById(chipId);
-        if (chip != null) {
-            chip.setBackgroundResource(active
-                    ? R.drawable.bg_wg_chip_on_orange : R.drawable.bg_wg_chip);
-        }
+        boolean transparent = OverlayBackground.isTransparent(c, WidgetsCommon.SIZE_HEATING);
+        root.findViewById(chipId).setBackgroundResource(
+                icons.buttonBackground(transparent, active, false, false));
         String value = level == null ? "—" : String.valueOf(level);
         String labelWithLevel = label + " " + value;
         TextView caption = root.findViewById(textId);
         if (caption != null) {
+            caption.setTextColor(icons.buttonTextColor(active, false));
             caption.setText(outline ? label : labelWithLevel);
             caption.setContentDescription(outline ? labelWithLevel : null);
         }

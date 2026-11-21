@@ -18,16 +18,21 @@ final class OverlayBackground {
     }
 
     static Drawable create(Context c, String key) {
-        float perWidget = Prefs.overlayAlphaPct(c, key) / 100f;
-        float global = Prefs.widgetBgOpacity(c) / 100f;
-        float opacity = Math.min(1f, perWidget * global);
-        int alpha = Math.round(255f * opacity);
+        int alpha = alpha(c, key);
         int base = c.getColor(R.color.wg_card);
         GradientDrawable d = new GradientDrawable();
         d.setColor(Color.argb(alpha, Color.red(base), Color.green(base), Color.blue(base)));
         d.setCornerRadius(dp(c, 22));
-        d.setStroke(Math.max(1, dp(c, 1)), c.getColor(R.color.wg_stroke_100));
+        d.setStroke(Math.max(1, dp(c, 1)), alpha == 0 ? Color.TRANSPARENT : c.getColor(R.color.wg_stroke_100));
         return d;
+    }
+
+    static boolean isTransparent(Context c, String key) {
+        return alpha(c, key) == 0;
+    }
+
+    private static int alpha(Context c, String key) {
+        return Math.round(255f * Prefs.overlayAlphaPct(c, key) * Prefs.widgetBgOpacity(c) / 10000f);
     }
 
     private static int dp(Context c, int value) {

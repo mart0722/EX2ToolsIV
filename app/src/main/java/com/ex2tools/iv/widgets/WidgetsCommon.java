@@ -120,6 +120,19 @@ public final class WidgetsCommon {
         return adjustTempDisplay(c, ClimateController.readTargetTemp(state(c)));
     }
 
+    static boolean isWarmAirflow(Context c) {
+        Float target = readTemp(c);
+        if (target == null || !Float.isFinite(target)) return false;
+
+        VehicleState state = state(c);
+        Float cabin = state.floatAny(CarProps.HVAC_TEMP_CURRENT,
+                state.areas(CarProps.HVAC_TEMP_CURRENT, CarProps.CABIN_AREAS));
+        // The car exposes the setpoint and cabin temperature, but no vent outlet reading.
+        float reference = cabin != null && Float.isFinite(cabin) && cabin >= -45f && cabin <= 65f
+                ? cabin : 22f;
+        return target > reference;
+    }
+
     /**
      * После пробуждения ECU держит 20, пока штатный HMI не вернёт сохранённую
      * уставку. В это окно показываем нашу последнюю известную, чтобы цифры
@@ -280,6 +293,7 @@ public final class WidgetsCommon {
         subscribe(state, CarProps.STEERING_WHEEL_HEAT, CarProps.WHEEL_HEAT_AREAS);
         subscribe(state, CarProps.SEAT_HEAT, CarProps.SEAT_AREAS);
         subscribe(state, CarProps.HVAC_TEMP_AOSP, CarProps.HVAC_AREAS);
+        subscribe(state, CarProps.HVAC_TEMP_CURRENT, CarProps.CABIN_AREAS);
         subscribe(state, CarProps.PERF_VEHICLE_SPEED, new int[]{0});
         subscribe(state, CarProps.ESC_SPEED, new int[]{0});
         subscribe(state, CarProps.SOC, new int[]{0});

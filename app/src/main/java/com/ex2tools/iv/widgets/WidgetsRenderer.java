@@ -127,6 +127,7 @@ public final class WidgetsRenderer {
 
     public static RemoteViews vent(Context c, Integer vent, Boolean recirc) {
         RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_hvac_direction);
+        c = OverlayWidgetViews.themeContext(c);
         bg(v, c);
         v.setTextViewText(R.id.txt_vent_header, c.getString(R.string.wg_vent_header));
         v.setTextViewText(R.id.txt_vent_face, c.getString(R.string.wg_vent_face));
@@ -134,19 +135,22 @@ public final class WidgetsRenderer {
         v.setTextViewText(R.id.txt_vent_windshield, c.getString(R.string.wg_vent_windshield));
         v.setTextViewText(R.id.txt_recirc, c.getString(R.string.wg_recirc));
         boolean directions = Prefs.ventDirectionButtons(c);
+        boolean transparent = Prefs.widgetBgOpacity(c) < 10;
         int mode = vent == null ? 0 : vent;
-        ClimateWidgetIcons.forRemote(OverlayWidgetViews.themeContext(c), v)
-                .ventButtons(vent == null ? 0 : vent, directions);
+        ClimateWidgetIcons icons = ClimateWidgetIcons.forRemote(c, v);
+        icons.ventButtons(vent == null ? 0 : vent, directions);
+        v.setInt(R.id.btn_vent_mode, "setBackgroundResource",
+                ClimateWidgetIcons.controlBackground(c, transparent, R.drawable.bg_wg_chip));
         v.setTextViewText(R.id.btn_vent_mode, c.getString(directions
                 ? R.string.widgets_vent_directions : R.string.widgets_vent_presets));
         v.setViewVisibility(R.id.chip_vent_face_floor, directions ? android.view.View.GONE : android.view.View.VISIBLE);
-        chip(v, c, R.id.chip_vent_face_floor, R.id.txt_vent_face_floor, mode == 3);
+        ventChip(v, icons, transparent, R.id.chip_vent_face_floor, R.id.txt_vent_face_floor, mode == 3);
         v.setViewVisibility(R.id.chip_vent_floor_windshield, directions ? android.view.View.GONE : android.view.View.VISIBLE);
-        chip(v, c, R.id.chip_vent_floor_windshield, R.id.txt_vent_floor_windshield, mode == 6);
-        chip(v, c, R.id.chip_vent_face, R.id.txt_vent_face, directions ? (mode & 1) != 0 : mode == 1);
-        chip(v, c, R.id.chip_vent_floor, R.id.txt_vent_floor, directions ? (mode & 2) != 0 : mode == 2);
-        chip(v, c, R.id.chip_vent_windshield, R.id.txt_vent_windshield, directions ? (mode & 4) != 0 : mode == 4);
-        chip(v, c, R.id.chip_recirc, R.id.txt_recirc, Boolean.TRUE.equals(recirc));
+        ventChip(v, icons, transparent, R.id.chip_vent_floor_windshield, R.id.txt_vent_floor_windshield, mode == 6);
+        ventChip(v, icons, transparent, R.id.chip_vent_face, R.id.txt_vent_face, directions ? (mode & 1) != 0 : mode == 1);
+        ventChip(v, icons, transparent, R.id.chip_vent_floor, R.id.txt_vent_floor, directions ? (mode & 2) != 0 : mode == 2);
+        ventChip(v, icons, transparent, R.id.chip_vent_windshield, R.id.txt_vent_windshield, directions ? (mode & 4) != 0 : mode == 4);
+        ventChip(v, icons, transparent, R.id.chip_recirc, R.id.txt_recirc, Boolean.TRUE.equals(recirc));
         click(v, c, R.id.chip_vent_face, WidgetsCommon.VENT_FACE);
         click(v, c, R.id.chip_vent_floor, WidgetsCommon.VENT_FLOOR);
         click(v, c, R.id.chip_vent_windshield, WidgetsCommon.VENT_WINDSHIELD);
@@ -159,15 +163,20 @@ public final class WidgetsRenderer {
 
     public static RemoteViews ventVertical(Context c, Integer vent, Boolean recirc) {
         RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_hvac_direction_vertical);
+        c = OverlayWidgetViews.themeContext(c);
         bg(v, c);
         int mode = vent == null ? 1 : vent;
-        ClimateWidgetIcons.forRemote(OverlayWidgetViews.themeContext(c), v).vent(R.id.img_vent_mode, mode, vent != null);
+        ClimateWidgetIcons icons = ClimateWidgetIcons.forRemote(c, v);
+        icons.vent(R.id.img_vent_mode, mode, vent != null);
         v.setTextViewText(R.id.tv_vent_mode_label, c.getString(WidgetsCommon.ventLabel(mode)));
         v.setTextViewText(R.id.tv_vent_mode_footer, c.getString(R.string.wg_vent_short));
         v.setTextViewText(R.id.txt_recirc_v, c.getString(R.string.wg_recirc));
-        v.setInt(R.id.chip_recirc_v, "setBackgroundResource",
-                Boolean.TRUE.equals(recirc) ? R.drawable.bg_wg_chip_on : R.drawable.bg_wg_chip);
-        v.setTextColor(R.id.txt_recirc_v, c.getColor(R.color.wg_text));
+        boolean transparent = Prefs.widgetBgOpacity(c) < 10;
+        int controlBackground = ClimateWidgetIcons.controlBackground(c, transparent, R.drawable.bg_wg_round);
+        v.setInt(R.id.btn_vent_next, "setBackgroundResource", controlBackground);
+        v.setInt(R.id.btn_vent_prev, "setBackgroundResource", controlBackground);
+        ventChip(v, icons, transparent, R.id.chip_recirc_v,
+                R.id.txt_recirc_v, Boolean.TRUE.equals(recirc));
         click(v, c, R.id.btn_vent_next, WidgetsCommon.VENT_NEXT);
         click(v, c, R.id.btn_vent_prev, WidgetsCommon.VENT_PREV);
         click(v, c, R.id.chip_recirc_v, WidgetsCommon.RECIRC_TOGGLE);
@@ -177,21 +186,25 @@ public final class WidgetsRenderer {
     public static RemoteViews ventFan(Context c, Integer vent, Boolean recirc,
                                       Integer fan, Boolean ac) {
         RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_hvac_direction_fan);
+        c = OverlayWidgetViews.themeContext(c);
         bg(v, c);
         int mode = vent == null ? 1 : vent;
         boolean directions = Prefs.ventDirectionButtons(c);
-        ClimateWidgetIcons.forRemote(OverlayWidgetViews.themeContext(c), v)
-                .ventButtons(vent == null ? 0 : vent, directions);
+        boolean transparent = Prefs.widgetBgOpacity(c) < 10;
+        ClimateWidgetIcons icons = ClimateWidgetIcons.forRemote(c, v);
+        icons.ventButtons(vent == null ? 0 : vent, directions);
+        v.setInt(R.id.btn_vent_mode, "setBackgroundResource",
+                ClimateWidgetIcons.controlBackground(c, transparent, R.drawable.bg_wg_chip));
         v.setTextViewText(R.id.btn_vent_mode, c.getString(directions
                 ? R.string.widgets_vent_directions : R.string.widgets_vent_presets));
         v.setViewVisibility(R.id.chip_vent_face_floor, directions ? android.view.View.GONE : android.view.View.VISIBLE);
-        chip(v, c, R.id.chip_vent_face_floor, R.id.txt_vent_face_floor, mode == 3);
+        ventChip(v, icons, transparent, R.id.chip_vent_face_floor, R.id.txt_vent_face_floor, mode == 3);
         v.setViewVisibility(R.id.chip_vent_floor_windshield, directions ? android.view.View.GONE : android.view.View.VISIBLE);
-        chip(v, c, R.id.chip_vent_floor_windshield, R.id.txt_vent_floor_windshield, mode == 6);
-        chip(v, c, R.id.chip_vent_face, R.id.txt_vent_face, directions ? (mode & 1) != 0 : mode == 1);
-        chip(v, c, R.id.chip_vent_floor, R.id.txt_vent_floor, directions ? (mode & 2) != 0 : mode == 2);
-        chip(v, c, R.id.chip_vent_windshield, R.id.txt_vent_windshield, directions ? (mode & 4) != 0 : mode == 4);
-        chip(v, c, R.id.chip_recirc, R.id.txt_recirc, Boolean.TRUE.equals(recirc));
+        ventChip(v, icons, transparent, R.id.chip_vent_floor_windshield, R.id.txt_vent_floor_windshield, mode == 6);
+        ventChip(v, icons, transparent, R.id.chip_vent_face, R.id.txt_vent_face, directions ? (mode & 1) != 0 : mode == 1);
+        ventChip(v, icons, transparent, R.id.chip_vent_floor, R.id.txt_vent_floor, directions ? (mode & 2) != 0 : mode == 2);
+        ventChip(v, icons, transparent, R.id.chip_vent_windshield, R.id.txt_vent_windshield, directions ? (mode & 4) != 0 : mode == 4);
+        ventChip(v, icons, transparent, R.id.chip_recirc, R.id.txt_recirc, Boolean.TRUE.equals(recirc));
         v.setTextViewText(R.id.tv_fan_value, fan == null ? "—" : String.valueOf(fan));
         for (int i = 0; i < FAN_DOTS.length; i++) {
             v.setInt(FAN_DOTS[i], "setBackgroundResource",
@@ -205,6 +218,9 @@ public final class WidgetsRenderer {
         click(v, c, R.id.chip_vent_floor_windshield, WidgetsCommon.VENT_FLOOR_WINDSHIELD);
         click(v, c, R.id.btn_vent_mode, WidgetsCommon.VENT_WIDGET_MODE);
         click(v, c, R.id.chip_recirc, WidgetsCommon.RECIRC_TOGGLE);
+        int controlBackground = ClimateWidgetIcons.controlBackground(c, transparent, R.drawable.bg_wg_round);
+        v.setInt(R.id.btn_fan_minus, "setBackgroundResource", controlBackground);
+        v.setInt(R.id.btn_fan_plus, "setBackgroundResource", controlBackground);
         click(v, c, R.id.btn_fan_minus, WidgetsCommon.FAN_MINUS);
         click(v, c, R.id.btn_fan_plus, WidgetsCommon.FAN_PLUS);
         return v;
@@ -214,21 +230,22 @@ public final class WidgetsRenderer {
                                       Boolean windshield, Integer seatDriver, Integer seatPassenger,
                                       boolean wheelPending) {
         RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_heating_test);
+        c = OverlayWidgetViews.themeContext(c);
         bg(v, c);
-        ClimateWidgetIcons icons = ClimateWidgetIcons.forRemote(OverlayWidgetViews.themeContext(c), v);
+        ClimateWidgetIcons icons = ClimateWidgetIcons.forRemote(c, v);
         icons.heating(wheel, rear, front, windshield, seatDriver, seatPassenger);
         v.setTextViewText(R.id.txt_heat_header, c.getString(R.string.wg_heat_header));
-        toggle(v, c, R.id.chip_wheel_heat, R.id.txt_wheel_heat,
+        toggle(v, c, icons, R.id.chip_wheel_heat, R.id.txt_wheel_heat,
                 Boolean.TRUE.equals(wheel), wheelPending, c.getString(R.string.wg_heat_wheel));
-        toggle(v, c, R.id.chip_front_rear_defrost, R.id.txt_front_rear_defrost,
+        toggle(v, c, icons, R.id.chip_front_rear_defrost, R.id.txt_front_rear_defrost,
                 Boolean.TRUE.equals(rear), c.getString(R.string.wg_heat_rear));
-        toggle(v, c, R.id.chip_front_max_defrost, R.id.txt_front_max_defrost,
+        toggle(v, c, icons, R.id.chip_front_max_defrost, R.id.txt_front_max_defrost,
                 Boolean.TRUE.equals(front), c.getString(icons.frontAirLabel()));
-        toggle(v, c, R.id.chip_windshield_heat, R.id.txt_windshield_heat,
+        toggle(v, c, icons, R.id.chip_windshield_heat, R.id.txt_windshield_heat,
                 Boolean.TRUE.equals(windshield), c.getString(icons.electricWindshieldLabel()));
-        seat(v, c, R.id.chip_seat_heat_driver, R.id.txt_seat_heat_driver,
+        seat(v, c, icons, R.id.chip_seat_heat_driver, R.id.txt_seat_heat_driver,
                 seatDriver, c.getString(R.string.wg_heat_seat_driver), icons.usesOutline());
-        seat(v, c, R.id.chip_seat_heat_passenger, R.id.txt_seat_heat_passenger,
+        seat(v, c, icons, R.id.chip_seat_heat_passenger, R.id.txt_seat_heat_passenger,
                 seatPassenger, c.getString(R.string.wg_heat_seat_passenger), icons.usesOutline());
         click(v, c, R.id.chip_wheel_heat, WidgetsCommon.WHEEL_HEAT_TOGGLE);
         click(v, c, R.id.chip_front_rear_defrost, WidgetsCommon.REAR_DEFROST_TOGGLE);
@@ -313,35 +330,36 @@ public final class WidgetsRenderer {
         v.setTextColor(textId, c.getColor(R.color.wg_text));
     }
 
-    private static void toggle(RemoteViews v, Context c, int chipId, int textId,
+    private static void ventChip(RemoteViews v, ClimateWidgetIcons icons, boolean transparent,
+                                 int chipId, int textId, boolean active) {
+        v.setInt(chipId, "setBackgroundResource",
+                icons.buttonBackground(transparent, active, false, true));
+        v.setTextColor(textId, icons.buttonTextColor(active, true));
+    }
+
+    private static void toggle(RemoteViews v, Context c, ClimateWidgetIcons icons, int chipId, int textId,
                                boolean active, String label) {
-        toggle(v, c, chipId, textId, active, false, label);
+        toggle(v, c, icons, chipId, textId, active, false, label);
     }
 
     /** Три состояния: выключено / ожидание подтверждения (синяя обводка) / включено. */
-    private static void toggle(RemoteViews v, Context c, int chipId, int textId,
+    private static void toggle(RemoteViews v, Context c, ClimateWidgetIcons icons, int chipId, int textId,
                                boolean active, boolean pending, String label) {
-        int bg;
-        if (active) {
-            bg = R.drawable.bg_wg_chip_on_orange;
-        } else if (pending) {
-            bg = R.drawable.bg_wg_chip_pending;
-        } else {
-            bg = R.drawable.bg_wg_chip;
-        }
-        v.setInt(chipId, "setBackgroundResource", bg);
+        boolean airflow = chipId == R.id.chip_front_max_defrost && icons.usesOutline();
+        v.setInt(chipId, "setBackgroundResource", icons.buttonBackground(
+                Prefs.widgetBgOpacity(c) < 10, active, pending, airflow));
         v.setTextColor(textId, pending && !active
                 ? c.getColor(R.color.wg_blue_light)
-                : c.getColor(R.color.wg_text));
+                : icons.buttonTextColor(active, airflow));
         v.setTextViewText(textId, label);
     }
 
-    private static void seat(RemoteViews v, Context c, int chipId, int textId,
+    private static void seat(RemoteViews v, Context c, ClimateWidgetIcons icons, int chipId, int textId,
                              Integer level, String label, boolean outline) {
         boolean active = level != null && level > 0;
-        v.setInt(chipId, "setBackgroundResource",
-                active ? R.drawable.bg_wg_chip_on_orange : R.drawable.bg_wg_chip);
-        v.setTextColor(textId, c.getColor(R.color.wg_text));
+        v.setInt(chipId, "setBackgroundResource", icons.buttonBackground(
+                Prefs.widgetBgOpacity(c) < 10, active, false, false));
+        v.setTextColor(textId, icons.buttonTextColor(active, false));
         String value = level == null ? "—" : String.valueOf(level);
         String labelWithLevel = label + " " + value;
         v.setTextViewText(textId, outline ? label : labelWithLevel);
