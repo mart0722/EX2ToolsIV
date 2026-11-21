@@ -248,6 +248,7 @@ public final class MainActivity extends AppCompatActivity {
             com.ex2tools.iv.screenshot.ScreenshotButtonService.sync(this);
             com.ex2tools.iv.tasks.TaskManagerButtonService.sync(this);
             com.ex2tools.iv.widgets.WidgetUpdateService.sync(this);
+            com.ex2tools.iv.body.WipersOnLockService.sync(this);
             com.ex2tools.iv.service.DriveRegenWatchService.sync(this);
         } catch (Throwable t) {
             LogStore.add(this, "service sync failed: " + t);

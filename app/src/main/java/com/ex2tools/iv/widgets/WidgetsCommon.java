@@ -202,7 +202,8 @@ public final class WidgetsCommon {
     }
 
     static boolean wiperServicePositionActive() {
-        return Integer.valueOf(1).equals(VehicleState.get().intValue(CarProps.WIPER_SERVICE_POSITION, 0));
+        Object value = VehicleState.get().value(CarProps.WIPER_SERVICE_POSITION, 0);
+        return Boolean.TRUE.equals(com.ex2tools.iv.body.BodyController.decodeWiperServicePosition(value));
     }
 
     public static Boolean readWindshieldHeat() {

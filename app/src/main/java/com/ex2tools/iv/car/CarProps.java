@@ -17,6 +17,8 @@ public final class CarProps {
     public static final int REGEN_STRONG = 537003267;    // 0x20020503
 
     public static final int GEAR = 289408001;            // 0x11400401
+    public static final int GEAR_SELECTION_VENDOR = 0x2140800F;
+    public static final int GEAR_SELECTION_VENDOR_PARK = 1;
     public static final int PERF_VEHICLE_SPEED = 291504647;
     public static final int ESC_SPEED = 557884185;
     public static final int SOC = 557885165;
@@ -51,7 +53,12 @@ public final class CarProps {
     public static final int DRIVE_MILEAGE = 658548345;
 
     public static final int WIPER_SERVICE_POSITION = 0x2140A80E;
+    public static final int WIPER_SERVICE_FUNCTION = 0x200C0100;
+    public static final int ALL_DOORS_LOCK_REQUEST = 0x2140A325;
+    public static final int IGNITION_STATE_VENDOR = 0x2140800B;
+    public static final int IGNITION_STATE = 0x11400409;
     public static final int VEHICLE_POWER_OFF_REQUEST = 0x2140A6FB;
+    public static final int VEHICLE_POWER_OFF_FUNCTION = 0x21100200;
     public static final int SPEED_AUTO_LOCK = 557850645;   // 0x21402015, as in Sapo
     public static final int WINDOW_POSITION = 322964416;
     public static final int DAY_NIGHT_SETTING = 538247424;

@@ -59,6 +59,7 @@ public final class SettingsFragment extends Fragment {
     private FlymeSwitchRow switchClimate;
     private FlymeSwitchRow switchComfort;
     private FlymeSwitchRow switchWindowFollow;
+    private FlymeSwitchRow switchWipersOnLock;
     private View settingsClimate;
     private FlymeSegmentedGroup autoLockTimeGroup;
     private Dialog rvcProgress;
@@ -100,6 +101,7 @@ public final class SettingsFragment extends Fragment {
         switchClimate = view.findViewById(R.id.switchClimate);
         switchComfort = view.findViewById(R.id.switchComfort);
         switchWindowFollow = view.findViewById(R.id.switchWindowFollow);
+        switchWipersOnLock = view.findViewById(R.id.switchWipersOnLock);
         settingsClimate = view.findViewById(R.id.settingsClimate);
         autoLockTimeGroup = view.findViewById(R.id.autoLockTimeGroup);
         applyResult = view.findViewById(R.id.applyResult);
@@ -232,6 +234,13 @@ public final class SettingsFragment extends Fragment {
             int sec = checkedId == R.id.autoLock30 ? 30
                     : checkedId == R.id.autoLock300 ? 300 : 60;
             Prefs.setAutoLockTimeoutSec(requireContext(), sec);
+        });
+
+        switchWipersOnLock.setChecked(Prefs.wipersOnLock(c));
+        switchWipersOnLock.setOnCheckedChangeListener((button, checked) -> {
+            if (binding) return;
+            Prefs.setWipersOnLock(c, checked);
+            com.ex2tools.iv.body.WipersOnLockService.sync(c);
         });
 
         switchWindowFollow.setChecked(Prefs.windowFollowDoor(c));
@@ -388,6 +397,11 @@ public final class SettingsFragment extends Fragment {
         if (switchWindowFollow != null) {
             binding = true;
             switchWindowFollow.setChecked(Prefs.windowFollowDoor(c));
+            binding = false;
+        }
+        if (switchWipersOnLock != null) {
+            binding = true;
+            switchWipersOnLock.setChecked(Prefs.wipersOnLock(c));
             binding = false;
         }
         if (switchComfort != null) {

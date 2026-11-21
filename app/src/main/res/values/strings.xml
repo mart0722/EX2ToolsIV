@@ -779,8 +779,9 @@
     <string name="widgets_overlay_placement_free">Свободно</string>
     <string name="widgets_overlay_placement_corners">К углам</string>
     <string name="widgets_overlay_placement_grid">По сетке</string>
-    <string name="widgets_overlay_placement_auto_grid">Автосетка</string>
-    <string name="widgets_overlay_auto_grid_hint">Виджеты выстраиваются в ряды. Перетащите виджет, чтобы сменить его место. Если места не хватает, уменьшите размеры виджетов.</string>
+    <string name="widgets_overlay_placement_neighbor">К виджетам</string>
+    <string name="widgets_overlay_wide_temperature">Широкая плитка температуры</string>
+    <string name="widgets_overlay_neighbor_hint">Подведите виджет к соседнему, чтобы выровнять их по краю с небольшим отступом.</string>
     <string name="steering_title">Кнопки руля</string>
     <string name="steering_climate">Управление климатом</string>
     <string name="steering_climate_hint">Двойное нажатие голосовой кнопки переключает режим климата.</string>
@@ -862,8 +863,10 @@
     <string name="climate_log_cleared">Журнал очищен</string>
     <string name="climate_log_size">Пакетов записано: %1$d, размер %2$d КБ</string>
     <string name="widget_name_wipers">Сервисный режим дворников</string>
+    <string name="widget_wipers_on_lock">Поднимать дворники при запирании</string>
+    <string name="widget_wipers_on_lock_note">Только на стоящей машине в положении P. Щётки должны свободно двигаться по стеклу.</string>
     <string name="widget_name_power_off">Выключить машину</string>
-    <string name="widget_wipers_unavailable">Режим дворников недоступен. Проверьте, что машина в P</string>
+    <string name="widget_wipers_unavailable">Сервисный режим дворников сейчас недоступен</string>
     <string name="widget_power_off_unavailable">Штатный диалог выключения недоступен</string>
     <string name="widget_power_off_without_confirmation">Выключать машину без подтверждения</string>
     <string name="widget_power_off_park_only">Выключение без подтверждения доступно только после полной остановки в положении P</string>

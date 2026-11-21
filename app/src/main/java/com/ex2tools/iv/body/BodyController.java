@@ -2,6 +2,7 @@ package com.ex2tools.iv.body;
 
 import android.car.hardware.CarPropertyValue;
 import android.content.Context;
+import android.util.Log;
 
 import com.ex2tools.iv.car.CarProps;
 import com.ex2tools.iv.vehicle.CommandDispatcher;
@@ -62,13 +63,14 @@ public final class BodyController {
     }
 
     private Boolean wiperServicePosition() {
-        CarPropertyValue<?> value =
-                gateway.readValue(CarProps.WIPER_SERVICE_POSITION, 0);
-        if (value == null || value.getStatus() != 0 || !(value.getValue() instanceof Integer)) {
-            return null;
-        }
-        int position = (Integer) value.getValue();
-        return switch (position) {
+        CarPropertyValue<?> value = availableProperty(CarProps.WIPER_SERVICE_POSITION);
+        return value == null ? null : decodeWiperServicePosition(value.getValue());
+    }
+
+    public static Boolean decodeWiperServicePosition(Object value) {
+        if (value instanceof Boolean active) return active;
+        if (!(value instanceof Integer position)) return null;
+        return switch (position.intValue()) {
             case 1 -> true;
             case 0, 2 -> false;
             default -> null;
@@ -76,40 +78,76 @@ public final class BodyController {
     }
 
     public boolean toggleWiperServicePosition() {
-        CarPropertyValue<?> gear = gateway.readValue(CarProps.GEAR, 0);
-        if (gear == null || gear.getStatus() != 0
-                || !Integer.valueOf(CarProps.GEAR_PARK).equals(gear.getValue())) return false;
+        if (!Boolean.TRUE.equals(parkSelected())) {
+            Log.i("BodyController", "Wiper service blocked: Park not confirmed");
+            return false;
+        }
 
         Boolean active = wiperServicePosition();
-        return active != null && submitInt(CarProps.WIPER_SERVICE_POSITION, 0, active ? 0 : 1).ok();
+        if (active == null) {
+            Log.i("BodyController", "Wiper service blocked: position unavailable");
+            return false;
+        }
+        return setWiperServicePosition(!active);
+    }
+
+    public boolean raiseWipersOnLock() {
+        if (!Boolean.TRUE.equals(parkSelected())) return false;
+        Number speed = availableValue(CarProps.PERF_VEHICLE_SPEED);
+        if (speed == null || speed.floatValue() != 0f) return false;
+        if (!Boolean.FALSE.equals(wiperServicePosition())) return false;
+        CarPropertyValue<?> ignition = availableProperty(CarProps.IGNITION_STATE_VENDOR);
+        if (ignition == null || !(ignition.getValue() instanceof Integer state)) return false;
+        // Flyme maps raw OFF/ACC/ON to 2/3/4 when it returns the Android property ID.
+        boolean powered = ignition.getPropertyId() == CarProps.IGNITION_STATE
+                ? state == 4 || state == 5 : state == 2 || state == 4;
+        return powered && setWiperServicePosition(true);
+    }
+
+    private boolean setWiperServicePosition(boolean active) {
+        return dispatcher.submit(new CommandDispatcher.Command(
+                CarProps.WIPER_SERVICE_FUNCTION, 0, PropertySpec.Type.BOOLEAN, active), false).ok();
     }
 
     public PowerOffResult requestParkedPowerOff(Context context) {
-        if (!gateway.ensure(context) || availableValue(CarProps.VEHICLE_POWER_OFF_REQUEST) == null) {
+        if (!gateway.ensure(context) || availableProperty(CarProps.VEHICLE_POWER_OFF_REQUEST) == null) {
             return PowerOffResult.UNAVAILABLE;
         }
-        Number gear = availableValue(CarProps.GEAR);
+        Boolean parked = parkSelected();
         Number speed = availableValue(CarProps.PERF_VEHICLE_SPEED);
-        if (gear == null || speed == null || !Float.isFinite(speed.floatValue())) {
+        if (parked == null || speed == null || !Float.isFinite(speed.floatValue())) {
             return PowerOffResult.UNAVAILABLE;
         }
-        if (gear.intValue() != CarProps.GEAR_PARK || speed.floatValue() != 0f) {
+        if (!parked || speed.floatValue() != 0f) {
             return PowerOffResult.NOT_PARKED;
         }
 
-        // Штатный Flyme Auto передаёт 1 в MMI_POWER_ON_OFF_REQ при подтверждении.
+        // Flyme's Boolean function sends the power-off request the stock dialog uses.
         CommandDispatcher.Result result = dispatcher.submit(new CommandDispatcher.Command(
-                CarProps.VEHICLE_POWER_OFF_REQUEST, 0, PropertySpec.Type.INT, 1), false);
+                CarProps.VEHICLE_POWER_OFF_FUNCTION, 0, PropertySpec.Type.BOOLEAN, true), false);
         return result.ok() ? PowerOffResult.SENT : PowerOffResult.UNAVAILABLE;
     }
 
-    private Number availableValue(int property) {
-        CarPropertyValue<?> value = gateway.readValue(property, 0);
-        if (value != null && value.getStatus() == CarPropertyValue.STATUS_AVAILABLE
-                && value.getValue() instanceof Number number) {
-            return number;
+    private Boolean parkSelected() {
+        // The EX2 adapter maps its GEAR_SELECTION value 1 to Android's GEAR_PARK.
+        CarPropertyValue<?> vendor = availableProperty(CarProps.GEAR_SELECTION_VENDOR);
+        if (vendor != null && vendor.getValue() instanceof Integer gear) {
+            int park = vendor.getPropertyId() == CarProps.GEAR
+                    ? CarProps.GEAR_PARK : CarProps.GEAR_SELECTION_VENDOR_PARK;
+            return gear == park;
         }
-        return null;
+        Number standard = availableValue(CarProps.GEAR);
+        return standard == null ? null : standard.intValue() == CarProps.GEAR_PARK;
+    }
+
+    private Number availableValue(int property) {
+        CarPropertyValue<?> value = availableProperty(property);
+        return value != null && value.getValue() instanceof Number number ? number : null;
+    }
+
+    private CarPropertyValue<?> availableProperty(int property) {
+        CarPropertyValue<?> value = gateway.readValue(property, 0);
+        return value != null && value.getStatus() == CarPropertyValue.STATUS_AVAILABLE ? value : null;
     }
 
     private CommandDispatcher.Result submitInt(int id, int area, int value) {
