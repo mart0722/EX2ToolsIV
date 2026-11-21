@@ -168,6 +168,22 @@
                         android:textSize="20sp" />
 
                     <com.ex2tools.iv.ui.FlymeSwitchRow
+                        android:id="@+id/widgetCardBorder"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/widgets_card_border"
+                        android:textColor="@color/flyme_label_level1"
+                        android:textSize="20sp" />
+
+                    <com.ex2tools.iv.ui.FlymeSwitchRow
+                        android:id="@+id/widgetButtonBorder"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/widgets_button_border"
+                        android:textColor="@color/flyme_label_level1"
+                        android:textSize="20sp" />
+
+                    <com.ex2tools.iv.ui.FlymeSwitchRow
                         android:id="@+id/widgetAccentBoost"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -176,6 +192,15 @@
                         android:textColor="@color/flyme_label_level1"
                         android:textSize="20sp"
                         android:visibility="gone" />
+
+                    <com.ex2tools.iv.ui.FlymeSwitchRow
+                        android:id="@+id/widgetPowerOffWithoutConfirmation"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/widget_power_off_without_confirmation"
+                        android:textColor="@color/flyme_label_level1"
+                        android:textSize="20sp"
+                        app:rowDescription="@string/widget_power_off_park_only" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

@@ -3,6 +3,7 @@ package com.ex2tools.iv.widgets;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
+import android.util.SparseIntArray;
 
 import androidx.core.graphics.ColorUtils;
 
@@ -15,6 +16,58 @@ final class WidgetAppearance {
 
     static boolean usesGlass(Context c) {
         return Prefs.climateIconStyle(c) != Prefs.ClimateIconStyle.STANDARD;
+    }
+
+    static int cardBackground(Context c, int resource) {
+        return Prefs.widgetCardBorder(c) ? resource : borderless(resource);
+    }
+
+    static int buttonBackground(Context c, int resource) {
+        return Prefs.widgetButtonBorder(c) ? resource : borderless(resource);
+    }
+
+    private static final SparseIntArray BORDERLESS = new SparseIntArray();
+
+    static {
+        BORDERLESS.put(R.drawable.bg_wg_card_020, R.drawable.bg_wg_card_020_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_card_040, R.drawable.bg_wg_card_040_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_card_060, R.drawable.bg_wg_card_060_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_card_080, R.drawable.bg_wg_card_080_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_card_100, R.drawable.bg_wg_card_100_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_chip_on, R.drawable.bg_wg_chip_on_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_chip_on_green, R.drawable.bg_wg_chip_on_green_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_chip_on_orange, R.drawable.bg_wg_chip_on_orange_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_chip_on_red, R.drawable.bg_wg_chip_on_red_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_chip_pending, R.drawable.bg_wg_chip_pending_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_climate_air, R.drawable.bg_wg_climate_air_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_climate_air_high, R.drawable.bg_wg_climate_air_high_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_climate_air_medium, R.drawable.bg_wg_climate_air_medium_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_climate_glass, R.drawable.bg_wg_climate_glass_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_climate_heat, R.drawable.bg_wg_climate_heat_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_climate_pending, R.drawable.bg_wg_climate_pending_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_climate_warm_air, R.drawable.bg_wg_climate_warm_air_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_climate_warm_air_high, R.drawable.bg_wg_climate_warm_air_high_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_climate_warm_air_medium, R.drawable.bg_wg_climate_warm_air_medium_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_glass_accent_air, R.drawable.bg_wg_glass_accent_air_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_glass_accent_air_high, R.drawable.bg_wg_glass_accent_air_high_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_glass_accent_air_medium, R.drawable.bg_wg_glass_accent_air_medium_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_glass_accent_green, R.drawable.bg_wg_glass_accent_green_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_glass_accent_heat, R.drawable.bg_wg_glass_accent_heat_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_glass_accent_red, R.drawable.bg_wg_glass_accent_red_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_glass_accent_warm_air, R.drawable.bg_wg_glass_accent_warm_air_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_glass_accent_warm_air_high, R.drawable.bg_wg_glass_accent_warm_air_high_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_glass_accent_warm_air_medium, R.drawable.bg_wg_glass_accent_warm_air_medium_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_glass_card_020, R.drawable.bg_wg_glass_card_020_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_glass_card_040, R.drawable.bg_wg_glass_card_040_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_glass_card_060, R.drawable.bg_wg_glass_card_060_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_glass_card_080, R.drawable.bg_wg_glass_card_080_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_glass_card_100, R.drawable.bg_wg_glass_card_100_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_glass_green, R.drawable.bg_wg_glass_green_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_glass_red, R.drawable.bg_wg_glass_red_borderless);
+    }
+
+    private static int borderless(int resource) {
+        return BORDERLESS.get(resource, resource);
     }
 
     static int glassCardResource(int opacity) {
@@ -35,7 +88,7 @@ final class WidgetAppearance {
         GradientDrawable card = new GradientDrawable(
                 GradientDrawable.Orientation.TOP_BOTTOM, new int[]{top, bottom});
         card.setCornerRadius(radius);
-        card.setStroke(strokeWidth, edge);
+        if (Prefs.widgetCardBorder(c)) card.setStroke(strokeWidth, edge);
         return card;
     }
 
@@ -44,12 +97,17 @@ final class WidgetAppearance {
     }
 
     static int controlBackground(Context c, boolean transparent, int standard) {
-        if (!usesGlass(c)) return standard;
-        return transparent ? android.R.color.transparent : R.drawable.bg_wg_climate_glass;
+        int background = !usesGlass(c) ? standard
+                : transparent ? android.R.color.transparent : R.drawable.bg_wg_climate_glass;
+        return buttonBackground(c, background);
     }
 
     /** Accent indices match the drive and regeneration controls: blue, green, red. */
     static int chipBackground(Context c, boolean transparent, boolean active, int accent) {
+        return buttonBackground(c, chipSurface(c, transparent, active, accent));
+    }
+
+    private static int chipSurface(Context c, boolean transparent, boolean active, int accent) {
         if (!usesGlass(c)) {
             if (!active) return R.drawable.bg_wg_chip;
             return switch (accent) {

@@ -66,6 +66,7 @@ public final class OverlayWidgetService extends Service {
                     || WidgetsCommon.SIZE_VENT.equals(key)
                     || WidgetsCommon.SIZE_VENT_FAN.equals(key)
                     || WidgetsCommon.SIZE_HEATING.equals(key)
+                    || WidgetsCommon.SIZE_WIPERS.equals(key)
                     || WidgetsCommon.SIZE_WINDSHIELD_HEAT.equals(key)) {
                 update(spec);
             }
@@ -432,6 +433,7 @@ public final class OverlayWidgetService extends Service {
                           WindowManager.LayoutParams lp) {
         final boolean locked = Prefs.overlayLock(this);
         final boolean lockWidget = WidgetsCommon.SIZE_LOCK.equals(spec.key);
+        final boolean vehicleButton = WidgetsCommon.isStandaloneVehicleButton(spec.key);
         View drag = content.findViewById(R.id.widget_bg_layer);
         if (lockWidget) {
             // Тело виджета блокировки перекрывает фон и перехватывает касания.
@@ -462,11 +464,11 @@ public final class OverlayWidgetService extends Service {
                         moved = false;
                         return true;
                     case MotionEvent.ACTION_MOVE:
-                        if (locked) return true;
+                        if (locked && !vehicleButton) return true;
                         float dx = event.getRawX() - downX;
                         float dy = event.getRawY() - downY;
                         if (Math.abs(dx) > dp(5) || Math.abs(dy) > dp(5)) moved = true;
-                        if (moved) {
+                        if (moved && !locked) {
                             spec.dragging = true;
                             lp.x = startX + Math.round(dx);
                             lp.y = startY + Math.round(dy);
@@ -491,6 +493,8 @@ public final class OverlayWidgetService extends Service {
                         } else if (!moved && event.getActionMasked() == MotionEvent.ACTION_UP) {
                             if (lockWidget) {
                                 openLockScreen();
+                            } else if (vehicleButton) {
+                                v.performClick();
                             } else if (WidgetsCommon.SIZE_SPEED.equals(spec.key)
                                     && v.getHeight() > 0
                                     && event.getY() >= v.getHeight() * 0.72f) {
@@ -626,6 +630,8 @@ public final class OverlayWidgetService extends Service {
                     WidgetsCommon.SIZE_HEATING,
                     WidgetsCommon.SIZE_WINDSHIELD_HEAT,
                     WidgetsCommon.SIZE_BATTERY_RANGE,
+                    WidgetsCommon.SIZE_WIPERS,
+                    WidgetsCommon.SIZE_POWER_OFF,
                     WidgetsCommon.SIZE_LOCK,
                     WidgetsCommon.SIZE_APPS
             };

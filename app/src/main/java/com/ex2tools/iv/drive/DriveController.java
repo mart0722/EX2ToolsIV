@@ -53,9 +53,7 @@ public final class DriveController {
     }
 
     public CommandDispatcher.Result setDrive(int mode) {
-        if (mode != CarProps.DRIVE_ECO
-                && mode != CarProps.DRIVE_COMFORT
-                && mode != CarProps.DRIVE_SPORT) {
+        if (!isDriveMode(mode)) {
             mode = CarProps.DRIVE_COMFORT;
         }
         return submitIntAny(CarProps.DRIVE_MODE, CarProps.DRIVE_AREAS, mode);
@@ -84,8 +82,13 @@ public final class DriveController {
 
     /** Фактический режим движения (из VehicleState, иначе прямое чтение). */
     public Integer currentDrive() {
-        Integer cached = state.intAny(CarProps.DRIVE_MODE, CarProps.DRIVE_AREAS);
-        return cached != null ? cached : readIntAny(CarProps.DRIVE_MODE, CarProps.DRIVE_AREAS);
+        for (int area : CarProps.DRIVE_AREAS) {
+            Integer cached = state.intValue(CarProps.DRIVE_MODE, area);
+            if (cached != null && isDriveMode(cached)) return cached;
+            int current = gateway.readInt(CarProps.DRIVE_MODE, area);
+            if (isDriveMode(current)) return current;
+        }
+        return null;
     }
 
     /** Фактическая рекуперация. */
@@ -96,7 +99,11 @@ public final class DriveController {
 
     /** Свежее чтение мимо кэша — для проверки, что запись реально применилась. */
     public Integer freshDrive() {
-        return readIntAny(CarProps.DRIVE_MODE, CarProps.DRIVE_AREAS);
+        for (int area : CarProps.DRIVE_AREAS) {
+            int current = gateway.readInt(CarProps.DRIVE_MODE, area);
+            if (isDriveMode(current)) return current;
+        }
+        return null;
     }
 
     /** Свежее чтение мимо кэша. */
@@ -161,6 +168,11 @@ public final class DriveController {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+    }
+
+    private static boolean isDriveMode(int value) {
+        return value == CarProps.DRIVE_ECO || value == CarProps.DRIVE_COMFORT
+                || value == CarProps.DRIVE_SPORT;
     }
 
     private static int step(int[] order, int current, int direction) {

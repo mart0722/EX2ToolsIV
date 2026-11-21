@@ -48,6 +48,8 @@ public final class WidgetUpdateService extends Service {
             WindshieldHeatWidgetProvider.class,
             SpeedWidgetProvider.class,
             BatteryRangeWidgetProvider.class,
+            WipersWidgetProvider.class,
+            PowerOffWidgetProvider.class,
             LockWidgetProvider.class
     };
 
@@ -180,6 +182,9 @@ public final class WidgetUpdateService extends Service {
         boolean carReady = state.ensure(this);
         if (!pendingActions.isEmpty()) {
             if (!carReady) {
+                if (pendingActions.removeIf(WidgetsCommon.WIPERS_TOGGLE::equals)) {
+                    showWipersUnavailable();
+                }
                 scheduleRetry();
                 return;
             }
@@ -289,6 +294,8 @@ public final class WidgetUpdateService extends Service {
         any |= update(awm, batteryRangeIds,
                 c -> WidgetsRenderer.batteryRange(c, soc,
                         Float.isNaN(displayRange) ? null : displayRange, energyKwh));
+        any |= update(awm, ids(awm, WipersWidgetProvider.class), WidgetsRenderer::wipers);
+        any |= update(awm, ids(awm, PowerOffWidgetProvider.class), WidgetsRenderer::powerOff);
         any |= update(awm, lockIds, WidgetsRenderer::lock);
         if (ids(awm, ClockWidgetProvider.class).length > 0) {
             ClockWidgetProvider.refreshAll(this);
@@ -364,14 +371,15 @@ public final class WidgetUpdateService extends Service {
     private boolean update(AppWidgetManager awm, int[] ids,
                            java.util.function.Function<Context, RemoteViews> build) {
         if (ids.length == 0) return false;
-        android.util.SparseArray<RemoteViews> byIconSize = new android.util.SparseArray<>();
+        android.util.SparseArray<RemoteViews> byIconSettings = new android.util.SparseArray<>();
         for (int id : ids) {
             Context widget = WidgetIconSizes.appWidgetContext(this, id);
-            int size = WidgetIconSizes.appWidgetSize(widget);
-            RemoteViews views = byIconSize.get(size);
+            int key = WidgetIconSizes.appWidgetSize(widget) * 2
+                    + (WidgetIconSizes.appWidgetLabels(widget) ? 1 : 0);
+            RemoteViews views = byIconSettings.get(key);
             if (views == null) {
                 views = build.apply(widget);
-                byIconSize.put(size, views);
+                byIconSettings.put(key, views);
             }
             awm.updateAppWidget(id, views);
         }
@@ -412,8 +420,18 @@ public final class WidgetUpdateService extends Service {
         if (result != null && result.ok()) VehicleState.get().requestDisplayRefresh();
     }
 
+    private void showWipersUnavailable() {
+        handler.post(() -> android.widget.Toast.makeText(this,
+                R.string.widget_wipers_unavailable, android.widget.Toast.LENGTH_SHORT).show());
+    }
+
     private void handleAction(String action) {
         switch (action) {
+            case WidgetsCommon.WIPERS_TOGGLE:
+                if (!com.ex2tools.iv.body.BodyController.get().toggleWiperServicePosition()) {
+                    showWipersUnavailable();
+                }
+                break;
             case WidgetsCommon.DRIVE_ECO:
                 WidgetsCommon.applyDrive(this, 570491137);
                 break;

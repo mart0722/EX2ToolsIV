@@ -294,6 +294,35 @@ public final class WidgetsRenderer {
         return v;
     }
 
+    static RemoteViews wipers(Context c) {
+        return vehicleControl(c, false);
+    }
+
+    static RemoteViews powerOff(Context c) {
+        return vehicleControl(c, true);
+    }
+
+    private static RemoteViews vehicleControl(Context widgetContext, boolean powerOff) {
+        Context c = OverlayWidgetViews.themeContext(widgetContext);
+        RemoteViews views = new RemoteViews(c.getPackageName(),
+                powerOff ? R.layout.widget_power_off : R.layout.widget_wipers);
+        ClimateWidgetIcons icons = ClimateWidgetIcons.forRemote(widgetContext, c, views);
+        icons.vehicleControl(powerOff);
+        boolean active = !powerOff && WidgetsCommon.wiperServicePositionActive();
+        int chip = powerOff ? R.id.chip_power_off : R.id.chip_wipers;
+        toggle(views, c, icons, chip, powerOff ? R.id.txt_power_off : R.id.txt_wipers,
+                active, false,
+                c.getString(powerOff ? R.string.widget_name_power_off : R.string.widget_name_wipers),
+                false);
+        if (powerOff) {
+            views.setOnClickPendingIntent(chip, PendingIntent.getActivity(c, 0,
+                    new Intent(c, VehiclePowerOffActivity.class), PendingIntent.FLAG_IMMUTABLE));
+        } else {
+            click(views, c, chip, WidgetsCommon.WIPERS_TOGGLE);
+        }
+        return views;
+    }
+
     public static RemoteViews batteryRange(Context c, Integer soc, Float range, Float energyKwh) {
         RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_battery_range);
         bg(v, c);
@@ -387,9 +416,13 @@ public final class WidgetsRenderer {
     /** Три состояния: выключено / ожидание подтверждения (синяя обводка) / включено. */
     private static void toggle(RemoteViews v, Context c, ClimateWidgetIcons icons, int chipId, int textId,
                                boolean active, boolean pending, String label) {
+        toggle(v, c, icons, chipId, textId, active, pending, label, Prefs.widgetBgOpacity(c) < 10);
+    }
+
+    private static void toggle(RemoteViews v, Context c, ClimateWidgetIcons icons, int chipId, int textId,
+                               boolean active, boolean pending, String label, boolean transparent) {
         boolean airflow = chipId == R.id.chip_front_max_defrost && icons.usesOutline();
-        v.setInt(chipId, "setBackgroundResource", icons.buttonBackground(
-                Prefs.widgetBgOpacity(c) < 10, active, pending, airflow));
+        v.setInt(chipId, "setBackgroundResource", icons.buttonBackground(transparent, active, pending, airflow));
         v.setTextColor(textId, pending && !active
                 ? c.getColor(R.color.wg_blue_light)
                 : icons.buttonTextColor(active, airflow));

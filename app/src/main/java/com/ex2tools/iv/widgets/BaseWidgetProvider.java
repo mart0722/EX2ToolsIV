@@ -20,7 +20,7 @@ abstract class BaseWidgetProvider extends AppWidgetProvider {
 
     @Override
     public void onDeleted(Context context, int[] ids) {
-        for (int id : ids) Prefs.clearClimateIconSize(context, WidgetIconSizes.appWidgetKey(id));
+        for (int id : ids) Prefs.clearWidgetIconSettings(context, WidgetIconSizes.appWidgetKey(id));
     }
 
     @Override

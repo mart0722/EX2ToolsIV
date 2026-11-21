@@ -14,7 +14,9 @@ public final class WidgetIconSizes {
                 || layout == R.layout.widget_hvac_direction_vertical
                 || layout == R.layout.widget_hvac_direction_fan
                 || layout == R.layout.widget_heating_test
-                || layout == R.layout.widget_windshield_heat;
+                || layout == R.layout.widget_windshield_heat
+                || layout == R.layout.widget_wipers
+                || layout == R.layout.widget_power_off;
     }
 
     public static boolean supportsOverlay(String key) {
@@ -30,8 +32,15 @@ public final class WidgetIconSizes {
     }
 
     static int appWidgetSize(Context context) {
-        String key = context instanceof IconSizeContext sized ? sized.key : "app_widget_default";
-        return Prefs.climateIconSizePct(context, key);
+        return Prefs.climateIconSizePct(context, appWidgetKey(context));
+    }
+
+    static boolean appWidgetLabels(Context context) {
+        return Prefs.climateIconLabels(context, appWidgetKey(context));
+    }
+
+    private static String appWidgetKey(Context context) {
+        return context instanceof IconSizeContext sized ? sized.key : "app_widget_default";
     }
 
     private static final class IconSizeContext extends ContextWrapper {

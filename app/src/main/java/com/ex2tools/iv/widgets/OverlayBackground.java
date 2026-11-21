@@ -26,8 +26,10 @@ final class OverlayBackground {
         GradientDrawable d = new GradientDrawable();
         d.setColor(Color.argb(alpha, Color.red(base), Color.green(base), Color.blue(base)));
         d.setCornerRadius(dp(c, 22));
-        d.setStroke(Math.max(1, dp(c, 1)), androidx.core.graphics.ColorUtils.setAlphaComponent(
-                c.getColor(R.color.wg_stroke_100), alpha));
+        if (Prefs.widgetCardBorder(c)) {
+            d.setStroke(Math.max(1, dp(c, 1)), androidx.core.graphics.ColorUtils.setAlphaComponent(
+                    c.getColor(R.color.wg_stroke_100), alpha));
+        }
         return d;
     }
 
