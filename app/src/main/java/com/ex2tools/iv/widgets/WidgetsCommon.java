@@ -97,6 +97,7 @@ public final class WidgetsCommon {
     private static final int[] REGEN_ORDER = {CarProps.REGEN_WEAK, CarProps.REGEN_MEDIUM, CarProps.REGEN_STRONG};
     private static final int[] VENT_ORDER = {1, 2, 3, 4, 6};
     private static final int SEAT_HEAT_MAX_LEVEL = 3;
+    private static final float WARM_AIRFLOW_THRESHOLD_C = 24f;
 
     public static final int WINDOW_FRONT_LEFT = 16;
     public static final int WINDOW_FRONT_RIGHT = 64;
@@ -121,16 +122,8 @@ public final class WidgetsCommon {
     }
 
     static boolean isWarmAirflow(Context c) {
-        Float target = readTemp(c);
-        if (target == null || !Float.isFinite(target)) return false;
-
-        VehicleState state = state(c);
-        Float cabin = state.floatAny(CarProps.HVAC_TEMP_CURRENT,
-                state.areas(CarProps.HVAC_TEMP_CURRENT, CarProps.CABIN_AREAS));
-        // The car exposes the setpoint and cabin temperature, but no vent outlet reading.
-        float reference = cabin != null && Float.isFinite(cabin) && cabin >= -45f && cabin <= 65f
-                ? cabin : 22f;
-        return target > reference;
+        Float setpoint = readTemp(c);
+        return setpoint != null && Float.isFinite(setpoint) && setpoint > WARM_AIRFLOW_THRESHOLD_C;
     }
 
     /**
@@ -293,7 +286,6 @@ public final class WidgetsCommon {
         subscribe(state, CarProps.STEERING_WHEEL_HEAT, CarProps.WHEEL_HEAT_AREAS);
         subscribe(state, CarProps.SEAT_HEAT, CarProps.SEAT_AREAS);
         subscribe(state, CarProps.HVAC_TEMP_AOSP, CarProps.HVAC_AREAS);
-        subscribe(state, CarProps.HVAC_TEMP_CURRENT, CarProps.CABIN_AREAS);
         subscribe(state, CarProps.PERF_VEHICLE_SPEED, new int[]{0});
         subscribe(state, CarProps.ESC_SPEED, new int[]{0});
         subscribe(state, CarProps.SOC, new int[]{0});
