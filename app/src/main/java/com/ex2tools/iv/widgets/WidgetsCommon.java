@@ -58,6 +58,7 @@ public final class WidgetsCommon {
     public static final String SIZE_TEMP = "temp";
     public static final String SIZE_VENT = "vent";
     public static final String SIZE_VENT_FAN = "vent_fan";
+    public static final String SIZE_WINDSHIELD_HEAT = "windshield_heat";
     public static final String SIZE_HEATING = "heating";
     public static final String SIZE_SPEED = "speed";
     public static final String SIZE_BATTERY_RANGE = "battery_range";

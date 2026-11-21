@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/widget_name_windshield_heat"
+    android:initialLayout="@layout/widget_windshield_heat"
+    android:previewLayout="@layout/widget_windshield_heat"
+    android:minWidth="120dp"
+    android:minHeight="85dp"
+    android:minResizeWidth="85dp"
+    android:minResizeHeight="65dp"
+    android:resizeMode="horizontal|vertical"
+    android:updatePeriodMillis="1800000"
+    android:widgetCategory="home_screen" />

@@ -3,6 +3,7 @@ package com.ex2tools.iv.widgets;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.Context;
+import android.os.Bundle;
 import android.widget.RemoteViews;
 
 abstract class BaseWidgetProvider extends AppWidgetProvider {
@@ -11,11 +12,22 @@ abstract class BaseWidgetProvider extends AppWidgetProvider {
 
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
-        RemoteViews views = build(context);
         for (int id : appWidgetIds) {
-            appWidgetManager.updateAppWidget(id, views);
+            updateSize(context, appWidgetManager, id, appWidgetManager.getAppWidgetOptions(id));
         }
         WidgetUpdateService.start(context);
+    }
+
+    @Override
+    public void onAppWidgetOptionsChanged(Context context, AppWidgetManager manager,
+                                          int appWidgetId, Bundle options) {
+        updateSize(context, manager, appWidgetId, options);
+        WidgetUpdateService.start(context);
+    }
+
+    private void updateSize(Context context, AppWidgetManager manager, int id, Bundle options) {
+        int size = SizedWidgetViews.size(context, manager, id, options);
+        manager.updateAppWidget(id, build(SizedWidgetViews.context(context, size)));
     }
 
     @Override

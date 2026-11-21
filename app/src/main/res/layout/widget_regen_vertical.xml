@@ -48,7 +48,7 @@
                 android:fontFamily="sans-serif-medium" />
 
             <TextView
-                android:id="@+id/tv_regen_level_footer"
+                android:id="@+id/widget_title"
                 style="@style/WgSection"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

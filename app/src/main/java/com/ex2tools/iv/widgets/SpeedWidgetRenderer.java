@@ -26,11 +26,12 @@ final class SpeedWidgetRenderer {
         views.setViewVisibility(R.id.speed_gauge, View.VISIBLE);
 
         boolean digital = Prefs.speedMode(c) == 0;
-        boolean background = Prefs.speedBackground(c);
+        int backgroundAlpha = Prefs.speedBackground(c)
+                ? Math.round(255f * Prefs.widgetBgOpacity(c) / 100f) : 0;
         float trip = WidgetsCommon.readTripKm(c);
         boolean showTrip = Prefs.speedShowTrip(c);
         Bitmap bitmap = SpeedGaugePainter.render(c, BITMAP_SIZE, BITMAP_SIZE,
-                kmh, digital, background, trip, showTrip && !digital);
+                kmh, digital, backgroundAlpha, trip, showTrip && !digital);
         views.setImageViewBitmap(R.id.speed_gauge, bitmap);
 
         // Тап по пробегу внизу — то же подтверждение сброса, что и в статус-баре.

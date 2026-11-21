@@ -45,6 +45,7 @@ public final class WidgetUpdateService extends Service {
             HvacDirectionVerticalWidgetProvider.class,
             HvacDirectionFanWidgetProvider.class,
             HeatingTestWidgetProvider.class,
+            WindshieldHeatWidgetProvider.class,
             SpeedWidgetProvider.class,
             BatteryRangeWidgetProvider.class,
             LockWidgetProvider.class
@@ -216,6 +217,7 @@ public final class WidgetUpdateService extends Service {
         int[] ventIds = ids(awm, HvacDirectionWidgetProvider.class);
         int[] ventVerticalIds = ids(awm, HvacDirectionVerticalWidgetProvider.class);
         int[] ventFanIds = ids(awm, HvacDirectionFanWidgetProvider.class);
+        int[] windshieldIds = ids(awm, WindshieldHeatWidgetProvider.class);
         int[] heatingIds = ids(awm, HeatingTestWidgetProvider.class);
         int[] speedIds = ids(awm, SpeedWidgetProvider.class);
         int[] batteryRangeIds = ids(awm, BatteryRangeWidgetProvider.class);
@@ -243,35 +245,41 @@ public final class WidgetUpdateService extends Service {
 
         Boolean rear = null;
         Boolean front = null;
-        Boolean windshield = null;
+        Boolean windshield = needHeating || windshieldIds.length > 0
+                ? WidgetsCommon.readWindshieldHeat() : null;
         Boolean wheel = null;
         Integer seatDriver = null;
         Integer seatPassenger = null;
         if (needHeating) {
             rear = WidgetsCommon.readRearDefrost();
             front = WidgetsCommon.readFrontMaxDefrost();
-            windshield = WidgetsCommon.readWindshieldHeat();
             wheel = WidgetsCommon.readWheelHeat();
             seatDriver = WidgetsCommon.readSeatHeat(1);
             seatPassenger = WidgetsCommon.readSeatHeat(4);
         }
 
+        Boolean wheelHeat = wheel;
+        Boolean rearDefrost = rear;
+        Boolean frontDefrost = front;
+        Integer driverHeat = seatDriver;
+        Integer passengerHeat = seatPassenger;
         boolean any = false;
-        any |= update(awm, driveRegenIds, WidgetsRenderer.driveRegen(this, drive, regen));
-        any |= update(awm, driveVerticalIds, WidgetsRenderer.driveVertical(this, drive));
-        any |= update(awm, regenVerticalIds, WidgetsRenderer.regenVertical(this, regen));
-        any |= update(awm, fanIds, WidgetsRenderer.fan(this, fan, R.layout.widget_fan_speed));
-        any |= update(awm, fanVerticalIds, WidgetsRenderer.fan(this, fan, R.layout.widget_fan_speed_vertical));
-        any |= update(awm, tempIds, WidgetsRenderer.temperature(this, temp, R.layout.widget_temperature));
+        any |= update(awm, windshieldIds, c -> WidgetsRenderer.windshieldHeat(c, windshield));
+        any |= update(awm, driveRegenIds, c -> WidgetsRenderer.driveRegen(c, drive, regen));
+        any |= update(awm, driveVerticalIds, c -> WidgetsRenderer.driveVertical(c, drive));
+        any |= update(awm, regenVerticalIds, c -> WidgetsRenderer.regenVertical(c, regen));
+        any |= update(awm, fanIds, c -> WidgetsRenderer.fan(c, fan, R.layout.widget_fan_speed));
+        any |= update(awm, fanVerticalIds, c -> WidgetsRenderer.fan(c, fan, R.layout.widget_fan_speed_vertical));
+        any |= update(awm, tempIds, c -> WidgetsRenderer.temperature(c, temp, R.layout.widget_temperature));
         any |= update(awm, tempVerticalIds,
-                WidgetsRenderer.temperature(this, temp, R.layout.widget_temperature_vertical));
-        any |= update(awm, ventIds, WidgetsRenderer.vent(this, vent, recirc));
-        any |= update(awm, ventVerticalIds, WidgetsRenderer.ventVertical(this, vent, recirc));
+                c -> WidgetsRenderer.temperature(c, temp, R.layout.widget_temperature_vertical));
+        any |= update(awm, ventIds, c -> WidgetsRenderer.vent(c, vent, recirc));
+        any |= update(awm, ventVerticalIds, c -> WidgetsRenderer.ventVertical(c, vent, recirc));
         any |= update(awm, ventFanIds,
-                WidgetsRenderer.ventFan(this, vent, recirc, fan, ac));
+                c -> WidgetsRenderer.ventFan(c, vent, recirc, fan, ac));
         any |= update(awm, heatingIds,
-                WidgetsRenderer.heating(this, wheel, rear, front, windshield,
-                        seatDriver, seatPassenger, WidgetsCommon.wheelHeatPending(this)));
+                c -> WidgetsRenderer.heating(c, wheelHeat, rearDefrost, frontDefrost, windshield,
+                        driverHeat, passengerHeat, WidgetsCommon.wheelHeatPending(this)));
         if (speedIds.length > 0) {
             SpeedWidgetProvider.update(this, awm, speedIds);
             any = true;
@@ -280,10 +288,11 @@ public final class WidgetUpdateService extends Service {
         float displayRange = Float.isNaN(learnedKm) ? rangeKm : learnedKm;
         Float energyKwh = batteryPercent == null ? null
                 : batteryPercent * com.ex2tools.iv.car.CarProps.CAPACITY_KWH / 100f;
+        Integer soc = batteryPercent;
         any |= update(awm, batteryRangeIds,
-                WidgetsRenderer.batteryRange(this, batteryPercent,
+                c -> WidgetsRenderer.batteryRange(c, soc,
                         Float.isNaN(displayRange) ? null : displayRange, energyKwh));
-        any |= update(awm, lockIds, WidgetsRenderer.lock(this));
+        any |= update(awm, lockIds, WidgetsRenderer::lock);
         if (ids(awm, ClockWidgetProvider.class).length > 0) {
             ClockWidgetProvider.refreshAll(this);
             any = true;
@@ -355,9 +364,19 @@ public final class WidgetUpdateService extends Service {
         return false;
     }
 
-    private boolean update(AppWidgetManager awm, int[] ids, RemoteViews views) {
+    private boolean update(AppWidgetManager awm, int[] ids,
+                           java.util.function.Function<Context, RemoteViews> build) {
         if (ids.length == 0) return false;
-        for (int id : ids) awm.updateAppWidget(id, views);
+        android.util.SparseArray<RemoteViews> bySize = new android.util.SparseArray<>();
+        for (int id : ids) {
+            int size = SizedWidgetViews.size(this, awm, id, awm.getAppWidgetOptions(id));
+            RemoteViews views = bySize.get(size);
+            if (views == null) {
+                views = build.apply(SizedWidgetViews.context(this, size));
+                bySize.put(size, views);
+            }
+            awm.updateAppWidget(id, views);
+        }
         return true;
     }
 

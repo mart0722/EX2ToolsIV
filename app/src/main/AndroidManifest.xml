@@ -265,6 +265,13 @@
             </intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_info_hvac_direction_fan" />
         </receiver>
+        <receiver android:name=".widgets.WindshieldHeatWidgetProvider" android:exported="true"
+            android:label="@string/widget_name_windshield_heat">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_info_windshield_heat" />
+        </receiver>
         <receiver android:name=".widgets.HeatingTestWidgetProvider" android:exported="true" android:label="@string/widget_name_heating_test">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
