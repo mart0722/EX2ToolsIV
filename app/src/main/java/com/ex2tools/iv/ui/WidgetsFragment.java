@@ -111,6 +111,7 @@ public final class WidgetsFragment extends Fragment {
     private View speedTripReset;
     private FlymeSwitchRow overlayLock;
     private FlymeSegmentedGroup overlayPlacement;
+    private View overlayAutoGridHint;
     private FlymeSegmentedGroup climateIconStyle;
     private FlymeSwitchRow widgetCardBorder;
     private FlymeSwitchRow widgetButtonBorder;
@@ -171,6 +172,7 @@ public final class WidgetsFragment extends Fragment {
         speedTripReset = view.findViewById(R.id.widgetSpeedTripReset);
         overlayLock = view.findViewById(R.id.widgetOverlayLock);
         overlayPlacement = view.findViewById(R.id.widgetOverlayPlacement);
+        overlayAutoGridHint = view.findViewById(R.id.widgetOverlayAutoGridHint);
         climateIconStyle = view.findViewById(R.id.widgetClimateIconStyle);
         widgetCardBorder = view.findViewById(R.id.widgetCardBorder);
         widgetButtonBorder = view.findViewById(R.id.widgetButtonBorder);
@@ -389,6 +391,11 @@ public final class WidgetsFragment extends Fragment {
         });
     }
 
+    private void updateAutoGridHint(Prefs.OverlayPlacement placement) {
+        overlayAutoGridHint.setVisibility(placement == Prefs.OverlayPlacement.AUTO_GRID
+                ? View.VISIBLE : View.GONE);
+    }
+
     private void setupSpeedControls(Context c) {
         speedModeGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
             if (!isChecked || binding) return;
@@ -434,7 +441,9 @@ public final class WidgetsFragment extends Fragment {
             Prefs.OverlayPlacement placement = Prefs.OverlayPlacement.FREE;
             if (checkedId == R.id.widgetOverlayPlacementCorners) placement = Prefs.OverlayPlacement.CORNERS;
             if (checkedId == R.id.widgetOverlayPlacementGrid) placement = Prefs.OverlayPlacement.GRID;
+            if (checkedId == R.id.widgetOverlayPlacementAutoGrid) placement = Prefs.OverlayPlacement.AUTO_GRID;
             Prefs.setOverlayPlacement(context, placement);
+            updateAutoGridHint(placement);
             OverlayWidgetService.restart(context);
         });
         if (overlayLock != null) {
@@ -746,11 +755,14 @@ public final class WidgetsFragment extends Fragment {
         speedBackground.setChecked(Prefs.speedBackground(c));
         speedTrip.setChecked(Prefs.speedShowTrip(c));
         if (overlayLock != null) overlayLock.setChecked(Prefs.overlayLock(c));
-        overlayPlacement.check(switch (Prefs.overlayPlacement(c)) {
+        Prefs.OverlayPlacement placement = Prefs.overlayPlacement(c);
+        overlayPlacement.check(switch (placement) {
             case FREE -> R.id.widgetOverlayPlacementFree;
             case CORNERS -> R.id.widgetOverlayPlacementCorners;
             case GRID -> R.id.widgetOverlayPlacementGrid;
+            case AUTO_GRID -> R.id.widgetOverlayPlacementAutoGrid;
         });
+        updateAutoGridHint(placement);
         climateIconStyle.check(switch (Prefs.climateIconStyle(c)) {
             case STANDARD -> R.id.widgetClimateIconStandard;
             case THIN -> R.id.widgetClimateIconThin;

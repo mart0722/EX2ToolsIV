@@ -28,6 +28,7 @@ import com.ex2tools.iv.R;
 import com.ex2tools.iv.state.VehicleState;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -41,10 +42,12 @@ public final class OverlayWidgetService extends Service {
 
     private static final long POLL_MS = 400L;
     private static final int GRID_STEP_DP = 16;
+    private static final int AUTO_GRID_GAP_DP = 8;
     private static final String ACTION_RESTART = "com.ex2tools.iv.overlay.RESTART";
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final List<OverlaySpec> specs = new ArrayList<>();
+    private final List<OverlaySpec> autoGridOrder = new ArrayList<>();
     public static volatile boolean running;
     private static volatile OverlayWidgetService instance;
     private WindowManager windowManager;
@@ -135,7 +138,11 @@ public final class OverlayWidgetService extends Service {
                     remove(spec);
                 }
             }
-            layoutDockedWidgets();
+            switch (Prefs.overlayPlacement(OverlayWidgetService.this)) {
+                case CORNERS -> layoutDockedWidgets();
+                case AUTO_GRID -> layoutAutoGrid();
+                default -> {}
+            }
             if (!anyEnabled) {
                 stopSelf();
                 return;
@@ -244,6 +251,12 @@ public final class OverlayWidgetService extends Service {
         for (String key : OverlaySpec.keys()) {
             specs.add(new OverlaySpec(key));
         }
+        autoGridOrder.addAll(specs);
+        List<String> savedOrder = Prefs.overlayAutoGridOrder(this);
+        autoGridOrder.sort(Comparator.comparingInt(spec -> {
+            int index = savedOrder.indexOf(spec.key);
+            return index < 0 ? savedOrder.size() : index;
+        }));
         WidgetsCommon.subscribeAll(this);
         VehicleState.get().addListener(stateListener);
         handler.post(poll);
@@ -333,10 +346,10 @@ public final class OverlayWidgetService extends Service {
             int width = Math.max(1, Math.round(baseWidthDp * density() * size / 100f));
             int height = Math.max(1, Math.round(baseHeightDp * density() * size / 100f));
             DisplayMetrics metrics = getResources().getDisplayMetrics();
-            width = Math.min(width, Math.max(1,
-                    metrics.widthPixels - dp(16)));
-            height = Math.min(height, Math.max(1,
-                    metrics.heightPixels - dp(16)));
+            Prefs.OverlayPlacement placement = Prefs.overlayPlacement(this);
+            int margin = placement == Prefs.OverlayPlacement.AUTO_GRID ? 2 * dp(AUTO_GRID_GAP_DP) : dp(16);
+            width = Math.min(width, Math.max(1, metrics.widthPixels - margin));
+            height = Math.min(height, Math.max(1, metrics.heightPixels - margin));
             WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
                     width, height,
                     WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
@@ -346,7 +359,7 @@ public final class OverlayWidgetService extends Service {
             lp.gravity = Gravity.TOP | Gravity.START;
             lp.x = Prefs.overlayX(this, spec.key, spec.defaultX);
             lp.y = Prefs.overlayY(this, spec.key, spec.defaultY);
-            if (Prefs.overlayPlacement(this) == Prefs.OverlayPlacement.GRID) {
+            if (placement == Prefs.OverlayPlacement.GRID) {
                 snapToGrid(lp);
             }
             container.setAlpha(1f);
@@ -368,7 +381,6 @@ public final class OverlayWidgetService extends Service {
 
     // Keep each corner as a vertical stack. Tall stacks continue inward in a new column.
     private void layoutDockedWidgets() {
-        if (Prefs.overlayPlacement(this) != Prefs.OverlayPlacement.CORNERS) return;
         for (OverlaySpec spec : specs) {
             if (spec.view != null && spec.dragging) return;
         }
@@ -409,6 +421,43 @@ public final class OverlayWidgetService extends Service {
         }
     }
 
+    private void layoutAutoGrid() {
+        for (OverlaySpec spec : autoGridOrder) {
+            if (spec.dragging) return;
+        }
+        DisplayMetrics metrics = getResources().getDisplayMetrics();
+        int gap = dp(AUTO_GRID_GAP_DP);
+        int right = metrics.widthPixels - gap;
+        int bottom = metrics.heightPixels - gap;
+        int x = gap;
+        int y = gap;
+        int rowHeight = 0;
+        for (OverlaySpec spec : autoGridOrder) {
+            if (spec.view == null || spec.params == null) continue;
+            WindowManager.LayoutParams lp = spec.params;
+            boolean wrap = x > gap && x + lp.width > right;
+            int nextX = wrap ? gap : x;
+            int nextY = wrap ? y + rowHeight + gap : y;
+            if (nextX + lp.width > right || nextY + lp.height > bottom) {
+                spec.view.setVisibility(View.GONE);
+                continue;
+            }
+            spec.view.setVisibility(View.VISIBLE);
+            if (lp.x != nextX || lp.y != nextY) {
+                lp.x = nextX;
+                lp.y = nextY;
+                try {
+                    windowManager.updateViewLayout(spec.view, lp);
+                } catch (RuntimeException e) {
+                    LogStore.add(this, "overlay auto grid " + spec.key + " failed: " + e);
+                }
+            }
+            x = nextX + lp.width + gap;
+            y = nextY;
+            rowHeight = wrap ? lp.height : Math.max(rowHeight, lp.height);
+        }
+    }
+
     private void snapToGrid(WindowManager.LayoutParams lp) {
         DisplayMetrics metrics = getResources().getDisplayMetrics();
         int step = Math.max(1, dp(GRID_STEP_DP));
@@ -446,6 +495,7 @@ public final class OverlayWidgetService extends Service {
         spec.content = null;
         spec.params = null;
         spec.speedView = null;
+        spec.dragging = false;
     }
 
     private void bindDrag(OverlaySpec spec, FrameLayout container, View content,
@@ -501,7 +551,8 @@ public final class OverlayWidgetService extends Service {
                     case MotionEvent.ACTION_CANCEL:
                         spec.dragging = false;
                         if (moved && !locked) {
-                            placeAfterDrag(spec, container, lp);
+                            placeAfterDrag(spec, container, lp, startX, startY,
+                                    event.getActionMasked() == MotionEvent.ACTION_UP);
                         } else if (!moved && event.getActionMasked() == MotionEvent.ACTION_UP) {
                             if (lockWidget) {
                                 openLockScreen();
@@ -529,8 +580,14 @@ public final class OverlayWidgetService extends Service {
         }
     }
 
-    private void placeAfterDrag(OverlaySpec spec, View container, WindowManager.LayoutParams lp) {
+    private void placeAfterDrag(OverlaySpec spec, View container, WindowManager.LayoutParams lp,
+                                int startX, int startY, boolean dropped) {
         Prefs.OverlayPlacement placement = Prefs.overlayPlacement(this);
+        if (placement == Prefs.OverlayPlacement.AUTO_GRID) {
+            if (dropped) reorderAutoGrid(spec, lp, startX, startY);
+            layoutAutoGrid();
+            return;
+        }
         if (placement == Prefs.OverlayPlacement.CORNERS) {
             DisplayMetrics metrics = getResources().getDisplayMetrics();
             int corner = (lp.x + lp.width / 2 >= metrics.widthPixels / 2 ? 1 : 0)
@@ -548,6 +605,31 @@ public final class OverlayWidgetService extends Service {
             }
         }
         Prefs.setOverlayPos(this, spec.key, lp.x, lp.y);
+    }
+
+    private void reorderAutoGrid(OverlaySpec dragged, WindowManager.LayoutParams lp, int startX, int startY) {
+        float x = lp.x + lp.width / 2f;
+        float y = lp.y + lp.height / 2f;
+        double closest = Math.hypot(lp.x - startX, lp.y - startY);
+        int target = -1;
+        for (int i = 0; i < autoGridOrder.size(); i++) {
+            OverlaySpec other = autoGridOrder.get(i);
+            if (other == dragged || other.view == null || other.params == null
+                    || other.view.getVisibility() != View.VISIBLE) continue;
+            WindowManager.LayoutParams bounds = other.params;
+            double distance = Math.hypot(x - (bounds.x + bounds.width / 2f),
+                    y - (bounds.y + bounds.height / 2f));
+            if (distance < closest) {
+                closest = distance;
+                target = i;
+            }
+        }
+        if (target < 0) return;
+        autoGridOrder.remove(dragged);
+        autoGridOrder.add(target, dragged);
+        List<String> keys = new ArrayList<>();
+        for (OverlaySpec spec : autoGridOrder) keys.add(spec.key);
+        Prefs.setOverlayAutoGridOrder(this, keys);
     }
 
     /** Попросить оверлеи перерисоваться сразу после действия виджета. */

@@ -779,6 +779,8 @@
     <string name="widgets_overlay_placement_free">Свободно</string>
     <string name="widgets_overlay_placement_corners">К углам</string>
     <string name="widgets_overlay_placement_grid">По сетке</string>
+    <string name="widgets_overlay_placement_auto_grid">Автосетка</string>
+    <string name="widgets_overlay_auto_grid_hint">Виджеты выстраиваются в ряды. Перетащите виджет, чтобы сменить его место. Если места не хватает, уменьшите размеры виджетов.</string>
     <string name="steering_title">Кнопки руля</string>
     <string name="steering_climate">Управление климатом</string>
     <string name="steering_climate_hint">Двойное нажатие голосовой кнопки переключает режим климата.</string>
