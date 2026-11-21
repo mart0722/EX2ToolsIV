@@ -748,15 +748,18 @@ public final class Prefs {
         get(c).edit().putInt("widget_size_pct", Math.max(50, Math.min(250, value))).apply();
     }
 
+    public static final int WIDGET_SIZE_MIN_PCT = 50;
+    public static final int WIDGET_SIZE_MAX_PCT = 300;
+
     public static int widgetSizePct(Context c, String key) {
         int fallback = widgetSizePct(c);
-        return Math.max(50, Math.min(250,
+        return Math.max(WIDGET_SIZE_MIN_PCT, Math.min(WIDGET_SIZE_MAX_PCT,
                 get(c).getInt("widget_size_" + key + "_pct", fallback)));
     }
 
     public static void setWidgetSizePct(Context c, String key, int value) {
         get(c).edit().putInt("widget_size_" + key + "_pct",
-                Math.max(50, Math.min(250, value))).apply();
+                Math.max(WIDGET_SIZE_MIN_PCT, Math.min(WIDGET_SIZE_MAX_PCT, value))).apply();
     }
 
     public static int widgetFanCache(Context c) {

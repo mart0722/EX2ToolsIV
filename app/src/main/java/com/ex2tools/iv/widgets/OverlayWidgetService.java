@@ -457,7 +457,9 @@ public final class OverlayWidgetService extends Service {
                           WindowManager.LayoutParams lp) {
         final boolean locked = Prefs.overlayLock(this);
         final boolean lockWidget = WidgetsCommon.SIZE_LOCK.equals(spec.key);
-        final boolean vehicleButton = WidgetsCommon.isStandaloneVehicleButton(spec.key);
+        final View button = WidgetsCommon.SIZE_WINDSHIELD_HEAT.equals(spec.key)
+                ? content.findViewById(R.id.chip_windshield_heat)
+                : WidgetsCommon.isStandaloneVehicleButton(spec.key) ? content : null;
         View drag = content.findViewById(R.id.widget_bg_layer);
         if (lockWidget) {
             // Тело виджета блокировки перекрывает фон и перехватывает касания.
@@ -488,7 +490,7 @@ public final class OverlayWidgetService extends Service {
                         moved = false;
                         return true;
                     case MotionEvent.ACTION_MOVE:
-                        if (locked && !vehicleButton) return true;
+                        if (locked && button == null) return true;
                         float dx = event.getRawX() - downX;
                         float dy = event.getRawY() - downY;
                         if (Math.abs(dx) > dp(5) || Math.abs(dy) > dp(5)) moved = true;
@@ -510,7 +512,7 @@ public final class OverlayWidgetService extends Service {
                         } else if (!moved && event.getActionMasked() == MotionEvent.ACTION_UP) {
                             if (lockWidget) {
                                 openLockScreen();
-                            } else if (vehicleButton) {
+                            } else if (v == button) {
                                 v.performClick();
                             } else if (WidgetsCommon.SIZE_SPEED.equals(spec.key)
                                     && v.getHeight() > 0
@@ -526,6 +528,7 @@ public final class OverlayWidgetService extends Service {
             }
         };
         drag.setOnTouchListener(listener);
+        if (button != null && button != drag) button.setOnTouchListener(listener);
         // The app-icon widget has a lot of empty space between rounded tiles;
         // let that area drag the window too, while icons keep working as clicks.
         if (WidgetsCommon.SIZE_APPS.equals(spec.key)) {
