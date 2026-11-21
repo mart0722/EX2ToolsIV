@@ -166,6 +166,11 @@ public final class WidgetsFragment extends Fragment {
             else if (checkedId == R.id.widgetClimateIconChromeThin) style = Prefs.ClimateIconStyle.CHROME_THIN;
             else style = Prefs.ClimateIconStyle.CHROME;
             Prefs.setClimateIconStyle(context, style);
+            if (opacityPreview != null) {
+                opacityPreview.setBackgroundResource(WidgetsCommon.bgDrawableResForPct(context));
+            }
+            ClockWidgetProvider.refreshAll(context);
+            refreshSpeed();
             VehicleState.get().requestDisplayRefresh();
             WidgetUpdateService.sync(context);
         });
@@ -339,6 +344,7 @@ public final class WidgetsFragment extends Fragment {
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 WidgetUpdateService.refreshOpacity(requireContext());
+                ClockWidgetProvider.refreshAll(requireContext());
                 refreshSpeed();
             }
         });
