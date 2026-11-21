@@ -19,6 +19,9 @@ final class OverlayBackground {
 
     static Drawable create(Context c, String key) {
         int alpha = alpha(c, key);
+        if (WidgetAppearance.usesGlass(c)) {
+            return WidgetAppearance.glassCard(c, alpha, dp(c, 22), Math.max(1, dp(c, 1)));
+        }
         int base = c.getColor(R.color.wg_card);
         GradientDrawable d = new GradientDrawable();
         d.setColor(Color.argb(alpha, Color.red(base), Color.green(base), Color.blue(base)));

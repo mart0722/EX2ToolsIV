@@ -4,9 +4,13 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.RectF;
+import android.graphics.Shader;
 import android.graphics.Typeface;
+
+import androidx.core.graphics.ColorUtils;
 
 import com.ex2tools.iv.Prefs;
 
@@ -47,9 +51,28 @@ final class SpeedGaugePainter {
         if (showBackground) {
             Paint bg = new Paint(Paint.ANTI_ALIAS_FLAG);
             bg.setColor(p.surface);
-            bg.setAlpha(backgroundAlpha(c));
+            int alpha = backgroundAlpha(c);
             float radius = size * 0.075f;
-            canvas.drawRoundRect(new RectF(0, 0, width, height), radius, radius, bg);
+            RectF panel = new RectF(0, 0, width, height);
+            if (WidgetAppearance.usesGlass(c)) {
+                // The gauge has its own foreground color setting, so use its
+                // matching surface color for the tint and preserve contrast.
+                int highlight = ColorUtils.blendARGB(p.surface, Color.WHITE, 0.22f);
+                int top = ColorUtils.setAlphaComponent(highlight, alpha);
+                int bottom = ColorUtils.setAlphaComponent(p.surface, Math.round(alpha * .82f));
+                bg.setShader(new LinearGradient(0, 0, 0, height, top, bottom, Shader.TileMode.CLAMP));
+                canvas.drawRoundRect(panel, radius, radius, bg);
+                bg.setShader(null);
+                bg.setColor(ColorUtils.setAlphaComponent(Color.WHITE, Math.round(alpha * .42f)));
+                bg.setStyle(Paint.Style.STROKE);
+                float strokeWidth = Math.max(1f, size / 160f);
+                bg.setStrokeWidth(strokeWidth);
+                panel.inset(strokeWidth / 2f, strokeWidth / 2f);
+                canvas.drawRoundRect(panel, radius, radius, bg);
+            } else {
+                bg.setAlpha(alpha);
+                canvas.drawRoundRect(panel, radius, radius, bg);
+            }
         }
 
         canvas.save();

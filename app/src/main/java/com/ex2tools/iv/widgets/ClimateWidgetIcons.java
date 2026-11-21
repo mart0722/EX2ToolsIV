@@ -173,11 +173,6 @@ final class ClimateWidgetIcons {
         return showsWarmAirflow() ? R.drawable.bg_wg_climate_warm_air : R.drawable.bg_wg_climate_air;
     }
 
-    static int controlBackground(Context c, boolean transparent, int standard) {
-        if (Prefs.climateIconStyle(c) == Prefs.ClimateIconStyle.STANDARD) return standard;
-        return transparent ? android.R.color.transparent : R.drawable.bg_wg_climate_glass;
-    }
-
     CharSequence ventCaption(int textId) {
         int label = R.string.wg_recirc;
         if (textId == R.id.txt_vent_face) label = R.string.wg_vent_face;

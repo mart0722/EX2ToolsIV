@@ -67,6 +67,7 @@ public final class WidgetsRenderer {
         v.setImageViewResource(R.id.img_drive_mode, icon);
         v.setTextViewText(R.id.tv_drive_mode_label, c.getString(label));
         v.setTextViewText(R.id.tv_drive_mode_footer, c.getString(R.string.wg_footer_drive));
+        roundControls(v, c, R.id.btn_drive_next, R.id.btn_drive_prev);
         click(v, c, R.id.btn_drive_next, WidgetsCommon.DRIVE_NEXT);
         click(v, c, R.id.btn_drive_prev, WidgetsCommon.DRIVE_PREV);
         return v;
@@ -90,6 +91,7 @@ public final class WidgetsRenderer {
         v.setImageViewResource(R.id.img_regen_level, icon);
         v.setTextViewText(R.id.tv_regen_level_label, c.getString(label));
         v.setTextViewText(R.id.tv_regen_level_footer, c.getString(R.string.wg_footer_regen));
+        roundControls(v, c, R.id.btn_regen_next, R.id.btn_regen_prev);
         click(v, c, R.id.btn_regen_next, WidgetsCommon.REGEN_NEXT);
         click(v, c, R.id.btn_regen_prev, WidgetsCommon.REGEN_PREV);
         return v;
@@ -104,6 +106,7 @@ public final class WidgetsRenderer {
             v.setInt(FAN_DOTS[i], "setBackgroundResource",
                     fan != null && i < fan ? R.drawable.bg_wg_dot_on : R.drawable.bg_wg_dot_off);
         }
+        roundControls(v, c, R.id.btn_fan_minus, R.id.btn_fan_plus);
         click(v, c, R.id.btn_fan_minus, WidgetsCommon.FAN_MINUS);
         click(v, c, R.id.btn_fan_plus, WidgetsCommon.FAN_PLUS);
         return v;
@@ -120,6 +123,7 @@ public final class WidgetsRenderer {
             int progress = Math.max(0, Math.min(15, Math.round(temp) - 17));
             v.setProgressBar(R.id.temp_bar, 16, progress, false);
         }
+        roundControls(v, c, R.id.btn_temp_minus, R.id.btn_temp_plus);
         click(v, c, R.id.btn_temp_minus, WidgetsCommon.TEMP_MINUS);
         click(v, c, R.id.btn_temp_plus, WidgetsCommon.TEMP_PLUS);
         return v;
@@ -136,7 +140,7 @@ public final class WidgetsRenderer {
         ClimateWidgetIcons icons = ClimateWidgetIcons.forRemote(c, v);
         icons.ventButtons(vent == null ? 0 : vent, directions);
         v.setInt(R.id.btn_vent_mode, "setBackgroundResource",
-                ClimateWidgetIcons.controlBackground(c, transparent, R.drawable.bg_wg_chip));
+                WidgetAppearance.controlBackground(c, transparent, R.drawable.bg_wg_chip));
         v.setTextViewText(R.id.btn_vent_mode, c.getString(directions
                 ? R.string.widgets_vent_directions : R.string.widgets_vent_presets));
         v.setViewVisibility(R.id.chip_vent_face_floor, directions ? android.view.View.GONE : android.view.View.VISIBLE);
@@ -167,7 +171,7 @@ public final class WidgetsRenderer {
         v.setTextViewText(R.id.tv_vent_mode_label, icons.ventModeCaption(mode));
         v.setTextViewText(R.id.tv_vent_mode_footer, c.getString(R.string.wg_vent_short));
         boolean transparent = Prefs.widgetBgOpacity(c) < 10;
-        int controlBackground = ClimateWidgetIcons.controlBackground(c, transparent, R.drawable.bg_wg_round);
+        int controlBackground = WidgetAppearance.controlBackground(c, transparent, R.drawable.bg_wg_round);
         v.setInt(R.id.btn_vent_next, "setBackgroundResource", controlBackground);
         v.setInt(R.id.btn_vent_prev, "setBackgroundResource", controlBackground);
         ventChip(v, icons, transparent, R.id.chip_recirc_v,
@@ -189,7 +193,7 @@ public final class WidgetsRenderer {
         ClimateWidgetIcons icons = ClimateWidgetIcons.forRemote(c, v);
         icons.ventButtons(vent == null ? 0 : vent, directions);
         v.setInt(R.id.btn_vent_mode, "setBackgroundResource",
-                ClimateWidgetIcons.controlBackground(c, transparent, R.drawable.bg_wg_chip));
+                WidgetAppearance.controlBackground(c, transparent, R.drawable.bg_wg_chip));
         v.setTextViewText(R.id.btn_vent_mode, c.getString(directions
                 ? R.string.widgets_vent_directions : R.string.widgets_vent_presets));
         v.setViewVisibility(R.id.chip_vent_face_floor, directions ? android.view.View.GONE : android.view.View.VISIBLE);
@@ -213,7 +217,7 @@ public final class WidgetsRenderer {
         click(v, c, R.id.chip_vent_floor_windshield, WidgetsCommon.VENT_FLOOR_WINDSHIELD);
         click(v, c, R.id.btn_vent_mode, WidgetsCommon.VENT_WIDGET_MODE);
         click(v, c, R.id.chip_recirc, WidgetsCommon.RECIRC_TOGGLE);
-        int controlBackground = ClimateWidgetIcons.controlBackground(c, transparent, R.drawable.bg_wg_round);
+        int controlBackground = WidgetAppearance.controlBackground(c, transparent, R.drawable.bg_wg_round);
         v.setInt(R.id.btn_fan_minus, "setBackgroundResource", controlBackground);
         v.setInt(R.id.btn_fan_plus, "setBackgroundResource", controlBackground);
         click(v, c, R.id.btn_fan_minus, WidgetsCommon.FAN_MINUS);
@@ -311,18 +315,16 @@ public final class WidgetsRenderer {
     /** accent: 0 — синий, 1 — зелёный, 2 — красный. */
     private static void chip(RemoteViews v, Context c, int chipId, int textId,
                              boolean active, int accent) {
-        int background;
-        if (!active) {
-            background = R.drawable.bg_wg_chip;
-        } else if (accent == 1) {
-            background = R.drawable.bg_wg_chip_on_green;
-        } else if (accent == 2) {
-            background = R.drawable.bg_wg_chip_on_red;
-        } else {
-            background = R.drawable.bg_wg_chip_on;
-        }
-        v.setInt(chipId, "setBackgroundResource", background);
-        v.setTextColor(textId, c.getColor(R.color.wg_text));
+        v.setInt(chipId, "setBackgroundResource", WidgetAppearance.chipBackground(
+                c, Prefs.widgetBgOpacity(c) < 10, active, accent));
+        v.setTextColor(textId, WidgetAppearance.chipTextColor(c, active, accent));
+    }
+
+    private static void roundControls(RemoteViews v, Context c, int first, int second) {
+        int background = WidgetAppearance.controlBackground(c, Prefs.widgetBgOpacity(c) < 10,
+                R.drawable.bg_wg_round);
+        v.setInt(first, "setBackgroundResource", background);
+        v.setInt(second, "setBackgroundResource", background);
     }
 
     private static void ventChip(RemoteViews v, ClimateWidgetIcons icons, boolean transparent,

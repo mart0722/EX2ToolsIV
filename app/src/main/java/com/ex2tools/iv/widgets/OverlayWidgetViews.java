@@ -300,6 +300,8 @@ final class OverlayWidgetViews {
     }
 
     private static void updateDrive(Context c, View root) {
+        controls(c, root, WidgetsCommon.SIZE_DRIVE_MODE, R.drawable.bg_wg_round,
+                R.id.btn_drive_next, R.id.btn_drive_prev);
         Integer read = WidgetsCommon.readDrive();
         int drive = read == null ? 0 : read;
         int icon;
@@ -320,6 +322,8 @@ final class OverlayWidgetViews {
     }
 
     private static void updateRegen(Context c, View root) {
+        controls(c, root, WidgetsCommon.SIZE_REGEN, R.drawable.bg_wg_round,
+                R.id.btn_regen_next, R.id.btn_regen_prev);
         Integer read = WidgetsCommon.readRegen();
         int regen = read == null ? 0 : read;
         int icon;
@@ -340,6 +344,8 @@ final class OverlayWidgetViews {
     }
 
     private static void updateFan(Context c, View root) {
+        controls(c, root, WidgetsCommon.SIZE_FAN, R.drawable.bg_wg_round,
+                R.id.btn_fan_minus, R.id.btn_fan_plus);
         Integer fan = WidgetsCommon.readFan();
         text(root, R.id.tv_fan_value, fan == null ? "—" : String.valueOf(fan));
         text(root, R.id.tv_fan_label, c.getString(R.string.wg_fan));
@@ -353,6 +359,8 @@ final class OverlayWidgetViews {
     }
 
     private static void updateTemp(Context c, View root) {
+        controls(c, root, WidgetsCommon.SIZE_TEMP, R.drawable.bg_wg_round,
+                R.id.btn_temp_minus, R.id.btn_temp_plus);
         Float temp = WidgetsCommon.readTemp(c);
         text(root, R.id.tv_temp_value, temp == null ? "—" : String.valueOf(Math.round(temp)));
         text(root, R.id.tv_temp_unit, "\u00B0C");
@@ -374,7 +382,7 @@ final class OverlayWidgetViews {
         ClimateWidgetIcons icons = ClimateWidgetIcons.forOverlay(c, root);
         icons.ventButtons(vent == null ? 0 : vent, directions);
         root.findViewById(R.id.btn_vent_mode).setBackgroundResource(
-                ClimateWidgetIcons.controlBackground(c, transparent, R.drawable.bg_wg_chip));
+                WidgetAppearance.controlBackground(c, transparent, R.drawable.bg_wg_chip));
         text(root, R.id.btn_vent_mode, c.getString(directions
                 ? R.string.widgets_vent_directions : R.string.widgets_vent_presets));
         root.findViewById(R.id.chip_vent_face_floor).setVisibility(directions ? View.GONE : View.VISIBLE);
@@ -397,7 +405,7 @@ final class OverlayWidgetViews {
         ClimateWidgetIcons icons = ClimateWidgetIcons.forOverlay(c, root);
         icons.ventButtons(vent == null ? 0 : vent, directions);
         root.findViewById(R.id.btn_vent_mode).setBackgroundResource(
-                ClimateWidgetIcons.controlBackground(c, transparent, R.drawable.bg_wg_chip));
+                WidgetAppearance.controlBackground(c, transparent, R.drawable.bg_wg_chip));
         text(root, R.id.btn_vent_mode, c.getString(directions
                 ? R.string.widgets_vent_directions : R.string.widgets_vent_presets));
         root.findViewById(R.id.chip_vent_face_floor).setVisibility(directions ? View.GONE : View.VISIBLE);
@@ -408,7 +416,7 @@ final class OverlayWidgetViews {
         ventChip(icons, root, transparent, R.id.chip_vent_floor, R.id.txt_vent_floor, directions ? (mode & 2) != 0 : mode == 2);
         ventChip(icons, root, transparent, R.id.chip_vent_windshield, R.id.txt_vent_windshield, directions ? (mode & 4) != 0 : mode == 4);
         ventChip(icons, root, transparent, R.id.chip_recirc, R.id.txt_recirc, Boolean.TRUE.equals(recirc));
-        int controlBackground = ClimateWidgetIcons.controlBackground(c, transparent, R.drawable.bg_wg_round);
+        int controlBackground = WidgetAppearance.controlBackground(c, transparent, R.drawable.bg_wg_round);
         root.findViewById(R.id.btn_fan_minus).setBackgroundResource(controlBackground);
         root.findViewById(R.id.btn_fan_plus).setBackgroundResource(controlBackground);
         text(root, R.id.tv_fan_value, fan == null ? "—" : String.valueOf(fan));
@@ -521,6 +529,8 @@ final class OverlayWidgetViews {
     }
 
     private static void updateClimate(Context c, View root) {
+        controls(c, root, WidgetsCommon.SIZE_CLIMATE, R.drawable.bg_wg_chip,
+                R.id.wg_climate_minus, R.id.wg_climate_plus);
         boolean enabled = Prefs.climateEnabled(c);
         float temp = Prefs.sensorTemp(c);
         long at = Prefs.sensorAt(c);
@@ -575,22 +585,20 @@ final class OverlayWidgetViews {
                              boolean active, int accent) {
         View chip = root.findViewById(chipId);
         if (chip != null) {
-            int background;
-            if (!active) {
-                background = R.drawable.bg_wg_chip;
-            } else if (accent == 1) {
-                background = R.drawable.bg_wg_chip_on_green;
-            } else if (accent == 2) {
-                background = R.drawable.bg_wg_chip_on_red;
-            } else {
-                background = R.drawable.bg_wg_chip_on;
-            }
-            chip.setBackgroundResource(background);
+            chip.setBackgroundResource(WidgetAppearance.chipBackground(c,
+                    OverlayBackground.isTransparent(c, WidgetsCommon.SIZE_DRIVE_REGEN), active, accent));
         }
         View text = root.findViewById(textId);
         if (text instanceof TextView) {
-            ((TextView) text).setTextColor(c.getColor(R.color.wg_text));
+            ((TextView) text).setTextColor(WidgetAppearance.chipTextColor(c, active, accent));
         }
+    }
+
+    private static void controls(Context c, View root, String key, int standard, int first, int second) {
+        int background = WidgetAppearance.controlBackground(c,
+                OverlayBackground.isTransparent(c, key), standard);
+        root.findViewById(first).setBackgroundResource(background);
+        root.findViewById(second).setBackgroundResource(background);
     }
 
     private static void ventChip(ClimateWidgetIcons icons, View root, boolean transparent,
