@@ -532,12 +532,23 @@ public final class Prefs {
         get(c).edit().putBoolean("vent_direction_buttons", !ventDirectionButtons(c)).apply();
     }
 
-    public static boolean climateOutlineIcons(Context c) {
-        return get(c).getBoolean("climate_outline_icons", true);
+    public enum ClimateIconStyle {
+        STANDARD, THIN, CHROME
     }
 
-    public static void setClimateOutlineIcons(Context c, boolean enabled) {
-        get(c).edit().putBoolean("climate_outline_icons", enabled).apply();
+    public static ClimateIconStyle climateIconStyle(Context c) {
+        SharedPreferences prefs = get(c);
+        return switch (prefs.getString("climate_icon_style", "")) {
+            case "STANDARD" -> ClimateIconStyle.STANDARD;
+            case "THIN" -> ClimateIconStyle.THIN;
+            case "CHROME" -> ClimateIconStyle.CHROME;
+            default -> prefs.getBoolean("climate_outline_icons", true)
+                    ? ClimateIconStyle.CHROME : ClimateIconStyle.STANDARD;
+        };
+    }
+
+    public static void setClimateIconStyle(Context c, ClimateIconStyle style) {
+        get(c).edit().putString("climate_icon_style", style.name()).apply();
     }
 
     public static boolean overlayAdaptClimateSize(Context c) {
