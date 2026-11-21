@@ -110,7 +110,7 @@ public final class WidgetsFragment extends Fragment {
     private FlymeSwitchRow speedTrip;
     private View speedTripReset;
     private FlymeSwitchRow overlayLock;
-    private FlymeSwitchRow overlayDocked;
+    private FlymeSegmentedGroup overlayPlacement;
     private FlymeSegmentedGroup climateIconStyle;
     private FlymeSwitchRow widgetCardBorder;
     private FlymeSwitchRow widgetButtonBorder;
@@ -170,7 +170,7 @@ public final class WidgetsFragment extends Fragment {
         speedTrip = view.findViewById(R.id.widgetSpeedTrip);
         speedTripReset = view.findViewById(R.id.widgetSpeedTripReset);
         overlayLock = view.findViewById(R.id.widgetOverlayLock);
-        overlayDocked = view.findViewById(R.id.widgetOverlayDocked);
+        overlayPlacement = view.findViewById(R.id.widgetOverlayPlacement);
         climateIconStyle = view.findViewById(R.id.widgetClimateIconStyle);
         widgetCardBorder = view.findViewById(R.id.widgetCardBorder);
         widgetButtonBorder = view.findViewById(R.id.widgetButtonBorder);
@@ -428,13 +428,15 @@ public final class WidgetsFragment extends Fragment {
                                 android.widget.Toast.LENGTH_SHORT).show();
                     });
         });
-        if (overlayDocked != null) {
-            overlayDocked.setOnCheckedChangeListener((b, checked) -> {
-                if (binding) return;
-                Prefs.setOverlayDocked(requireContext(), checked);
-                OverlayWidgetService.restart(requireContext());
-            });
-        }
+        overlayPlacement.addOnButtonCheckedListener((group, checkedId, checked) -> {
+            if (binding || !checked) return;
+            Context context = requireContext();
+            Prefs.OverlayPlacement placement = Prefs.OverlayPlacement.FREE;
+            if (checkedId == R.id.widgetOverlayPlacementCorners) placement = Prefs.OverlayPlacement.CORNERS;
+            if (checkedId == R.id.widgetOverlayPlacementGrid) placement = Prefs.OverlayPlacement.GRID;
+            Prefs.setOverlayPlacement(context, placement);
+            OverlayWidgetService.restart(context);
+        });
         if (overlayLock != null) {
             overlayLock.setOnCheckedChangeListener((b, checked) -> {
                 if (binding) return;
@@ -744,7 +746,11 @@ public final class WidgetsFragment extends Fragment {
         speedBackground.setChecked(Prefs.speedBackground(c));
         speedTrip.setChecked(Prefs.speedShowTrip(c));
         if (overlayLock != null) overlayLock.setChecked(Prefs.overlayLock(c));
-        if (overlayDocked != null) overlayDocked.setChecked(Prefs.overlayDocked(c));
+        overlayPlacement.check(switch (Prefs.overlayPlacement(c)) {
+            case FREE -> R.id.widgetOverlayPlacementFree;
+            case CORNERS -> R.id.widgetOverlayPlacementCorners;
+            case GRID -> R.id.widgetOverlayPlacementGrid;
+        });
         climateIconStyle.check(switch (Prefs.climateIconStyle(c)) {
             case STANDARD -> R.id.widgetClimateIconStandard;
             case THIN -> R.id.widgetClimateIconThin;
