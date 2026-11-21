@@ -54,6 +54,10 @@
         <item name="android:layout_marginTop">4dp</item>
     </style>
 
+    <style name="WgClimateChipLabel" parent="WgChipLabel">
+        <item name="android:textStyle">normal</item>
+    </style>
+
     <style name="WgIcon">
         <item name="android:layout_width">38dp</item>
         <item name="android:layout_height">38dp</item>

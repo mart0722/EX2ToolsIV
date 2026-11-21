@@ -161,7 +161,8 @@ public final class WidgetsFragment extends Fragment {
             Context context = requireContext();
             Prefs.ClimateIconStyle style = checkedId == R.id.widgetClimateIconStandard
                     ? Prefs.ClimateIconStyle.STANDARD : checkedId == R.id.widgetClimateIconThin
-                    ? Prefs.ClimateIconStyle.THIN : Prefs.ClimateIconStyle.CHROME;
+                    ? Prefs.ClimateIconStyle.THIN : checkedId == R.id.widgetClimateIconChromeThin
+                    ? Prefs.ClimateIconStyle.CHROME_THIN : Prefs.ClimateIconStyle.CHROME;
             Prefs.setClimateIconStyle(context, style);
             VehicleState.get().requestDisplayRefresh();
             WidgetUpdateService.sync(context);
@@ -523,6 +524,7 @@ public final class WidgetsFragment extends Fragment {
         climateIconStyle.check(switch (Prefs.climateIconStyle(c)) {
             case STANDARD -> R.id.widgetClimateIconStandard;
             case THIN -> R.id.widgetClimateIconThin;
+            case CHROME_THIN -> R.id.widgetClimateIconChromeThin;
             case CHROME -> R.id.widgetClimateIconChrome;
         });
         speedEnabled.setChecked(Prefs.overlayEnabled(c, WidgetsCommon.SIZE_SPEED));

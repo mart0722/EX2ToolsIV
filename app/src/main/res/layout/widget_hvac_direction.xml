@@ -74,7 +74,7 @@
 
                 <TextView
                     android:id="@+id/txt_vent_face"
-                    style="@style/WgChipLabel"
+                    style="@style/WgClimateChipLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Лицо" />
@@ -96,7 +96,7 @@
 
                 <TextView
                     android:id="@+id/txt_vent_floor"
-                    style="@style/WgChipLabel"
+                    style="@style/WgClimateChipLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Ноги" />
@@ -118,7 +118,7 @@
 
                 <TextView
                     android:id="@+id/txt_vent_face_floor"
-                    style="@style/WgChipLabel"
+                    style="@style/WgClimateChipLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Лицо+ноги" />
@@ -140,7 +140,7 @@
 
                 <TextView
                     android:id="@+id/txt_vent_windshield"
-                    style="@style/WgChipLabel"
+                    style="@style/WgClimateChipLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Стекло" />
@@ -162,7 +162,7 @@
 
                 <TextView
                     android:id="@+id/txt_vent_floor_windshield"
-                    style="@style/WgChipLabel"
+                    style="@style/WgClimateChipLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Ноги+стекло" />
@@ -182,7 +182,7 @@
 
                 <TextView
                     android:id="@+id/txt_recirc"
-                    style="@style/WgChipLabel"
+                    style="@style/WgClimateChipLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Рецирк." />

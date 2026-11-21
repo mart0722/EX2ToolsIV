@@ -62,7 +62,7 @@
 
                 <TextView
                     android:id="@+id/txt_wheel_heat"
-                    style="@style/WgChipLabel"
+                    style="@style/WgClimateChipLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Руль" />
@@ -83,7 +83,7 @@
 
                 <TextView
                     android:id="@+id/txt_front_rear_defrost"
-                    style="@style/WgChipLabel"
+                    style="@style/WgClimateChipLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Заднее" />
@@ -104,7 +104,7 @@
 
                 <TextView
                     android:id="@+id/txt_front_max_defrost"
-                    style="@style/WgChipLabel"
+                    style="@style/WgClimateChipLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Макс." />
@@ -134,7 +134,7 @@
 
                 <TextView
                     android:id="@+id/txt_windshield_heat"
-                    style="@style/WgChipLabel"
+                    style="@style/WgClimateChipLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Лобовое" />
@@ -156,7 +156,7 @@
 
                 <TextView
                     android:id="@+id/txt_seat_heat_driver"
-                    style="@style/WgChipLabel"
+                    style="@style/WgClimateChipLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/wg_heat_seat_driver" />
@@ -177,7 +177,7 @@
 
                 <TextView
                     android:id="@+id/txt_seat_heat_passenger"
-                    style="@style/WgChipLabel"
+                    style="@style/WgClimateChipLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/wg_heat_seat_passenger" />

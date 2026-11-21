@@ -130,10 +130,6 @@ public final class WidgetsRenderer {
         c = OverlayWidgetViews.themeContext(c);
         bg(v, c);
         v.setTextViewText(R.id.txt_vent_header, c.getString(R.string.wg_vent_header));
-        v.setTextViewText(R.id.txt_vent_face, c.getString(R.string.wg_vent_face));
-        v.setTextViewText(R.id.txt_vent_floor, c.getString(R.string.wg_vent_floor));
-        v.setTextViewText(R.id.txt_vent_windshield, c.getString(R.string.wg_vent_windshield));
-        v.setTextViewText(R.id.txt_recirc, c.getString(R.string.wg_recirc));
         boolean directions = Prefs.ventDirectionButtons(c);
         boolean transparent = Prefs.widgetBgOpacity(c) < 10;
         int mode = vent == null ? 0 : vent;
@@ -168,9 +164,8 @@ public final class WidgetsRenderer {
         int mode = vent == null ? 1 : vent;
         ClimateWidgetIcons icons = ClimateWidgetIcons.forRemote(c, v);
         icons.vent(R.id.img_vent_mode, mode, vent != null);
-        v.setTextViewText(R.id.tv_vent_mode_label, c.getString(WidgetsCommon.ventLabel(mode)));
+        v.setTextViewText(R.id.tv_vent_mode_label, icons.ventModeCaption(mode));
         v.setTextViewText(R.id.tv_vent_mode_footer, c.getString(R.string.wg_vent_short));
-        v.setTextViewText(R.id.txt_recirc_v, c.getString(R.string.wg_recirc));
         boolean transparent = Prefs.widgetBgOpacity(c) < 10;
         int controlBackground = ClimateWidgetIcons.controlBackground(c, transparent, R.drawable.bg_wg_round);
         v.setInt(R.id.btn_vent_next, "setBackgroundResource", controlBackground);
@@ -334,6 +329,7 @@ public final class WidgetsRenderer {
                                  int chipId, int textId, boolean active) {
         v.setInt(chipId, "setBackgroundResource",
                 icons.buttonBackground(transparent, active, false, true));
+        v.setTextViewText(textId, icons.ventCaption(textId));
         v.setTextColor(textId, icons.buttonTextColor(active, true));
     }
 
@@ -351,7 +347,7 @@ public final class WidgetsRenderer {
         v.setTextColor(textId, pending && !active
                 ? c.getColor(R.color.wg_blue_light)
                 : icons.buttonTextColor(active, airflow));
-        v.setTextViewText(textId, label);
+        v.setTextViewText(textId, icons.caption(label));
     }
 
     private static void seat(RemoteViews v, Context c, ClimateWidgetIcons icons, int chipId, int textId,
@@ -362,7 +358,7 @@ public final class WidgetsRenderer {
         v.setTextColor(textId, icons.buttonTextColor(active, false));
         String value = level == null ? "—" : String.valueOf(level);
         String labelWithLevel = label + " " + value;
-        v.setTextViewText(textId, outline ? label : labelWithLevel);
+        v.setTextViewText(textId, icons.caption(outline ? label : labelWithLevel));
         v.setContentDescription(textId, outline ? labelWithLevel : null);
     }
 
