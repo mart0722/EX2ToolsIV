@@ -159,10 +159,12 @@ public final class WidgetsFragment extends Fragment {
         climateIconStyle.addOnButtonCheckedListener((group, checkedId, checked) -> {
             if (binding || !checked) return;
             Context context = requireContext();
-            Prefs.ClimateIconStyle style = checkedId == R.id.widgetClimateIconStandard
-                    ? Prefs.ClimateIconStyle.STANDARD : checkedId == R.id.widgetClimateIconThin
-                    ? Prefs.ClimateIconStyle.THIN : checkedId == R.id.widgetClimateIconChromeThin
-                    ? Prefs.ClimateIconStyle.CHROME_THIN : Prefs.ClimateIconStyle.CHROME;
+            Prefs.ClimateIconStyle style;
+            if (checkedId == R.id.widgetClimateIconStandard) style = Prefs.ClimateIconStyle.STANDARD;
+            else if (checkedId == R.id.widgetClimateIconThin) style = Prefs.ClimateIconStyle.THIN;
+            else if (checkedId == R.id.widgetClimateIconExtraThin) style = Prefs.ClimateIconStyle.EXTRA_THIN;
+            else if (checkedId == R.id.widgetClimateIconChromeThin) style = Prefs.ClimateIconStyle.CHROME_THIN;
+            else style = Prefs.ClimateIconStyle.CHROME;
             Prefs.setClimateIconStyle(context, style);
             VehicleState.get().requestDisplayRefresh();
             WidgetUpdateService.sync(context);
@@ -524,6 +526,7 @@ public final class WidgetsFragment extends Fragment {
         climateIconStyle.check(switch (Prefs.climateIconStyle(c)) {
             case STANDARD -> R.id.widgetClimateIconStandard;
             case THIN -> R.id.widgetClimateIconThin;
+            case EXTRA_THIN -> R.id.widgetClimateIconExtraThin;
             case CHROME_THIN -> R.id.widgetClimateIconChromeThin;
             case CHROME -> R.id.widgetClimateIconChrome;
         });
