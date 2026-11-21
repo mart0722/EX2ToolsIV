@@ -22,7 +22,7 @@ public final class WidgetsRenderer {
     }
 
     public static RemoteViews driveRegen(Context c, Integer drive, Integer regen) {
-        RemoteViews v = SizedWidgetViews.create(c, R.layout.widget_drive_regen);
+        RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_drive_regen);
         bg(v, c);
         titles(v, c, R.id.txt_drive_header, R.id.txt_regen_header);
         v.setTextViewText(R.id.txt_drive_header, c.getString(R.string.wg_drive_header));
@@ -52,7 +52,7 @@ public final class WidgetsRenderer {
     }
 
     public static RemoteViews driveVertical(Context c, Integer drive) {
-        RemoteViews v = SizedWidgetViews.create(c, R.layout.widget_drive_mode_vertical);
+        RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_drive_mode_vertical);
         bg(v, c);
         titles(v, c, R.id.widget_title);
         int icon;
@@ -77,7 +77,7 @@ public final class WidgetsRenderer {
     }
 
     public static RemoteViews regenVertical(Context c, Integer regen) {
-        RemoteViews v = SizedWidgetViews.create(c, R.layout.widget_regen_vertical);
+        RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_regen_vertical);
         bg(v, c);
         titles(v, c, R.id.widget_title);
         int icon;
@@ -102,7 +102,7 @@ public final class WidgetsRenderer {
     }
 
     public static RemoteViews fan(Context c, Integer fan, int layout) {
-        RemoteViews v = SizedWidgetViews.create(c, layout);
+        RemoteViews v = new RemoteViews(c.getPackageName(), layout);
         bg(v, c);
         titles(v, c, R.id.widget_title);
         v.setTextViewText(R.id.tv_fan_value, fan == null ? "—" : String.valueOf(fan));
@@ -119,7 +119,7 @@ public final class WidgetsRenderer {
     }
 
     public static RemoteViews temperature(Context c, Float temp, int layout) {
-        RemoteViews v = SizedWidgetViews.create(c, layout);
+        RemoteViews v = new RemoteViews(c.getPackageName(), layout);
         bg(v, c);
         titles(v, c, R.id.widget_title);
         v.setTextViewText(R.id.tv_temp_value,
@@ -139,7 +139,7 @@ public final class WidgetsRenderer {
 
     public static RemoteViews vent(Context c, Integer vent, Boolean recirc) {
         Context widgetContext = c;
-        RemoteViews v = SizedWidgetViews.create(c, R.layout.widget_hvac_direction);
+        RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_hvac_direction);
         c = OverlayWidgetViews.themeContext(c);
         bg(v, c);
         titles(v, c, R.id.widget_title);
@@ -173,7 +173,7 @@ public final class WidgetsRenderer {
 
     public static RemoteViews ventVertical(Context c, Integer vent, Boolean recirc) {
         Context widgetContext = c;
-        RemoteViews v = SizedWidgetViews.create(c, R.layout.widget_hvac_direction_vertical);
+        RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_hvac_direction_vertical);
         c = OverlayWidgetViews.themeContext(c);
         bg(v, c);
         titles(v, c, R.id.widget_title);
@@ -201,7 +201,7 @@ public final class WidgetsRenderer {
     public static RemoteViews ventFan(Context c, Integer vent, Boolean recirc,
                                       Integer fan, Boolean ac) {
         Context widgetContext = c;
-        RemoteViews v = SizedWidgetViews.create(c, R.layout.widget_hvac_direction_fan);
+        RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_hvac_direction_fan);
         c = OverlayWidgetViews.themeContext(c);
         bg(v, c);
         titles(v, c, R.id.widget_title);
@@ -243,23 +243,30 @@ public final class WidgetsRenderer {
         return v;
     }
 
-    public static RemoteViews heating(Context c, Boolean wheel, Boolean rear, Boolean front,
+    public static RemoteViews heating(Context c, Boolean wheel, Boolean rear,
                                       Boolean windshield, Integer seatDriver, Integer seatPassenger,
                                       boolean wheelPending) {
         Context widgetContext = c;
-        RemoteViews v = SizedWidgetViews.create(c, R.layout.widget_heating_test);
+        boolean singleRow = Prefs.heatingSingleRow(c);
+        RemoteViews v = new RemoteViews(c.getPackageName(), singleRow
+                ? R.layout.widget_heating_single_row : R.layout.widget_heating_test);
         c = OverlayWidgetViews.themeContext(c);
         bg(v, c);
         titles(v, c, R.id.widget_title);
         ClimateWidgetIcons icons = ClimateWidgetIcons.forRemote(widgetContext, c, v);
-        icons.heating(wheel, rear, front, windshield, seatDriver, seatPassenger);
+        icons.heating(wheel, rear, windshield, seatDriver, seatPassenger);
+        if (!singleRow) {
+            boolean front = Boolean.TRUE.equals(WidgetsCommon.readFrontMaxDefrost());
+            icons.frontMaxDefrost(front);
+            toggle(v, c, icons, R.id.chip_front_max_defrost, R.id.txt_front_max_defrost,
+                    front, c.getString(icons.frontAirLabel()));
+            click(v, c, R.id.chip_front_max_defrost, WidgetsCommon.FRONT_MAX_DEFROST_TOGGLE);
+        }
         v.setTextViewText(R.id.txt_heat_header, c.getString(R.string.wg_heat_header));
         toggle(v, c, icons, R.id.chip_wheel_heat, R.id.txt_wheel_heat,
                 Boolean.TRUE.equals(wheel), wheelPending, c.getString(R.string.wg_heat_wheel));
         toggle(v, c, icons, R.id.chip_front_rear_defrost, R.id.txt_front_rear_defrost,
                 Boolean.TRUE.equals(rear), c.getString(R.string.wg_heat_rear));
-        toggle(v, c, icons, R.id.chip_front_max_defrost, R.id.txt_front_max_defrost,
-                Boolean.TRUE.equals(front), c.getString(icons.frontAirLabel()));
         toggle(v, c, icons, R.id.chip_windshield_heat, R.id.txt_windshield_heat,
                 Boolean.TRUE.equals(windshield), c.getString(icons.electricWindshieldLabel()));
         seat(v, c, icons, R.id.chip_seat_heat_driver, R.id.txt_seat_heat_driver,
@@ -268,7 +275,6 @@ public final class WidgetsRenderer {
                 seatPassenger, c.getString(R.string.wg_heat_seat_passenger), icons.usesOutline());
         click(v, c, R.id.chip_wheel_heat, WidgetsCommon.WHEEL_HEAT_TOGGLE);
         click(v, c, R.id.chip_front_rear_defrost, WidgetsCommon.REAR_DEFROST_TOGGLE);
-        click(v, c, R.id.chip_front_max_defrost, WidgetsCommon.FRONT_MAX_DEFROST_TOGGLE);
         click(v, c, R.id.chip_windshield_heat, WidgetsCommon.WINDSHIELD_HEAT_TOGGLE);
         click(v, c, R.id.chip_seat_heat_driver, WidgetsCommon.SEAT_DRIVER_CYCLE);
         click(v, c, R.id.chip_seat_heat_passenger, WidgetsCommon.SEAT_PASSENGER_CYCLE);
@@ -277,7 +283,7 @@ public final class WidgetsRenderer {
 
     static RemoteViews windshieldHeat(Context c, Boolean state) {
         Context widgetContext = c;
-        RemoteViews v = SizedWidgetViews.create(c, R.layout.widget_windshield_heat);
+        RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_windshield_heat);
         c = OverlayWidgetViews.themeContext(c);
         bg(v, c);
         ClimateWidgetIcons icons = ClimateWidgetIcons.forRemote(widgetContext, c, v);
@@ -289,7 +295,7 @@ public final class WidgetsRenderer {
     }
 
     public static RemoteViews batteryRange(Context c, Integer soc, Float range, Float energyKwh) {
-        RemoteViews v = SizedWidgetViews.create(c, R.layout.widget_battery_range);
+        RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_battery_range);
         bg(v, c);
         Context tc = OverlayWidgetViews.themeContext(c);
         int primary = tc.getColor(R.color.wg_text);
@@ -324,7 +330,7 @@ public final class WidgetsRenderer {
     }
 
     public static RemoteViews lock(Context c) {
-        RemoteViews v = SizedWidgetViews.create(c, R.layout.widget_lock);
+        RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_lock);
         bg(v, c);
         Context tc = OverlayWidgetViews.themeContext(c);
         v.setInt(R.id.img_lock, "setColorFilter", tc.getColor(R.color.wg_text));

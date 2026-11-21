@@ -3,7 +3,7 @@ package com.ex2tools.iv.widgets;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.Context;
-import android.os.Bundle;
+import com.ex2tools.iv.Prefs;
 import android.widget.RemoteViews;
 
 abstract class BaseWidgetProvider extends AppWidgetProvider {
@@ -13,21 +13,14 @@ abstract class BaseWidgetProvider extends AppWidgetProvider {
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
         for (int id : appWidgetIds) {
-            updateSize(context, appWidgetManager, id, appWidgetManager.getAppWidgetOptions(id));
+            appWidgetManager.updateAppWidget(id, build(WidgetIconSizes.appWidgetContext(context, id)));
         }
         WidgetUpdateService.start(context);
     }
 
     @Override
-    public void onAppWidgetOptionsChanged(Context context, AppWidgetManager manager,
-                                          int appWidgetId, Bundle options) {
-        updateSize(context, manager, appWidgetId, options);
-        WidgetUpdateService.start(context);
-    }
-
-    private void updateSize(Context context, AppWidgetManager manager, int id, Bundle options) {
-        int size = SizedWidgetViews.size(context, manager, id, options);
-        manager.updateAppWidget(id, build(SizedWidgetViews.context(context, size)));
+    public void onDeleted(Context context, int[] ids) {
+        for (int id : ids) Prefs.clearClimateIconSize(context, WidgetIconSizes.appWidgetKey(id));
     }
 
     @Override
