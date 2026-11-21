@@ -64,12 +64,7 @@ public final class ClimateController {
 
     private CommandDispatcher.Result setTemp(float value, boolean awaitConfirmation) {
         int celsius = Math.max(17, Math.min(32, Math.round(value)));
-        CommandDispatcher.Result last = null;
-        for (int area : TEMP_AREAS) {
-            CommandDispatcher.Result result = dispatcher.submit(new CommandDispatcher.Command(
-                    CarProps.HVAC_TEMP_ADJUST, area, PropertySpec.Type.INT, celsius), awaitConfirmation);
-            if (last == null || result.ok()) last = result;
-        }
+        CommandDispatcher.Result last = writeTemp(celsius, awaitConfirmation);
         if (last != null && last.ok()) {
             pendingTempAt = android.os.SystemClock.elapsedRealtime();
             pendingTemp = celsius;
@@ -87,15 +82,18 @@ public final class ClimateController {
      */
     public CommandDispatcher.Result setTempSilent(float value) {
         int celsius = Math.max(17, Math.min(32, Math.round(value)));
+        CommandDispatcher.Result result = writeTemp(celsius, false);
+        logTempState("silent " + celsius);
+        return result;
+    }
+
+    private CommandDispatcher.Result writeTemp(int celsius, boolean awaitConfirmation) {
         CommandDispatcher.Result last = null;
         for (int area : TEMP_AREAS) {
-            CommandDispatcher.Result set = dispatcher.submit(new CommandDispatcher.Command(
-                    CarProps.HVAC_TEMP_SET, area, PropertySpec.Type.INT, celsius), false);
-            dispatcher.submit(new CommandDispatcher.Command(
-                    CarProps.HVAC_TEMP_ADJUST, area, PropertySpec.Type.INT, celsius), false);
-            last = set;
+            CommandDispatcher.Result result = dispatcher.submit(new CommandDispatcher.Command(
+                    CarProps.HVAC_TEMP_ADJUST, area, PropertySpec.Type.INT, celsius), awaitConfirmation);
+            if (last == null || result.ok()) last = result;
         }
-        logTempState("silent " + celsius);
         return last;
     }
 
