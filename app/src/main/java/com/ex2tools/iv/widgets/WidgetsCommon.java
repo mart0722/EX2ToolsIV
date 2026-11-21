@@ -62,9 +62,17 @@ public final class WidgetsCommon {
     public static final String SIZE_HEATING = "heating";
     public static final String SIZE_SPEED = "speed";
     public static final String SIZE_BATTERY_RANGE = "battery_range";
+    static final String WIPERS_TOGGLE = "com.ex2tools.iv.widgets.WIPERS_TOGGLE";
+
+    public static final String SIZE_WIPERS = "wipers";
+    public static final String SIZE_POWER_OFF = "power_off";
     public static final String SIZE_LOCK = "lock";
     public static final String SIZE_APPS = "apps";
     public static final String SIZE_CLIMATE = "climate";
+
+    public static boolean isStandaloneVehicleButton(String key) {
+        return SIZE_WIPERS.equals(key) || SIZE_POWER_OFF.equals(key);
+    }
 
     public static final String CLIMATE_TARGET_MINUS = "com.ex2tools.iv.widget.CLIMATE_TARGET_MINUS";
     public static final String CLIMATE_TARGET_PLUS = "com.ex2tools.iv.widget.CLIMATE_TARGET_PLUS";
@@ -193,6 +201,10 @@ public final class WidgetsCommon {
         return readBoolAny(CarProps.HVAC_FRONT_MAX_DEFROST_ON, new int[]{1});
     }
 
+    static boolean wiperServicePositionActive() {
+        return Integer.valueOf(1).equals(VehicleState.get().intValue(CarProps.WIPER_SERVICE_POSITION, 0));
+    }
+
     public static Boolean readWindshieldHeat() {
         return readBoolAny(CarProps.HVAC_WINDSHIELD_HEAT, new int[]{117});
     }
@@ -219,7 +231,7 @@ public final class WidgetsCommon {
     }
 
     public static Integer readDrive() {
-        return readIntAny(CarProps.DRIVE_MODE, CarProps.DRIVE_AREAS);
+        return DriveController.get().currentDrive();
     }
 
     public static Integer readRegen() {
@@ -285,6 +297,7 @@ public final class WidgetsCommon {
         subscribe(state, CarProps.HVAC_REAR_DEFROSTER_ON, new int[]{2});
         subscribe(state, CarProps.HVAC_FRONT_MAX_DEFROST_ON, new int[]{1});
         subscribe(state, CarProps.HVAC_WINDSHIELD_HEAT, new int[]{117});
+        subscribe(state, CarProps.WIPER_SERVICE_POSITION, new int[]{0});
         subscribe(state, CarProps.STEERING_WHEEL_HEAT, CarProps.WHEEL_HEAT_AREAS);
         subscribe(state, CarProps.SEAT_HEAT, CarProps.SEAT_AREAS);
         subscribe(state, CarProps.HVAC_TEMP_AOSP, CarProps.HVAC_AREAS);
@@ -570,21 +583,16 @@ public final class WidgetsCommon {
 
     public static int bgDrawableResForPct(Context c) {
         int pct = Math.round(Prefs.widgetBgOpacity(c) / 20f) * 20;
-        if (WidgetAppearance.usesGlass(c)) return WidgetAppearance.glassCardResource(pct);
-        switch (pct) {
-            case 0:
-                return R.drawable.bg_wg_card_000;
-            case 20:
-                return R.drawable.bg_wg_card_020;
-            case 40:
-                return R.drawable.bg_wg_card_040;
-            case 60:
-                return R.drawable.bg_wg_card_060;
-            case 80:
-                return R.drawable.bg_wg_card_080;
-            default:
-                return R.drawable.bg_wg_card_100;
-        }
+        int resource = WidgetAppearance.usesGlass(c) ? WidgetAppearance.glassCardResource(pct)
+                : switch (pct) {
+                    case 0 -> R.drawable.bg_wg_card_000;
+                    case 20 -> R.drawable.bg_wg_card_020;
+                    case 40 -> R.drawable.bg_wg_card_040;
+                    case 60 -> R.drawable.bg_wg_card_060;
+                    case 80 -> R.drawable.bg_wg_card_080;
+                    default -> R.drawable.bg_wg_card_100;
+                };
+        return WidgetAppearance.cardBackground(c, resource);
     }
 
     public static int ventIcon(int mode) {

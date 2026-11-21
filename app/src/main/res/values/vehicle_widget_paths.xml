@@ -1,0 +1,8 @@
+<resources>
+    <string-array name="wg_icon_wipers">
+        <item>M12 26 Q48 4 84 26 L75 68 Q48 58 21 68 Z M49 59 L64 30 M49 48 L63 27 L69 24 L69 31 L55 51 Z M29 47 L29 31 M23 37 L29 31 L35 37</item>
+    </string-array>
+    <string-array name="wg_icon_power_off">
+        <item>M44 12 H52 V46 H44 Z M29 22 L33 29 C21 36 17 49 21 61 C25 73 36 81 48 81 C60 81 71 73 75 61 C79 49 75 36 63 29 L67 22 C82 31 87 47 82 63 C77 78 64 88 48 88 C32 88 19 78 14 63 C9 47 14 31 29 22 Z</item>
+    </string-array>
+</resources>

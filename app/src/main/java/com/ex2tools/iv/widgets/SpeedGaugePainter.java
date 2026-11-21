@@ -62,13 +62,15 @@ final class SpeedGaugePainter {
                 int bottom = ColorUtils.setAlphaComponent(p.surface, Math.round(alpha * .82f));
                 bg.setShader(new LinearGradient(0, 0, 0, height, top, bottom, Shader.TileMode.CLAMP));
                 canvas.drawRoundRect(panel, radius, radius, bg);
-                bg.setShader(null);
-                bg.setColor(ColorUtils.setAlphaComponent(Color.WHITE, Math.round(alpha * .42f)));
-                bg.setStyle(Paint.Style.STROKE);
-                float strokeWidth = Math.max(1f, size / 160f);
-                bg.setStrokeWidth(strokeWidth);
-                panel.inset(strokeWidth / 2f, strokeWidth / 2f);
-                canvas.drawRoundRect(panel, radius, radius, bg);
+                if (Prefs.widgetCardBorder(c)) {
+                    bg.setShader(null);
+                    bg.setColor(ColorUtils.setAlphaComponent(Color.WHITE, Math.round(alpha * .42f)));
+                    bg.setStyle(Paint.Style.STROKE);
+                    float strokeWidth = Math.max(1f, size / 160f);
+                    bg.setStrokeWidth(strokeWidth);
+                    panel.inset(strokeWidth / 2f, strokeWidth / 2f);
+                    canvas.drawRoundRect(panel, radius, radius, bg);
+                }
             } else {
                 bg.setAlpha(alpha);
                 canvas.drawRoundRect(panel, radius, radius, bg);

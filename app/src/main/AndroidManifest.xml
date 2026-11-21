@@ -265,6 +265,22 @@
             </intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_info_hvac_direction_fan" />
         </receiver>
+        <activity android:name=".widgets.VehiclePowerOffActivity" android:exported="false"
+            android:theme="@android:style/Theme.NoDisplay" />
+        <receiver android:name=".widgets.WipersWidgetProvider" android:exported="true"
+            android:label="@string/widget_name_wipers">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_info_wipers" />
+        </receiver>
+        <receiver android:name=".widgets.PowerOffWidgetProvider" android:exported="true"
+            android:label="@string/widget_name_power_off">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_info_power_off" />
+        </receiver>
         <receiver android:name=".widgets.WindshieldHeatWidgetProvider" android:exported="true"
             android:label="@string/widget_name_windshield_heat">
             <intent-filter>

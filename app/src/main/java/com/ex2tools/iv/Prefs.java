@@ -566,8 +566,11 @@ public final class Prefs {
         get(c).edit().putInt("climate_icon_size_" + widgetKey, clampClimateIconSize(pct)).apply();
     }
 
-    public static void clearClimateIconSize(Context c, String widgetKey) {
-        get(c).edit().remove("climate_icon_size_" + widgetKey).apply();
+    public static void clearWidgetIconSettings(Context c, String widgetKey) {
+        get(c).edit()
+                .remove("climate_icon_size_" + widgetKey)
+                .remove("climate_icon_labels_" + widgetKey)
+                .apply();
     }
 
     private static int clampClimateIconSize(int pct) {
@@ -596,6 +599,42 @@ public final class Prefs {
 
     public static void setClimateIconLabels(Context c, boolean enabled) {
         get(c).edit().putBoolean("climate_icon_labels", enabled).apply();
+    }
+
+    public static boolean climateIconLabels(Context c, String widgetKey) {
+        return get(c).getBoolean("climate_icon_labels_" + widgetKey, climateIconLabels(c));
+    }
+
+    public static void setClimateIconLabels(Context c, String widgetKey, boolean enabled) {
+        SharedPreferences.Editor editor = get(c).edit();
+        String key = "climate_icon_labels_" + widgetKey;
+        if (enabled == climateIconLabels(c)) editor.remove(key);
+        else editor.putBoolean(key, enabled);
+        editor.apply();
+    }
+
+    public static boolean widgetPowerOffWithoutConfirmation(Context c) {
+        return get(c).getBoolean("widget_power_off_without_confirmation", false);
+    }
+
+    public static void setWidgetPowerOffWithoutConfirmation(Context c, boolean enabled) {
+        get(c).edit().putBoolean("widget_power_off_without_confirmation", enabled).apply();
+    }
+
+    public static boolean widgetCardBorder(Context c) {
+        return get(c).getBoolean("widget_card_border", true);
+    }
+
+    public static void setWidgetCardBorder(Context c, boolean visible) {
+        get(c).edit().putBoolean("widget_card_border", visible).apply();
+    }
+
+    public static boolean widgetButtonBorder(Context c) {
+        return get(c).getBoolean("widget_button_border", true);
+    }
+
+    public static void setWidgetButtonBorder(Context c, boolean visible) {
+        get(c).edit().putBoolean("widget_button_border", visible).apply();
     }
 
     public static boolean widgetAccentBoost(Context c) {

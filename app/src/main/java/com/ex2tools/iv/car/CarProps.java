@@ -50,6 +50,8 @@ public final class CarProps {
     public static final int ENV_OUTSIDE_TEMPERATURE = 291505923;
     public static final int DRIVE_MILEAGE = 658548345;
 
+    public static final int WIPER_SERVICE_POSITION = 0x2140A80E;
+    public static final int VEHICLE_POWER_OFF_REQUEST = 0x2140A6FB;
     public static final int SPEED_AUTO_LOCK = 557850645;   // 0x21402015, as in Sapo
     public static final int WINDOW_POSITION = 322964416;
     public static final int DAY_NIGHT_SETTING = 538247424;
@@ -61,7 +63,7 @@ public final class CarProps {
     // Drive mode живёт ещё и в третьей зоне 0x01000000 (16777216) — так делает
     // Sapo. Зоны 0 и 1 на этой машине принимают запись молча, но не применяют
     // режим на ходу; рабочая — 16777216.
-    public static final int[] DRIVE_AREAS = new int[]{0, 1, 16777216};
+    public static final int[] DRIVE_AREAS = new int[]{16777216, 0, 1};
     public static final int[] REGEN_AREAS = new int[]{0, 1};
     public static final int[] CABIN_AREAS = new int[]{1, 4, 0, 7};
     public static final int[] HVAC_AREAS = new int[]{1, 4, 0};

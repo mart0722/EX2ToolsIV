@@ -89,6 +89,10 @@ final class OverlayWidgetViews {
             case WidgetsCommon.SIZE_VENT_FAN:
                 updateVentFan(c, root);
                 break;
+            case WidgetsCommon.SIZE_WIPERS:
+            case WidgetsCommon.SIZE_POWER_OFF:
+                updateVehicleControl(c, root, key);
+                break;
             case WidgetsCommon.SIZE_WINDSHIELD_HEAT:
                 updateWindshieldHeat(c, root);
                 break;
@@ -209,6 +213,14 @@ final class OverlayWidgetViews {
                 click(c, root, R.id.chip_windshield_heat, WidgetsCommon.WINDSHIELD_HEAT_TOGGLE);
                 click(c, root, R.id.chip_seat_heat_driver, WidgetsCommon.SEAT_DRIVER_CYCLE);
                 click(c, root, R.id.chip_seat_heat_passenger, WidgetsCommon.SEAT_PASSENGER_CYCLE);
+                break;
+            case WidgetsCommon.SIZE_WIPERS:
+                click(c, root, R.id.chip_wipers, WidgetsCommon.WIPERS_TOGGLE);
+                break;
+            case WidgetsCommon.SIZE_POWER_OFF:
+                root.findViewById(R.id.chip_power_off).setOnClickListener(v ->
+                        c.startActivity(new Intent(c, VehiclePowerOffActivity.class)
+                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)));
                 break;
             case WidgetsCommon.SIZE_LOCK:
                 View lock = root.findViewById(R.id.lock_body);
@@ -518,6 +530,17 @@ final class OverlayWidgetViews {
                 seatPassenger, c.getString(R.string.wg_heat_seat_passenger), icons.usesOutline());
     }
 
+    private static void updateVehicleControl(Context c, View root, String key) {
+        boolean powerOff = WidgetsCommon.SIZE_POWER_OFF.equals(key);
+        ClimateWidgetIcons icons = ClimateWidgetIcons.forOverlay(c, root, key);
+        icons.vehicleControl(powerOff);
+        boolean active = !powerOff && WidgetsCommon.wiperServicePositionActive();
+        int chip = powerOff ? R.id.chip_power_off : R.id.chip_wipers;
+        int caption = powerOff ? R.id.txt_power_off : R.id.txt_wipers;
+        int label = powerOff ? R.string.widget_name_power_off : R.string.widget_name_wipers;
+        toggle(c, root, icons, chip, caption, active, false, c.getString(label), false);
+    }
+
     private static void updateWindshieldHeat(Context c, View root) {
         Boolean state = WidgetsCommon.readWindshieldHeat();
         ClimateWidgetIcons icons = ClimateWidgetIcons.forOverlay(c, root, WidgetsCommon.SIZE_WINDSHIELD_HEAT);
@@ -653,8 +676,13 @@ final class OverlayWidgetViews {
 
     private static void toggle(Context c, View root, ClimateWidgetIcons icons, int chipId, int textId,
                                boolean active, boolean pending, String label) {
+        toggle(c, root, icons, chipId, textId, active, pending, label,
+                OverlayBackground.isTransparent(c, WidgetsCommon.SIZE_HEATING));
+    }
+
+    private static void toggle(Context c, View root, ClimateWidgetIcons icons, int chipId, int textId,
+                               boolean active, boolean pending, String label, boolean transparent) {
         boolean airflow = chipId == R.id.chip_front_max_defrost && icons.usesOutline();
-        boolean transparent = OverlayBackground.isTransparent(c, WidgetsCommon.SIZE_HEATING);
         root.findViewById(chipId).setBackgroundResource(
                 icons.buttonBackground(transparent, active, pending, airflow));
         TextView caption = root.findViewById(textId);

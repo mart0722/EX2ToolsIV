@@ -783,8 +783,8 @@
     <string name="settings_fast_widget_response">Быстрый отклик виджетов</string>
     <string name="settings_fast_widget_response_note">Ускоряет кнопки температуры и вентилятора. Показания обновляются по данным автомобиля.</string>
     <string name="widgets_heating_single_row">Обогревы в один ряд</string>
-    <string name="widgets_individual_icon_sizes">Настройки обдува и обогревов</string>
-    <string name="widgets_individual_icon_sizes_empty">Добавьте виджет обдува или обогрева на рабочий стол</string>
+    <string name="widgets_individual_icon_sizes">Настройки иконок виджетов</string>
+    <string name="widgets_individual_icon_sizes_empty">Добавьте на рабочий стол виджет обдува, обогрева, дворников или выключения машины</string>
     <string name="widgets_icon_size_instance">%1$s · №%2$d</string>
     <string name="widgets_climate_icon_size">Размер иконок</string>
     <string name="widgets_show_titles">Заголовки виджетов</string>
@@ -856,4 +856,13 @@
     <string name="climate_log_failed">Не удалось сохранить. Файл приложения: %1$s</string>
     <string name="climate_log_cleared">Журнал очищен</string>
     <string name="climate_log_size">Пакетов записано: %1$d, размер %2$d КБ</string>
+    <string name="widget_name_wipers">Сервисный режим дворников</string>
+    <string name="widget_name_power_off">Выключить машину</string>
+    <string name="widget_wipers_unavailable">Режим дворников недоступен. Проверьте, что машина в P</string>
+    <string name="widget_power_off_unavailable">Штатный диалог выключения недоступен</string>
+    <string name="widget_power_off_without_confirmation">Выключать машину без подтверждения</string>
+    <string name="widget_power_off_park_only">Выключение без подтверждения доступно только после полной остановки в положении P</string>
+    <string name="widget_power_off_direct_unavailable">Выключение без подтверждения сейчас недоступно</string>
+    <string name="widgets_card_border">Показывать рамку виджета</string>
+    <string name="widgets_button_border">Показывать рамки кнопок</string>
 </resources>

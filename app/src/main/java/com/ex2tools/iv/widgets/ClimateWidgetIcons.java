@@ -58,6 +58,8 @@ final class ClimateWidgetIcons {
         FACE(R.array.wg_chrome_face),
         FLOOR(R.array.wg_chrome_floor),
         FACE_FLOOR(R.array.wg_chrome_face_floor),
+        WIPERS(R.array.wg_icon_wipers),
+        POWER_OFF(R.array.wg_icon_power_off),
         FLOOR_GLASS(R.array.wg_chrome_floor_glass);
 
         final int pathResource;
@@ -100,13 +102,13 @@ final class ClimateWidgetIcons {
     private Float airflowDelta;
     private Integer airflowGradient;
 
-    private ClimateWidgetIcons(Context c, int iconSizePct, Target target) {
+    private ClimateWidgetIcons(Context c, int iconSizePct, boolean showLabels, Target target) {
         context = c;
         this.target = target;
         resources = c.getResources();
         style = Prefs.climateIconStyle(c);
         iconScale = iconSizePct / 100f;
-        showLabels = Prefs.climateIconLabels(c);
+        this.showLabels = showLabels;
         accentBoost = usesOutline() && Prefs.widgetAccentBoost(c);
         night = (resources.getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK)
                 == Configuration.UI_MODE_NIGHT_YES;
@@ -144,16 +146,18 @@ final class ClimateWidgetIcons {
 
     int ventModeBackground(boolean transparent, boolean active) {
         return usesOutline() && !transparent && active
-                ? airflowBackground() : android.R.color.transparent;
+                ? WidgetAppearance.buttonBackground(context, airflowBackground())
+                : android.R.color.transparent;
     }
 
     static ClimateWidgetIcons forRemote(Context widgetContext, Context theme, RemoteViews views) {
         return new ClimateWidgetIcons(theme, WidgetIconSizes.appWidgetSize(widgetContext),
-                views::setImageViewBitmap);
+                WidgetIconSizes.appWidgetLabels(widgetContext), views::setImageViewBitmap);
     }
 
     static ClimateWidgetIcons forOverlay(Context c, View root, String key) {
-        return new ClimateWidgetIcons(c, Prefs.climateIconSizePct(c, key), (id, bitmap) -> {
+        return new ClimateWidgetIcons(c, Prefs.climateIconSizePct(c, key),
+                Prefs.climateIconLabels(c, key), (id, bitmap) -> {
             ImageView image = root.findViewById(id);
             image.setImageBitmap(bitmap);
         });
@@ -222,6 +226,10 @@ final class ClimateWidgetIcons {
     }
 
     int buttonBackground(boolean transparent, boolean active, boolean pending, boolean airflow) {
+        return WidgetAppearance.buttonBackground(context, buttonSurface(transparent, active, pending, airflow));
+    }
+
+    private int buttonSurface(boolean transparent, boolean active, boolean pending, boolean airflow) {
         if (!usesOutline()) {
             if (active) return airflow ? R.drawable.bg_wg_chip_on : R.drawable.bg_wg_chip_on_orange;
             return pending ? R.drawable.bg_wg_chip_pending : R.drawable.bg_wg_chip;
@@ -277,6 +285,14 @@ final class ClimateWidgetIcons {
 
     private static int seatLevel(Integer level) {
         return level == null ? 0 : Math.max(0, Math.min(3, level));
+    }
+
+    void vehicleControl(boolean powerOff) {
+        if (powerOff) {
+            set(R.id.img_power_off, R.drawable.wg_ic_power_off, true, Shape.POWER_OFF, 0);
+        } else {
+            set(R.id.img_wipers, R.drawable.wg_ic_wipers, true, Shape.WIPERS, 0);
+        }
     }
 
     private void set(int id, int resource, boolean tinted, Shape shape, int level) {
@@ -387,7 +403,7 @@ final class ClimateWidgetIcons {
                 canvas.save();
                 canvas.clipOutRect(SEAT_GAP_LEFT, 73, SEAT_GAP_RIGHT, VIEWPORT);
             }
-            if (!waves) {
+            if (!waves && shape != Shape.WIPERS && shape != Shape.POWER_OFF) {
                 paint.setStyle(Paint.Style.FILL);
                 canvas.drawPath(path, paint);
             }

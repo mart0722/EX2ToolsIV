@@ -64,6 +64,10 @@ public final class VehicleProperties {
         add(CarProps.ENV_OUTSIDE_TEMPERATURE, "vehicle.outside_temp", PropertySpec.Type.FLOAT,
                 new int[]{0}, -60f, 90f);
 
+        add(CarProps.WIPER_SERVICE_POSITION, "vehicle.wiper_service_position", PropertySpec.Type.INT,
+                new int[]{0}, 0f, 2f);
+        add(CarProps.VEHICLE_POWER_OFF_REQUEST, "vehicle.power_off_request", PropertySpec.Type.INT,
+                new int[]{0}, 0f, 2f);
         add(CarProps.SPEED_AUTO_LOCK, "vehicle.speed_auto_lock", PropertySpec.Type.INT,
                 new int[]{0}, 0f, 1f);
         add(CarProps.WINDOW_POSITION, "vehicle.window_position", PropertySpec.Type.INT,
