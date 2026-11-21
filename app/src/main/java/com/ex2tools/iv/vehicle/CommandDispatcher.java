@@ -93,7 +93,7 @@ public final class CommandDispatcher {
         long now = SystemClock.elapsedRealtime();
         String key = command.id + ":" + command.area;
         Long last = lastWrite.get(key);
-        if (last != null && now - last < 120L) {
+        if (last != null && now - last < 40L) {
             return new Result(Status.REJECTED, "rate limit: " + text);
         }
         lastWrite.put(key, now);
@@ -124,10 +124,10 @@ public final class CommandDispatcher {
         }
 
         Object readBack = null;
-        for (int attempt = 0; attempt < 5; attempt++) {
+        for (int attempt = 0; attempt < 3; attempt++) {
             if (attempt > 0) {
                 try {
-                    Thread.sleep(250L);
+                    Thread.sleep(60L);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     break;

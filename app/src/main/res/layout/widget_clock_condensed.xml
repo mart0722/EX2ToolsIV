@@ -25,5 +25,5 @@
         android:padding="8dp"
         android:textColor="@color/wg_text"
         android:textSize="42sp"
-        android:textStyle="bold" />
+/>
 </FrameLayout>

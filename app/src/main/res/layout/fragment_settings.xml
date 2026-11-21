@@ -317,6 +317,48 @@
                     android:text="@string/settings_auto_lock_5m" />
             </com.ex2tools.iv.ui.FlymeSegmentedGroup>
 
+            <com.ex2tools.iv.ui.FlymeSwitchRow
+                android:id="@+id/switchClimate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/climate_title"
+                android:textColor="@color/flyme_label_level1"
+                android:textSize="22sp"
+                android:visibility="gone"
+                app:rowDescription="@string/climate_note" />
+
+            <com.ex2tools.iv.ui.FlymeSwitchRow
+                android:id="@+id/switchComfort"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/comfort_restore_title"
+                android:textColor="@color/flyme_label_level1"
+                android:textSize="22sp"
+                app:rowDescription="@string/comfort_restore_note" />
+
+            <com.ex2tools.iv.ui.FlymeSwitchRow
+                android:id="@+id/switchWindowFollow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/window_follow_title"
+                android:textColor="@color/flyme_label_level1"
+                android:textSize="22sp"
+                android:visibility="gone"
+                app:rowDescription="@string/window_follow_note" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/settingsClimate"
+                style="@style/Widget.EX2.SecondaryButton"
+                android:layout_width="match_parent"
+                android:layout_height="72dp"
+                android:layout_marginTop="12dp"
+                android:text="@string/climate_open"
+                android:textSize="22sp"
+                android:visibility="gone" />
+
             <TextView
                 style="@style/Text.EX2.GroupLabel"
                 android:layout_width="match_parent"

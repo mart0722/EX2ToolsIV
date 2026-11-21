@@ -16,24 +16,25 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-public final class ClockWidgetProvider extends AppWidgetProvider {
+public class ClockWidgetProvider extends AppWidgetProvider {
 
     @Override
     public void onUpdate(Context context, AppWidgetManager manager, int[] ids) {
-        update(context, manager, ids);
+        update(context, manager, ids, false);
     }
 
     public static void refreshAll(Context context) {
         AppWidgetManager manager = AppWidgetManager.getInstance(context);
         int[] ids = manager.getAppWidgetIds(new ComponentName(context, ClockWidgetProvider.class));
-        if (ids != null && ids.length > 0) update(context, manager, ids);
+        if (ids != null && ids.length > 0) update(context, manager, ids, false);
+        ClockDateWidgetProvider.refreshAll(context);
     }
 
-    private static void update(Context context, AppWidgetManager manager, int[] ids) {
+    static void update(Context context, AppWidgetManager manager, int[] ids, boolean forceDate) {
         if (ids == null) return;
         int font = Prefs.clockFont(context);
         int color = color(context);
-        boolean date = Prefs.clockDate(context);
+        boolean date = forceDate || Prefs.clockDate(context);
         int layout;
         if (date) {
             layout = font == 1

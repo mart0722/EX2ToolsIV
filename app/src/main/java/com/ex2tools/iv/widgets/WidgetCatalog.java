@@ -39,6 +39,8 @@ public final class WidgetCatalog {
     private static final Map<String, Entry> ENTRIES = new LinkedHashMap<>();
 
     static {
+        add(WidgetsCommon.SIZE_CLOCK, R.string.widgets_size_clock,
+                R.layout.widget_clock_overlay, 240, 120, 40, 40);
         add(WidgetsCommon.SIZE_SPEED, R.string.widgets_size_speed,
                 R.layout.widget_speed, 240, 240, 40, 160);
         add(WidgetsCommon.SIZE_DRIVE_REGEN, R.string.widgets_size_drive_regen,
@@ -58,11 +60,13 @@ public final class WidgetCatalog {
         add(WidgetsCommon.SIZE_HEATING, R.string.widgets_size_heating,
                 R.layout.widget_heating_test, 420, 260, 480, 520);
         add(WidgetsCommon.SIZE_BATTERY_RANGE, R.string.widgets_size_battery_range,
-                R.layout.widget_battery_range, 260, 90, 40, 700);
+                R.layout.widget_battery_range, 300, 96, 40, 700);
         add(WidgetsCommon.SIZE_LOCK, R.string.widgets_size_lock,
                 R.layout.widget_lock, 160, 160, 360, 700);
         add(WidgetsCommon.SIZE_APPS, R.string.widgets_size_apps,
                 R.layout.widget_apps, 84, 84, 560, 700);
+        add(WidgetsCommon.SIZE_CLIMATE, R.string.climate_overlay,
+                R.layout.widget_climate_control, 300, 160, 800, 40);
     }
 
     private static void add(String key, int labelRes, int layoutRes,

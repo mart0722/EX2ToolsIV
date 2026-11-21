@@ -36,6 +36,12 @@ public final class BodyController {
         if (areas != null) {
             for (int area : areas) {
                 last = submitInt(CarProps.WINDOW_POSITION, area, value);
+                if (last != null && last.ok()) return last;
+            }
+            // На части прошивок WINDOW_POSITION нет, а команда лежит в WINDOW_MOVE.
+            for (int area : areas) {
+                last = submitInt(CarProps.WINDOW_MOVE, area, value);
+                if (last != null && last.ok()) return last;
             }
         }
         return last;

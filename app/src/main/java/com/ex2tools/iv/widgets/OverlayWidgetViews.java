@@ -21,9 +21,13 @@ import com.ex2tools.iv.Prefs;
 import com.ex2tools.iv.R;
 import com.ex2tools.iv.car.CarProps;
 import com.ex2tools.iv.car.Telemetry;
+import com.ex2tools.iv.climate.Thermostat;
 import com.ex2tools.iv.lock.LockActivity;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Normal views for the floating widgets. They intentionally mirror the
@@ -89,6 +93,12 @@ final class OverlayWidgetViews {
                 break;
             case WidgetsCommon.SIZE_APPS:
                 // Built once in create(); the selection only changes on restart.
+                break;
+            case WidgetsCommon.SIZE_CLIMATE:
+                updateClimate(c, root);
+                break;
+            case WidgetsCommon.SIZE_CLOCK:
+                updateClock(c, root);
                 break;
             default:
                 break;
@@ -171,9 +181,6 @@ final class OverlayWidgetViews {
                 click(c, root, R.id.chip_vent_floor_windshield, WidgetsCommon.VENT_FLOOR_WINDSHIELD);
                 click(c, root, R.id.btn_vent_mode, WidgetsCommon.VENT_WIDGET_MODE);
                 click(c, root, R.id.chip_recirc, WidgetsCommon.RECIRC_TOGGLE);
-                click(c, root, R.id.chip_fan_ac, WidgetsCommon.AC_TOGGLE);
-                click(c, root, R.id.tv_fan_value, WidgetsCommon.AC_TOGGLE);
-                clickParent(c, root, R.id.chip_fan_ac, WidgetsCommon.AC_TOGGLE);
                 click(c, root, R.id.btn_fan_minus, WidgetsCommon.FAN_MINUS);
                 click(c, root, R.id.btn_fan_plus, WidgetsCommon.FAN_PLUS);
                 break;
@@ -189,6 +196,11 @@ final class OverlayWidgetViews {
                 View lock = root.findViewById(R.id.lock_body);
                 if (lock == null) lock = root;
                 lock.setOnClickListener(v -> openLock(c));
+                break;
+            case WidgetsCommon.SIZE_CLIMATE:
+                click(c, root, R.id.wg_climate_minus, WidgetsCommon.CLIMATE_TARGET_MINUS);
+                click(c, root, R.id.wg_climate_plus, WidgetsCommon.CLIMATE_TARGET_PLUS);
+                click(c, root, R.id.wg_climate_status, WidgetsCommon.CLIMATE_TOGGLE);
                 break;
             case WidgetsCommon.SIZE_APPS:
                 bindApps(c, root);
@@ -380,7 +392,6 @@ final class OverlayWidgetViews {
         Integer vent = WidgetsCommon.readVent();
         Boolean recirc = WidgetsCommon.readRecirc();
         Integer fan = WidgetsCommon.readFan();
-        Boolean ac = WidgetsCommon.readAc();
         int mode = vent == null ? 1 : vent;
         boolean directions = Prefs.ventDirectionButtons(c);
         ClimateWidgetIcons.forOverlay(c, root)
@@ -402,17 +413,6 @@ final class OverlayWidgetViews {
                 dot.setBackgroundResource(fan != null && i < fan
                         ? R.drawable.bg_wg_dot_on : R.drawable.bg_wg_dot_off);
             }
-        }
-        boolean acOn = Boolean.TRUE.equals(ac);
-        View acChip = root.findViewById(R.id.chip_fan_ac);
-        if (acChip != null) {
-            acChip.setBackgroundResource(acOn
-                    ? R.drawable.bg_wg_chip_on : R.drawable.bg_wg_chip);
-        }
-        View acIcon = root.findViewById(R.id.img_ac);
-        if (acIcon instanceof ImageView) {
-            ((ImageView) acIcon).setColorFilter(c.getColor(acOn
-                    ? R.color.wg_blue : R.color.wg_text));
         }
         View fanValue = root.findViewById(R.id.tv_fan_value);
         if (fanValue instanceof TextView) {
@@ -482,6 +482,73 @@ final class OverlayWidgetViews {
                 seatDriver, c.getString(R.string.wg_heat_seat_driver), icons.usesOutline());
         seat(root, R.id.chip_seat_heat_passenger, R.id.txt_seat_heat_passenger,
                 seatPassenger, c.getString(R.string.wg_heat_seat_passenger), icons.usesOutline());
+    }
+
+    private static void updateClock(Context c, View root) {
+        int color = Prefs.clockColor(c) == 1 ? android.graphics.Color.WHITE
+                : Prefs.clockColor(c) == 2 ? android.graphics.Color.BLACK
+                : c.getColor(R.color.clock_text);
+        String dateText;
+        try {
+            String value = new SimpleDateFormat("EEEE, d MMMM", new java.util.Locale("ru"))
+                    .format(new Date());
+            dateText = value.isEmpty() ? value
+                    : Character.toUpperCase(value.charAt(0)) + value.substring(1);
+        } catch (Throwable t) {
+            dateText = "";
+        }
+        android.graphics.Typeface typeface = android.graphics.Typeface.create(
+                Prefs.clockFont(c) == 1 ? "sans-serif-condensed" : "sans-serif-medium",
+                android.graphics.Typeface.NORMAL);
+        View time = root.findViewById(R.id.clockTime);
+        if (time instanceof TextView) {
+            ((TextView) time).setTextColor(color);
+            ((TextView) time).setTypeface(typeface);
+        }
+        View date = root.findViewById(R.id.clockDate);
+        if (date instanceof TextView) {
+            ((TextView) date).setText(dateText);
+            ((TextView) date).setTextColor(color);
+            ((TextView) date).setTypeface(android.graphics.Typeface.create(
+                    Prefs.clockFont(c) == 1 ? "sans-serif-condensed" : "sans-serif",
+                    android.graphics.Typeface.NORMAL));
+        }
+    }
+
+    private static void updateClimate(Context c, View root) {
+        boolean enabled = Prefs.climateEnabled(c);
+        float temp = Prefs.sensorTemp(c);
+        long at = Prefs.sensorAt(c);
+        boolean fresh = at > 0 && System.currentTimeMillis() - at <= Thermostat.STALE_MS;
+        text(root, R.id.wg_climate_cabin_temp,
+                Float.isNaN(temp) ? "--" : String.format(Locale.US, "%.1f°", temp));
+
+        int humidity = Prefs.sensorHumidity(c);
+        int battery = Prefs.sensorBattery(c);
+        String humidityText = "--";
+        if (humidity >= 0 && battery >= 0) {
+            humidityText = humidity + "% · " + battery + "%";
+        } else if (humidity >= 0) {
+            humidityText = humidity + "%";
+        }
+        text(root, R.id.wg_climate_humidity, humidityText);
+        text(root, R.id.wg_climate_target_value,
+                String.format(Locale.US, "%.0f°", Prefs.climateTarget(c)));
+
+        String status;
+        if (!enabled) {
+            status = c.getString(R.string.wg_climate_off);
+        } else if (!fresh) {
+            status = c.getString(R.string.wg_climate_wait);
+        } else {
+            status = c.getString(R.string.wg_climate_auto);
+        }
+        text(root, R.id.wg_climate_status, status);
+        View statusView = root.findViewById(R.id.wg_climate_status);
+        if (statusView instanceof TextView) {
+            ((TextView) statusView).setTextColor(c.getColor(enabled && fresh
+                    ? R.color.wg_text : R.color.wg_text2));
+        }
     }
 
     private static void text(View root, int id, String value) {

@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ScrollView
+        android:layout_width="@dimen/content_width"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        android:padding="@dimen/screen_padding"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="48dp">
+
+            <TextView
+                android:id="@+id/climateStatus"
+                style="@style/Text.EX2.Section"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_overview_card"
+                android:paddingStart="24dp"
+                android:paddingTop="18dp"
+                android:paddingEnd="24dp"
+                android:paddingBottom="18dp"
+                android:text="@string/climate_off" />
+
+            <com.ex2tools.iv.ui.FlymeSwitchRow
+                android:id="@+id/climateEnabled"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/climate_on"
+                android:textColor="@color/flyme_label_level1"
+                android:textSize="22sp"
+                app:rowDescription="@string/climate_on_note" />
+
+            <TextView
+                style="@style/Text.EX2.GroupLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="40dp"
+                android:text="@string/climate_target_title" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/climateTargetMinus"
+                    style="@style/Widget.EX2.Toggle"
+                    android:layout_width="88dp"
+                    android:layout_height="88dp"
+                    android:minWidth="0dp"
+                    android:text="@string/minus_sign" />
+
+                <TextView
+                    android:id="@+id/climateTargetValue"
+                    style="@style/Text.EX2.Number"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="@string/climate_no_data" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/climateTargetPlus"
+                    style="@style/Widget.EX2.Toggle"
+                    android:layout_width="88dp"
+                    android:layout_height="88dp"
+                    android:minWidth="0dp"
+                    android:text="@string/plus_sign" />
+            </LinearLayout>
+
+            <TextView
+                style="@style/Text.EX2.Caption"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/climate_target_note" />
+
+            <TextView
+                style="@style/Text.EX2.GroupLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="40dp"
+                android:text="@string/climate_sensor_title" />
+
+            <TextView
+                android:id="@+id/climateSensorStatus"
+                style="@style/Text.EX2.Body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/climate_sensor_not_set" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/climateFindSensor"
+                    style="@style/Widget.EX2.SecondaryButton"
+                    android:layout_width="0dp"
+                    android:layout_height="72dp"
+                    android:layout_marginEnd="12dp"
+                    android:layout_weight="1"
+                    android:text="@string/climate_find_sensor"
+                    android:textSize="20sp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/climateKey"
+                    style="@style/Widget.EX2.SecondaryButton"
+                    android:layout_width="0dp"
+                    android:layout_height="72dp"
+                    android:layout_weight="1"
+                    android:text="@string/climate_key"
+                    android:textSize="20sp" />
+            </LinearLayout>
+
+            <TextView
+                style="@style/Text.EX2.GroupLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="40dp"
+                android:text="@string/climate_log_title" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/climateLogExport"
+                    style="@style/Widget.EX2.SecondaryButton"
+                    android:layout_width="0dp"
+                    android:layout_height="72dp"
+                    android:layout_marginEnd="12dp"
+                    android:layout_weight="1"
+                    android:text="@string/climate_log_export"
+                    android:textSize="20sp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/climateLogClear"
+                    style="@style/Widget.EX2.SecondaryButton"
+                    android:layout_width="0dp"
+                    android:layout_height="72dp"
+                    android:layout_weight="1"
+                    android:text="@string/climate_log_clear"
+                    android:textSize="20sp" />
+            </LinearLayout>
+
+            <TextView
+                style="@style/Text.EX2.GroupLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="40dp"
+                android:text="@string/climate_widget_title" />
+
+            <com.ex2tools.iv.ui.FlymeSwitchRow
+                android:id="@+id/climateOverlay"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/climate_overlay"
+                android:textColor="@color/flyme_label_level1"
+                android:textSize="22sp"
+                app:rowDescription="@string/climate_overlay_note" />
+        </LinearLayout>
+    </ScrollView>
+</FrameLayout>

@@ -33,6 +33,14 @@ public final class CarProps {
     public static final int HVAC_REAR_DEFROSTER_ON = 354419988;
     public static final int HVAC_FRONT_MAX_DEFROST_ON = 354419975;
     public static final int HVAC_WINDSHIELD_HEAT = 270535680;
+    public static final int DOOR_POS = 373295872;        // 0x16400B00
+    public static final int DOOR_MOVE = 373295873;       // 0x16400B01
+    public static final int WINDOW_MOVE = 322964417;     // 0x13400BC1
+    public static final int AC_INSIDE_TEMP = 557884281;   // 0x2140A379
+    public static final int AC_POWER = 557884965;        // 0x2140A625
+    public static final int HVAC_AC_ON_AOSP = 354419973;  // 0x15200505
+    public static final int HVAC_RECIRC_ON_AOSP = 354419976; // 0x15200508
+    public static final int HVAC_AUTO_ON = 354419978;     // 0x1520050A
     public static final int STEERING_WHEEL_HEAT = 289408269;
     public static final int SEAT_HEAT = 356517131;
     public static final int ODOMETER_VENDOR = 289407492;

@@ -28,6 +28,9 @@ import com.ex2tools.iv.state.VehicleState;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * РџР»Р°РІР°СЋС‰РёРµ РІРёРґР¶РµС‚С‹ РїРѕРІРµСЂС… СЂР°Р±РѕС‡РµРіРѕ СЃС‚РѕР»Р°. Р—РЅР°С‡РµРЅРёСЏ С‡РёС‚Р°СЋС‚СЃСЏ РёР·
@@ -35,16 +38,19 @@ import java.util.List;
  */
 public final class OverlayWidgetService extends Service {
 
-    private static final long POLL_MS = 1000L;
+    private static final long POLL_MS = 400L;
     private static final String ACTION_RESTART = "com.ex2tools.iv.overlay.RESTART";
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final List<OverlaySpec> specs = new ArrayList<>();
     public static volatile boolean running;
+    private static volatile OverlayWidgetService instance;
     private WindowManager windowManager;
     private volatile boolean destroyed;
     private int lastThemeSignature = Integer.MIN_VALUE;
     private volatile boolean stateDirty = true;
+    private long lastRangeSample;
+    private long lastClockMinute = -1L;
 
     private final VehicleState.Listener stateListener = this::onVehicleStateChanged;
 
@@ -53,13 +59,22 @@ public final class OverlayWidgetService extends Service {
         stateDirty = true;
         if (!Prefs.fastWidgetResponse(this)) return;
         for (OverlaySpec spec : specs) {
-            if (spec.view != null && (WidgetsCommon.SIZE_TEMP.equals(spec.key)
-                    || WidgetsCommon.SIZE_FAN.equals(spec.key)
-                    || WidgetsCommon.SIZE_VENT_FAN.equals(spec.key))) {
+            if (spec.view == null) continue;
+            String key = spec.key;
+            if (WidgetsCommon.SIZE_TEMP.equals(key)
+                    || WidgetsCommon.SIZE_FAN.equals(key)
+                    || WidgetsCommon.SIZE_VENT.equals(key)
+                    || WidgetsCommon.SIZE_VENT_FAN.equals(key)
+                    || WidgetsCommon.SIZE_HEATING.equals(key)) {
                 update(spec);
             }
         }
     }
+    private final ExecutorService speedIo = Executors.newSingleThreadExecutor();
+    private final AtomicBoolean speedBusy = new AtomicBoolean();
+    private volatile float speedTrip;
+    private volatile long speedTripAt;
+
 
     private final Runnable poll = new Runnable() {
         @Override
@@ -70,6 +85,14 @@ public final class OverlayWidgetService extends Service {
                 stopSelf();
                 return;
             }
+            long now = System.currentTimeMillis();
+            if (now - lastRangeSample > 10_000L) {
+                lastRangeSample = now;
+                com.ex2tools.iv.car.RangeModel.sample(OverlayWidgetService.this);
+            }
+            long clockMinute = now / 60_000L;
+            boolean clockTick = clockMinute != lastClockMinute;
+            lastClockMinute = clockMinute;
             int themeSignature = themeSignature();
             if (lastThemeSignature != Integer.MIN_VALUE
                     && lastThemeSignature != themeSignature) {
@@ -87,9 +110,12 @@ public final class OverlayWidgetService extends Service {
             stateDirty = false;
             for (OverlaySpec spec : specs) {
                 boolean enabled = Prefs.overlayEnabled(OverlayWidgetService.this, spec.key);
-                anyEnabled |= enabled;
+                boolean active = enabled
+                        && !(WidgetsCommon.SIZE_CLIMATE.equals(spec.key)
+                        && !Prefs.climateEnabled(OverlayWidgetService.this));
+                anyEnabled |= active;
                 boolean pinned = Prefs.overlayPinned(OverlayWidgetService.this, spec.key);
-                boolean show = enabled && !state.appList && (pinned || state.launcher);
+                boolean show = active && !state.appList && (pinned || state.launcher);
                 if (show && WidgetsCommon.SIZE_APPS.equals(spec.key)
                         && !AppsOverlay.hasVisible(OverlayWidgetService.this)) {
                     show = false;
@@ -97,7 +123,10 @@ public final class OverlayWidgetService extends Service {
                 if (show) {
                     boolean created = ensure(spec);
                     // Retry climate reads even if the ECU emitted no event during boot.
-                    if (render || created || WidgetsCommon.SIZE_TEMP.equals(spec.key)) update(spec);
+                    if (render || created || WidgetsCommon.SIZE_TEMP.equals(spec.key)
+                            || (clockTick && WidgetsCommon.SIZE_CLOCK.equals(spec.key))) {
+                        update(spec);
+                    }
                 } else {
                     remove(spec);
                 }
@@ -108,6 +137,41 @@ public final class OverlayWidgetService extends Service {
                 return;
             }
             handler.postDelayed(this, POLL_MS);
+        }
+    };
+
+    private final Runnable speedTick = new Runnable() {
+        @Override
+        public void run() {
+            if (destroyed) return;
+            OverlaySpec speed = null;
+            for (OverlaySpec spec : specs) {
+                if (WidgetsCommon.SIZE_SPEED.equals(spec.key)) {
+                    speed = spec;
+                    break;
+                }
+            }
+            final OverlaySpec target = speed;
+            if (target != null && target.view != null && target.speedView != null
+                    && !speedBusy.get()) {
+                speedBusy.set(true);
+                speedIo.execute(() -> {
+                    float kmh = WidgetsCommon.readSpeed(OverlayWidgetService.this);
+                    long now = System.currentTimeMillis();
+                    if (now - speedTripAt > 2000L) {
+                        speedTrip = WidgetsCommon.readTripKm(OverlayWidgetService.this);
+                        speedTripAt = now;
+                    }
+                    final float trip = speedTrip;
+                    handler.post(() -> {
+                        speedBusy.set(false);
+                        if (target.view != null && target.speedView != null) {
+                            target.speedView.update(OverlayWidgetService.this, kmh, trip);
+                        }
+                    });
+                });
+            }
+            handler.postDelayed(this, 120L);
         }
     };
 
@@ -158,7 +222,9 @@ public final class OverlayWidgetService extends Service {
 
     public static boolean hasEnabled(Context c) {
         for (String key : OverlaySpec.keys()) {
-            if (Prefs.overlayEnabled(c, key)) return true;
+            if (!Prefs.overlayEnabled(c, key)) continue;
+            if (WidgetsCommon.SIZE_CLIMATE.equals(key) && !Prefs.climateEnabled(c)) continue;
+            return true;
         }
         return false;
     }
@@ -176,6 +242,7 @@ public final class OverlayWidgetService extends Service {
         WidgetsCommon.subscribeAll(this);
         VehicleState.get().addListener(stateListener);
         handler.post(poll);
+        handler.post(speedTick);
     }
 
     @Override
@@ -212,6 +279,7 @@ public final class OverlayWidgetService extends Service {
         for (OverlaySpec spec : specs) {
             remove(spec);
         }
+        speedIo.shutdownNow();
         stopForeground(true);
         super.onDestroy();
     }
@@ -362,9 +430,20 @@ public final class OverlayWidgetService extends Service {
 
     private void bindDrag(OverlaySpec spec, FrameLayout container, View content,
                           WindowManager.LayoutParams lp) {
-        if (Prefs.overlayLock(this)) return;
+        final boolean locked = Prefs.overlayLock(this);
+        final boolean lockWidget = WidgetsCommon.SIZE_LOCK.equals(spec.key);
         View drag = content.findViewById(R.id.widget_bg_layer);
-        if (drag == null || drag.getVisibility() != View.VISIBLE) drag = content;
+        if (lockWidget) {
+            // Тело виджета блокировки перекрывает фон и перехватывает касания.
+            View body = content.findViewById(R.id.lock_body);
+            if (body != null) {
+                body.setOnClickListener(null);
+                body.setClickable(false);
+            }
+            drag = content;
+        } else if (drag == null || drag.getVisibility() != View.VISIBLE) {
+            drag = content;
+        }
         View.OnTouchListener listener = new View.OnTouchListener() {
             private float downX;
             private float downY;
@@ -383,6 +462,7 @@ public final class OverlayWidgetService extends Service {
                         moved = false;
                         return true;
                     case MotionEvent.ACTION_MOVE:
+                        if (locked) return true;
                         float dx = event.getRawX() - downX;
                         float dy = event.getRawY() - downY;
                         if (Math.abs(dx) > dp(5) || Math.abs(dy) > dp(5)) moved = true;
@@ -399,21 +479,24 @@ public final class OverlayWidgetService extends Service {
                     case MotionEvent.ACTION_UP:
                     case MotionEvent.ACTION_CANCEL:
                         spec.dragging = false;
-                        if (moved && Prefs.overlayDocked(OverlayWidgetService.this)) {
+                        if (moved && !locked && Prefs.overlayDocked(OverlayWidgetService.this)) {
                             int width = getResources().getDisplayMetrics().widthPixels;
                             int height = getResources().getDisplayMetrics().heightPixels;
                             int corner = (lp.x + lp.width / 2 >= width / 2 ? 1 : 0)
                                     | (lp.y + lp.height / 2 >= height / 2 ? 2 : 0);
                             Prefs.setOverlayCorner(OverlayWidgetService.this, spec.key, corner);
                             layoutDockedWidgets();
-                        } else if (moved) {
+                        } else if (moved && !locked) {
                             Prefs.setOverlayPos(OverlayWidgetService.this, spec.key, lp.x, lp.y);
-                        } else if (WidgetsCommon.SIZE_SPEED.equals(spec.key)
-                                && event.getActionMasked() == MotionEvent.ACTION_UP
-                                && v.getHeight() > 0
-                                && event.getY() >= v.getHeight() * 0.72f) {
-                            // Тап по нижней части спидометра (там пробег) — сброс с подтверждением.
-                            com.ex2tools.iv.status.TripResetService.start(OverlayWidgetService.this);
+                        } else if (!moved && event.getActionMasked() == MotionEvent.ACTION_UP) {
+                            if (lockWidget) {
+                                openLockScreen();
+                            } else if (WidgetsCommon.SIZE_SPEED.equals(spec.key)
+                                    && v.getHeight() > 0
+                                    && event.getY() >= v.getHeight() * 0.72f) {
+                                // Тап по нижней части спидометра (там пробег) — сброс с подтверждением.
+                                com.ex2tools.iv.status.TripResetService.start(OverlayWidgetService.this);
+                            }
                         }
                         return true;
                     default:
@@ -427,6 +510,26 @@ public final class OverlayWidgetService extends Service {
         if (WidgetsCommon.SIZE_APPS.equals(spec.key)) {
             View iconArea = content.findViewById(R.id.apps_container);
             if (iconArea != null && iconArea != drag) iconArea.setOnTouchListener(listener);
+        }
+    }
+
+    /** Попросить оверлеи перерисоваться сразу после действия виджета. */
+    public static void requestUpdate(Context c) {
+        OverlayWidgetService service = instance;
+        if (service == null) return;
+        service.stateDirty = true;
+        service.handler.removeCallbacks(service.poll);
+        service.handler.post(service.poll);
+    }
+
+    private void openLockScreen() {
+        try {
+            startActivity(new android.content.Intent(this,
+                    com.ex2tools.iv.lock.LockActivity.class)
+                    .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+                            | android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP));
+        } catch (Throwable t) {
+            LogStore.add(this, "lock widget open failed: " + t);
         }
     }
 

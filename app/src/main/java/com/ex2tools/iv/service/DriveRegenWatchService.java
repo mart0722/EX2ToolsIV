@@ -43,12 +43,17 @@ public final class DriveRegenWatchService extends Service {
 
     private volatile boolean forceApply;
     private volatile boolean stopRequested;
+    private volatile long wakeGraceUntil;
+    private int stableDrive = Integer.MIN_VALUE;
+    private int stableRegen = Integer.MIN_VALUE;
+    private int stableCount;
     private Thread worker;
 
     private final BroadcastReceiver wakeReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             forceApply = true;
+            wakeGraceUntil = System.currentTimeMillis() + 180_000L;
         }
     };
 
@@ -96,6 +101,7 @@ public final class DriveRegenWatchService extends Service {
             return START_NOT_STICKY;
         }
         forceApply = true;
+        wakeGraceUntil = System.currentTimeMillis() + 120_000L;
         if (!running) {
             running = true;
             worker = new Thread(this::runWatch, "ex2-drive-watch");
@@ -123,6 +129,7 @@ public final class DriveRegenWatchService extends Service {
             long lastWriteAt = 0L;
             int lastGear = Telemetry.gear(this);
             long windowStart = System.currentTimeMillis();
+            long lastRangeSample = 0L;
             int applies = 0;
 
             // Первичное применение после загрузки/синхронизации.
@@ -142,6 +149,10 @@ public final class DriveRegenWatchService extends Service {
                 Thread.sleep(1000L);
 
                 long now = System.currentTimeMillis();
+                if (now - lastRangeSample > 10_000L) {
+                    lastRangeSample = now;
+                    com.ex2tools.iv.car.RangeModel.sample(this);
+                }
                 if (now - windowStart > WINDOW_MS) {
                     windowStart = now;
                     applies = 0;
@@ -168,7 +179,7 @@ public final class DriveRegenWatchService extends Service {
 
                 // Ручное переключение в штатном меню принимаем как новое желаемое,
                 // но только вне окна применения, чтобы не спорить с ECU.
-                if (now - lastWriteAt > QUIET_BEFORE_ADOPT_MS) {
+                if (now > wakeGraceUntil && now - lastWriteAt > QUIET_BEFORE_ADOPT_MS) {
                     adoptManualChange(controller);
                 }
             }
@@ -185,6 +196,17 @@ public final class DriveRegenWatchService extends Service {
     private void adoptManualChange(DriveController controller) {
         Integer drive = controller.currentDrive();
         Integer regen = controller.currentRegen();
+        // Принимаем ручную правку только если значение стабильно несколько чтений:
+        // сразу после wake ECU может отдавать дефолт comfort/medium.
+        if (drive == null || regen == null) return;
+        if (drive == stableDrive && regen == stableRegen) {
+            stableCount++;
+        } else {
+            stableDrive = drive;
+            stableRegen = regen;
+            stableCount = 1;
+        }
+        if (stableCount < 5) return;
         boolean changed = false;
         if (drive != null && drive != Prefs.drive(this)) {
             Prefs.setDrive(this, drive);

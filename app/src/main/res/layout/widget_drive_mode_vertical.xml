@@ -46,7 +46,7 @@
                 android:text="Комфорт"
                 android:textColor="@color/wg_text"
                 android:textSize="17sp"
-                android:textStyle="bold" />
+                android:fontFamily="sans-serif-medium" />
 
             <TextView
                 android:id="@+id/tv_drive_mode_footer"

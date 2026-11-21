@@ -56,6 +56,10 @@ public final class SettingsFragment extends Fragment {
     private FlymeSwitchRow switchRvcBlack;
     private FlymeSwitchRow switchTtl65;
     private FlymeSwitchRow switchAutoLock;
+    private FlymeSwitchRow switchClimate;
+    private FlymeSwitchRow switchComfort;
+    private FlymeSwitchRow switchWindowFollow;
+    private View settingsClimate;
     private FlymeSegmentedGroup autoLockTimeGroup;
     private Dialog rvcProgress;
     private Dialog ttlProgress;
@@ -67,6 +71,9 @@ public final class SettingsFragment extends Fragment {
     private final SharedPreferences.OnSharedPreferenceChangeListener prefListener =
             (sharedPreferences, key) -> {
                 if (!isAdded()) return;
+                if (key != null && key.startsWith("sensor_")) return;
+                if ("climate_target".equals(key) || "climate_trim".equals(key)
+                        || "climate_action_at".equals(key)) return;
                 updateFromPrefs();
             };
 
@@ -90,6 +97,10 @@ public final class SettingsFragment extends Fragment {
         switchRvcBlack = view.findViewById(R.id.switchRvcBlack);
         switchTtl65 = view.findViewById(R.id.switchTtl65);
         switchAutoLock = view.findViewById(R.id.switchAutoLock);
+        switchClimate = view.findViewById(R.id.switchClimate);
+        switchComfort = view.findViewById(R.id.switchComfort);
+        switchWindowFollow = view.findViewById(R.id.switchWindowFollow);
+        settingsClimate = view.findViewById(R.id.settingsClimate);
         autoLockTimeGroup = view.findViewById(R.id.autoLockTimeGroup);
         applyResult = view.findViewById(R.id.applyResult);
 
@@ -223,6 +234,56 @@ public final class SettingsFragment extends Fragment {
             Prefs.setAutoLockTimeoutSec(requireContext(), sec);
         });
 
+        switchWindowFollow.setChecked(Prefs.windowFollowDoor(c));
+        switchWindowFollow.setOnCheckedChangeListener((b, checked) -> {
+            if (binding) return;
+            Prefs.setWindowFollowDoor(c, checked);
+            if (checked) {
+                com.ex2tools.iv.service.WindowFollowService.startIfEnabled(c);
+            } else {
+                c.stopService(new android.content.Intent(c,
+                        com.ex2tools.iv.service.WindowFollowService.class));
+            }
+        });
+
+        switchComfort.setChecked(Prefs.comfortRestore(c));
+        switchComfort.setOnCheckedChangeListener((b, checked) -> {
+            if (binding) return;
+            Prefs.setComfortRestore(c, checked);
+        });
+
+        switchClimate.setChecked(Prefs.climateEnabled(c));
+        switchClimate.setOnCheckedChangeListener((b, checked) -> {
+            if (binding) return;
+            Prefs.setClimateEnabled(c, checked);
+            if (checked) {
+                com.ex2tools.iv.climate.Thermostat.applyTargetNow(c);
+            } else {
+                com.ex2tools.iv.climate.Thermostat.restore(c);
+            }
+            com.ex2tools.iv.service.CabinClimateService.sync(c);
+            if (checked) {
+                if (!com.ex2tools.iv.sensor.CabinSensor.hasLocationPermission(c)) {
+                    requestPermissions(
+                            new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, 42);
+                } else {
+                    com.ex2tools.iv.sensor.CabinSensor.get(c).start();
+                }
+            } else {
+                com.ex2tools.iv.sensor.CabinSensor.get(c).stop();
+            }
+            updateClimateRow();
+            if (requireActivity() instanceof MainActivity) {
+                ((MainActivity) requireActivity()).refreshClimateNav();
+            }
+        });
+        settingsClimate.setOnClickListener(v -> {
+            if (requireActivity() instanceof MainActivity) {
+                ((MainActivity) requireActivity()).openClimate();
+            }
+        });
+        updateClimateRow();
+
         view.findViewById(R.id.settingsCustomCommands).setOnClickListener(v ->
                 CustomCommandsDialog.show(c));
 
@@ -274,6 +335,22 @@ public final class SettingsFragment extends Fragment {
         super.onDestroyView();
     }
 
+    private void updateClimateRow() {
+        if (settingsClimate == null || switchClimate == null || !isAdded()) return;
+        settingsClimate.setVisibility(Prefs.climateEnabled(requireContext())
+                ? View.VISIBLE : View.GONE);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                                           int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 42 && grantResults.length > 0
+                && grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            com.ex2tools.iv.sensor.CabinSensor.get(requireContext()).start();
+        }
+    }
+
     private void updateFromPrefs() {
         if (!isAdded()) return;
         Context c = requireContext();
@@ -307,6 +384,22 @@ public final class SettingsFragment extends Fragment {
                 autoLockTimeGroup.check(autoLockButton(Prefs.autoLockTimeoutSec(c)));
             }
             binding = false;
+        }
+        if (switchWindowFollow != null) {
+            binding = true;
+            switchWindowFollow.setChecked(Prefs.windowFollowDoor(c));
+            binding = false;
+        }
+        if (switchComfort != null) {
+            binding = true;
+            switchComfort.setChecked(Prefs.comfortRestore(c));
+            binding = false;
+        }
+        if (switchClimate != null) {
+            binding = true;
+            switchClimate.setChecked(Prefs.climateEnabled(c));
+            binding = false;
+            updateClimateRow();
         }
         String result = Prefs.lastResult(c);
         String applied = Prefs.lastApplied(c);

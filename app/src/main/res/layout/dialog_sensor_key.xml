@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_overview_card"
+    android:orientation="vertical"
+    android:padding="28dp">
+
+    <TextView
+        style="@style/Text.EX2.Section"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/climate_key_title" />
+
+    <TextView
+        style="@style/Text.EX2.Caption"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="@string/climate_note" />
+
+    <EditText
+        android:id="@+id/keyMac"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:hint="@string/climate_mac_hint"
+        android:importantForAutofill="no"
+        android:inputType="textVisiblePassword"
+        android:maxLines="1"
+        android:textColor="@color/flyme_label_level1"
+        android:textColorHint="@color/flyme_label_level3"
+        android:textSize="20sp" />
+
+    <EditText
+        android:id="@+id/keyValue"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:hint="@string/climate_key_hint"
+        android:importantForAutofill="no"
+        android:inputType="textVisiblePassword"
+        android:maxLines="1"
+        android:textColor="@color/flyme_label_level1"
+        android:textColorHint="@color/flyme_label_level3"
+        android:textSize="20sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/keySave"
+            style="@style/Widget.EX2.SecondaryButton"
+            android:layout_width="0dp"
+            android:layout_height="64dp"
+            android:layout_marginEnd="12dp"
+            android:layout_weight="1"
+            android:text="@string/climate_save"
+            android:textSize="18sp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/keyCancel"
+            style="@style/Widget.EX2.SecondaryButton"
+            android:layout_width="0dp"
+            android:layout_height="64dp"
+            android:layout_weight="1"
+            android:text="@string/cancel"
+            android:textSize="18sp" />
+    </LinearLayout>
+</LinearLayout>

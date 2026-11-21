@@ -46,7 +46,7 @@
                 android:text="Лицо"
                 android:textColor="@color/wg_text"
                 android:textSize="15sp"
-                android:textStyle="bold" />
+                android:fontFamily="sans-serif-medium" />
 
             <TextView
                 android:id="@+id/tv_vent_mode_footer"

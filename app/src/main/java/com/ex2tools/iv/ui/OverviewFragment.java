@@ -115,7 +115,9 @@ public final class OverviewFragment extends Fragment {
                 d.soc = Telemetry.soc(c);
                 d.socRaw = Telemetry.socRaw(c);
                 d.temp = Telemetry.outsideTemp(c);
-                d.target = Telemetry.hvacTarget(c);
+                d.target = com.ex2tools.iv.Prefs.climateEnabled(c)
+                        ? com.ex2tools.iv.Prefs.climateTarget(c)
+                        : Telemetry.hvacTarget(c);
                 d.range = Telemetry.rangeKm(c);
                 d.consumption = Telemetry.avgConsumption(c);
                 d.volt = Telemetry.aux12v(c);

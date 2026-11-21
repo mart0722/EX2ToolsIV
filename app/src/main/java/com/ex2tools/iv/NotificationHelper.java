@@ -26,6 +26,9 @@ public final class NotificationHelper {
     public static final int ID_VOICE = 2112;
     public static final int ID_OVERLAY = 2113;
     public static final int ID_AUTOLOCK = 2114;
+    public static final int ID_CLIMATE = 2115;
+    public static final int ID_COMFORT = 2116;
+    public static final int ID_WINDOW = 2117;
 
     private NotificationHelper() {
     }
@@ -167,6 +170,30 @@ public final class NotificationHelper {
                 .setOngoing(true)
                 .build();
     }
+    public static Notification windowFollow(Context c) {
+        return base(c, App.CH_SERVICE, R.drawable.ic_tile_temp,
+                c.getString(R.string.window_follow_title),
+                c.getString(R.string.window_follow_notification))
+                .setOngoing(true)
+                .build();
+    }
+
+    public static Notification comfort(Context c) {
+        return base(c, App.CH_SERVICE, R.drawable.ic_tile_temp,
+                c.getString(R.string.comfort_notification_title),
+                c.getString(R.string.comfort_notification_text))
+                .setOngoing(true)
+                .build();
+    }
+
+    public static Notification climate(Context c, String text) {
+        return base(c, App.CH_CLIMATE, R.drawable.ic_tile_climate,
+                c.getString(R.string.climate_notification_title), text)
+                .setOngoing(true)
+                .setContentIntent(openApp(c))
+                .build();
+    }
+
     public static Notification bottom(Context c) {
         return base(c, App.CH_BOTTOM, R.drawable.ic_battery,
                 c.getString(R.string.bottom_notification_title),

@@ -197,11 +197,6 @@ public final class WidgetsRenderer {
             v.setInt(FAN_DOTS[i], "setBackgroundResource",
                     fan != null && i < fan ? R.drawable.bg_wg_dot_on : R.drawable.bg_wg_dot_off);
         }
-        boolean acOn = Boolean.TRUE.equals(ac);
-        v.setInt(R.id.chip_fan_ac, "setBackgroundResource",
-                acOn ? R.drawable.bg_wg_chip_on : R.drawable.bg_wg_chip);
-        v.setInt(R.id.img_ac, "setColorFilter",
-                c.getColor(acOn ? R.color.wg_blue : R.color.wg_text));
         v.setTextColor(R.id.tv_fan_value, c.getColor(R.color.wg_text));
         click(v, c, R.id.chip_vent_face, WidgetsCommon.VENT_FACE);
         click(v, c, R.id.chip_vent_floor, WidgetsCommon.VENT_FLOOR);
@@ -210,8 +205,6 @@ public final class WidgetsRenderer {
         click(v, c, R.id.chip_vent_floor_windshield, WidgetsCommon.VENT_FLOOR_WINDSHIELD);
         click(v, c, R.id.btn_vent_mode, WidgetsCommon.VENT_WIDGET_MODE);
         click(v, c, R.id.chip_recirc, WidgetsCommon.RECIRC_TOGGLE);
-        click(v, c, R.id.chip_fan_ac, WidgetsCommon.AC_TOGGLE);
-        click(v, c, R.id.tv_fan_value, WidgetsCommon.AC_TOGGLE);
         click(v, c, R.id.btn_fan_minus, WidgetsCommon.FAN_MINUS);
         click(v, c, R.id.btn_fan_plus, WidgetsCommon.FAN_PLUS);
         return v;
@@ -255,8 +248,8 @@ public final class WidgetsRenderer {
 
         int percent = soc == null ? 0 : Math.max(0, Math.min(100, soc));
         v.setTextColor(R.id.tv_battery_range_percent, primary);
-        v.setTextColor(R.id.tv_battery_range_energy, primary);
-        v.setTextColor(R.id.tv_battery_range_km, secondary);
+        v.setTextColor(R.id.tv_battery_range_energy, secondary);
+        v.setTextColor(R.id.tv_battery_range_km, primary);
 
         v.setTextViewText(R.id.tv_battery_range_percent,
                 soc == null ? "-" : c.getString(R.string.widget_battery_range_percent, percent));
