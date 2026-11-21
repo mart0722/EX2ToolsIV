@@ -70,13 +70,16 @@ final class ClimateWidgetIcons {
     private final int blue;
     private final int coral;
     private final int inactiveHeat;
-    private Boolean warmAirflow;
+    private final boolean accentBoost;
+    private Float airflowDelta;
+    private Integer airflowAccentBackground;
 
     private ClimateWidgetIcons(Context c, Target target) {
         context = c;
         this.target = target;
         resources = c.getResources();
         style = Prefs.climateIconStyle(c);
+        accentBoost = usesOutline() && Prefs.widgetAccentBoost(c);
         night = (resources.getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK)
                 == Configuration.UI_MODE_NIGHT_YES;
         ink = c.getColor(R.color.wg_text);
@@ -87,9 +90,39 @@ final class ClimateWidgetIcons {
         inactiveHeat = c.getColor(R.color.wg_climate_inactive);
     }
 
+    private float airflowDelta() {
+        if (airflowDelta == null) airflowDelta = WidgetsCommon.airflowSetpointDelta(context);
+        return airflowDelta;
+    }
+
     private boolean showsWarmAirflow() {
-        if (warmAirflow == null) warmAirflow = WidgetsCommon.isWarmAirflow(context);
-        return warmAirflow;
+        return airflowDelta() > 0f;
+    }
+
+    private int boostedAirflowBackground() {
+        if (airflowAccentBackground == null) {
+            Integer fan = WidgetsCommon.readFan();
+            float fanFraction = fan == null ? 0f : Math.max(0, Math.min(7, fan)) / 7f;
+            float temperatureFraction = Math.min(1f, Math.abs(airflowDelta()) / 8f);
+            float strength = .60f * fanFraction + .65f * temperatureFraction;
+            boolean warm = showsWarmAirflow();
+            if (strength >= .74f) {
+                airflowAccentBackground = warm ? R.drawable.bg_wg_glass_accent_warm_air_high
+                        : R.drawable.bg_wg_glass_accent_air_high;
+            } else if (strength >= .34f) {
+                airflowAccentBackground = warm ? R.drawable.bg_wg_glass_accent_warm_air_medium
+                        : R.drawable.bg_wg_glass_accent_air_medium;
+            } else {
+                airflowAccentBackground = warm ? R.drawable.bg_wg_glass_accent_warm_air
+                        : R.drawable.bg_wg_glass_accent_air;
+            }
+        }
+        return airflowAccentBackground;
+    }
+
+    int ventModeBackground(boolean transparent, boolean active) {
+        return accentBoost && !transparent && active
+                ? boostedAirflowBackground() : android.R.color.transparent;
     }
 
     static ClimateWidgetIcons forRemote(Context c, RemoteViews views) {
@@ -169,7 +202,9 @@ final class ClimateWidgetIcons {
         if (pending && !active) return R.drawable.bg_wg_climate_pending;
         if (transparent) return android.R.color.transparent;
         if (!active) return R.drawable.bg_wg_climate_glass;
-        if (!airflow) return R.drawable.bg_wg_climate_heat;
+        if (!airflow) return accentBoost
+                ? R.drawable.bg_wg_glass_accent_heat : R.drawable.bg_wg_climate_heat;
+        if (accentBoost) return boostedAirflowBackground();
         return showsWarmAirflow() ? R.drawable.bg_wg_climate_warm_air : R.drawable.bg_wg_climate_air;
     }
 

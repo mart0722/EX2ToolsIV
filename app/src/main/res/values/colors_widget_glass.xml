@@ -19,4 +19,9 @@
     <color name="wg_glass_red_fill">#60F698A1</color>
     <color name="wg_glass_green_ink">#006049</color>
     <color name="wg_glass_red_ink">#9E2534</color>
+    <color name="wg_glass_accent_air">#A577BFFF</color>
+    <color name="wg_glass_accent_warm_air">#AFFF9D89</color>
+    <color name="wg_glass_accent_heat">#A5FFBD72</color>
+    <color name="wg_glass_accent_green">#9135BF87</color>
+    <color name="wg_glass_accent_red">#A0F68A97</color>
 </resources>

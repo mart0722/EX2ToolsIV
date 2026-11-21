@@ -782,6 +782,7 @@
     <string name="settings_fast_widget_response">Быстрый отклик виджетов</string>
     <string name="settings_fast_widget_response_note">Ускоряет кнопки температуры и вентилятора. Показания обновляются по данным автомобиля.</string>
     <string name="widgets_overlay_adapt_climate_size">Подогнать размеры климата</string>
+    <string name="widgets_accent_boost">Усиленный акцент</string>
     <string name="widgets_climate_icons_title">Стиль виджетов</string>
     <string name="widgets_climate_icons_standard">Стандарт</string>
     <string name="widgets_climate_icons_thin">Тонкие</string>

@@ -150,6 +150,16 @@
                             android:textSize="14sp"
                             android:text="@string/widgets_climate_icons_chrome" />
                     </com.ex2tools.iv.ui.FlymeSegmentedGroup>
+
+                    <com.ex2tools.iv.ui.FlymeSwitchRow
+                        android:id="@+id/widgetAccentBoost"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="@string/widgets_accent_boost"
+                        android:textColor="@color/flyme_label_level1"
+                        android:textSize="20sp"
+                        android:visibility="gone" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

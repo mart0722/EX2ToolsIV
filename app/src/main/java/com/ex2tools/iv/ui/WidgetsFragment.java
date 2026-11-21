@@ -99,6 +99,7 @@ public final class WidgetsFragment extends Fragment {
     private FlymeSwitchRow overlayDocked;
     private FlymeSwitchRow overlayAdaptClimateSize;
     private FlymeSegmentedGroup climateIconStyle;
+    private FlymeSwitchRow widgetAccentBoost;
     private final Map<String, FlymeSwitchRow> overlayToggles = new LinkedHashMap<>();
     private final Map<String, SeekBar> overlaySizeSeeks = new LinkedHashMap<>();
     private final Map<String, SeekBar> overlayAlphaSeeks = new LinkedHashMap<>();
@@ -151,6 +152,7 @@ public final class WidgetsFragment extends Fragment {
         overlayDocked = view.findViewById(R.id.widgetOverlayDocked);
         overlayAdaptClimateSize = view.findViewById(R.id.widgetOverlayAdaptClimateSize);
         climateIconStyle = view.findViewById(R.id.widgetClimateIconStyle);
+        widgetAccentBoost = view.findViewById(R.id.widgetAccentBoost);
 
         buildOverlayRows(c);
         setupModeControls(c);
@@ -166,6 +168,7 @@ public final class WidgetsFragment extends Fragment {
             else if (checkedId == R.id.widgetClimateIconChromeThin) style = Prefs.ClimateIconStyle.CHROME_THIN;
             else style = Prefs.ClimateIconStyle.CHROME;
             Prefs.setClimateIconStyle(context, style);
+            updateAccentControl(context);
             if (opacityPreview != null) {
                 opacityPreview.setBackgroundResource(WidgetsCommon.bgDrawableResForPct(context));
             }
@@ -174,8 +177,20 @@ public final class WidgetsFragment extends Fragment {
             VehicleState.get().requestDisplayRefresh();
             WidgetUpdateService.sync(context);
         });
+        widgetAccentBoost.setOnCheckedChangeListener((button, checked) -> {
+            if (binding) return;
+            Context context = requireContext();
+            Prefs.setWidgetAccentBoost(context, checked);
+            VehicleState.get().requestDisplayRefresh();
+            WidgetUpdateService.sync(context);
+        });
         WidgetModes.refreshAuto(c);
         updateAll();
+    }
+
+    private void updateAccentControl(Context c) {
+        widgetAccentBoost.setVisibility(Prefs.climateIconStyle(c) == Prefs.ClimateIconStyle.STANDARD
+                ? View.GONE : View.VISIBLE);
     }
 
     private void setupModeControls(Context c) {
@@ -536,6 +551,8 @@ public final class WidgetsFragment extends Fragment {
             case CHROME_THIN -> R.id.widgetClimateIconChromeThin;
             case CHROME -> R.id.widgetClimateIconChrome;
         });
+        updateAccentControl(c);
+        widgetAccentBoost.setChecked(Prefs.widgetAccentBoost(c));
         speedEnabled.setChecked(Prefs.overlayEnabled(c, WidgetsCommon.SIZE_SPEED));
         speedPinned.setChecked(Prefs.overlayPinned(c, WidgetsCommon.SIZE_SPEED));
         if (appsModeGroup != null) {
