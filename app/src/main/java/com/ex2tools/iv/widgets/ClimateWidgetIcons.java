@@ -198,7 +198,7 @@ final class ClimateWidgetIcons {
         // Framework spans survive RemoteViews parceling to the launcher.
         Object font = switch (style) {
             case STANDARD -> new StyleSpan(Typeface.BOLD);
-            case CHROME_THIN -> new TypefaceSpan("sans-serif-light");
+            case EXTRA_THIN, CHROME_THIN -> new TypefaceSpan("sans-serif-light");
             case THIN -> new TypefaceSpan("sans-serif");
             case CHROME -> new TypefaceSpan("sans-serif-medium");
         };
@@ -247,6 +247,7 @@ final class ClimateWidgetIcons {
         paint.setStrokeJoin(Paint.Join.ROUND);
         boolean thick = style == Prefs.ClimateIconStyle.CHROME;
         boolean thinChrome = style == Prefs.ClimateIconStyle.CHROME_THIN;
+        boolean extraThin = style == Prefs.ClimateIconStyle.EXTRA_THIN;
         boolean multiLevelHeat = shape == Shape.SEAT || shape == Shape.WHEEL;
         for (int layer = 0; layer < data.length; layer++) {
             Path path = PathParser.createPathFromPathData(data[layer]);
@@ -257,14 +258,15 @@ final class ClimateWidgetIcons {
             paint.setColor(active || (waves && level > 0) ? accent
                     : multiLevelHeat && layer > 0 ? inactiveHeat : neutral);
             float width;
-            if (thinChrome) width = 0.75f;
+            if (extraThin) width = 0.25f;
+            else if (thinChrome) width = 0.75f;
             else if (waves) width = thick ? 1.2f : 1.06f;
             else if (active) width = thick ? 1.89f : 1.25f;
             else if (multiLevelHeat && layer > 0) width = thick ? 1.02f : 0.56f;
             else width = thick ? 1.64f : 1f;
             paint.setStrokeWidth(width * FIGMA_TO_VIEWPORT);
 
-            if ((thick || thinChrome) && layer == 0) {
+            if ((thick || thinChrome || extraThin) && layer == 0) {
                 RectF bounds = new RectF();
                 path.computeBounds(bounds, true);
                 paint.setShader(new LinearGradient(0, bounds.top, 0, bounds.bottom,
