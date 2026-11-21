@@ -11,6 +11,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.provider.Settings;
+import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
@@ -39,6 +40,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class OverlayWidgetService extends Service {
 
     private static final long POLL_MS = 400L;
+    private static final int GRID_STEP_DP = 16;
     private static final String ACTION_RESTART = "com.ex2tools.iv.overlay.RESTART";
 
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -330,10 +332,11 @@ public final class OverlayWidgetService extends Service {
             }
             int width = Math.max(1, Math.round(baseWidthDp * density() * size / 100f));
             int height = Math.max(1, Math.round(baseHeightDp * density() * size / 100f));
+            DisplayMetrics metrics = getResources().getDisplayMetrics();
             width = Math.min(width, Math.max(1,
-                    getResources().getDisplayMetrics().widthPixels - dp(16)));
+                    metrics.widthPixels - dp(16)));
             height = Math.min(height, Math.max(1,
-                    getResources().getDisplayMetrics().heightPixels - dp(16)));
+                    metrics.heightPixels - dp(16)));
             WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
                     width, height,
                     WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
@@ -343,6 +346,9 @@ public final class OverlayWidgetService extends Service {
             lp.gravity = Gravity.TOP | Gravity.START;
             lp.x = Prefs.overlayX(this, spec.key, spec.defaultX);
             lp.y = Prefs.overlayY(this, spec.key, spec.defaultY);
+            if (Prefs.overlayPlacement(this) == Prefs.OverlayPlacement.GRID) {
+                snapToGrid(lp);
+            }
             container.setAlpha(1f);
 
             bindDrag(spec, container, content, lp);
@@ -362,7 +368,7 @@ public final class OverlayWidgetService extends Service {
 
     // Keep each corner as a vertical stack. Tall stacks continue inward in a new column.
     private void layoutDockedWidgets() {
-        if (!Prefs.overlayDocked(this)) return;
+        if (Prefs.overlayPlacement(this) != Prefs.OverlayPlacement.CORNERS) return;
         for (OverlaySpec spec : specs) {
             if (spec.view != null && spec.dragging) return;
         }
@@ -401,6 +407,19 @@ public final class OverlayWidgetService extends Service {
                 columnWidth = Math.max(columnWidth, lp.width);
             }
         }
+    }
+
+    private void snapToGrid(WindowManager.LayoutParams lp) {
+        DisplayMetrics metrics = getResources().getDisplayMetrics();
+        int step = Math.max(1, dp(GRID_STEP_DP));
+        lp.x = gridCoordinate(lp.x, metrics.widthPixels - lp.width, step);
+        lp.y = gridCoordinate(lp.y, metrics.heightPixels - lp.height, step);
+    }
+
+    private static int gridCoordinate(int position, int max, int step) {
+        int nearest = Math.round(Math.max(0, position) / (float) step);
+        int lastVisible = Math.max(0, max) / step;
+        return Math.min(nearest, lastVisible) * step;
     }
 
     private void update(OverlaySpec spec) {
@@ -481,15 +500,8 @@ public final class OverlayWidgetService extends Service {
                     case MotionEvent.ACTION_UP:
                     case MotionEvent.ACTION_CANCEL:
                         spec.dragging = false;
-                        if (moved && !locked && Prefs.overlayDocked(OverlayWidgetService.this)) {
-                            int width = getResources().getDisplayMetrics().widthPixels;
-                            int height = getResources().getDisplayMetrics().heightPixels;
-                            int corner = (lp.x + lp.width / 2 >= width / 2 ? 1 : 0)
-                                    | (lp.y + lp.height / 2 >= height / 2 ? 2 : 0);
-                            Prefs.setOverlayCorner(OverlayWidgetService.this, spec.key, corner);
-                            layoutDockedWidgets();
-                        } else if (moved && !locked) {
-                            Prefs.setOverlayPos(OverlayWidgetService.this, spec.key, lp.x, lp.y);
+                        if (moved && !locked) {
+                            placeAfterDrag(spec, container, lp);
                         } else if (!moved && event.getActionMasked() == MotionEvent.ACTION_UP) {
                             if (lockWidget) {
                                 openLockScreen();
@@ -515,6 +527,27 @@ public final class OverlayWidgetService extends Service {
             View iconArea = content.findViewById(R.id.apps_container);
             if (iconArea != null && iconArea != drag) iconArea.setOnTouchListener(listener);
         }
+    }
+
+    private void placeAfterDrag(OverlaySpec spec, View container, WindowManager.LayoutParams lp) {
+        Prefs.OverlayPlacement placement = Prefs.overlayPlacement(this);
+        if (placement == Prefs.OverlayPlacement.CORNERS) {
+            DisplayMetrics metrics = getResources().getDisplayMetrics();
+            int corner = (lp.x + lp.width / 2 >= metrics.widthPixels / 2 ? 1 : 0)
+                    | (lp.y + lp.height / 2 >= metrics.heightPixels / 2 ? 2 : 0);
+            Prefs.setOverlayCorner(this, spec.key, corner);
+            layoutDockedWidgets();
+            return;
+        }
+        if (placement == Prefs.OverlayPlacement.GRID) {
+            snapToGrid(lp);
+            try {
+                windowManager.updateViewLayout(container, lp);
+            } catch (RuntimeException e) {
+                LogStore.add(this, "overlay grid " + spec.key + " failed: " + e);
+            }
+        }
+        Prefs.setOverlayPos(this, spec.key, lp.x, lp.y);
     }
 
     /** Попросить оверлеи перерисоваться сразу после действия виджета. */

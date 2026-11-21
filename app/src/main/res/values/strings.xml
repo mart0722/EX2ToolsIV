@@ -775,7 +775,10 @@
 
     <!-- Виджеты: наши подписи -->
     <string name="wg_temp_short">Температура печки</string>
-    <string name="widgets_overlay_docked">Привязка к углам</string>
+    <string name="widgets_overlay_placement">Расстановка виджетов</string>
+    <string name="widgets_overlay_placement_free">Свободно</string>
+    <string name="widgets_overlay_placement_corners">К углам</string>
+    <string name="widgets_overlay_placement_grid">По сетке</string>
     <string name="steering_title">Кнопки руля</string>
     <string name="steering_climate">Управление климатом</string>
     <string name="steering_climate_hint">Двойное нажатие голосовой кнопки переключает режим климата.</string>

@@ -645,12 +645,23 @@ public final class Prefs {
         get(c).edit().putBoolean("widget_accent_boost", enabled).apply();
     }
 
-    public static boolean overlayDocked(Context c) {
-        return get(c).getBoolean("overlay_docked", false);
+    public enum OverlayPlacement {
+        FREE, CORNERS, GRID
     }
 
-    public static void setOverlayDocked(Context c, boolean value) {
-        get(c).edit().putBoolean("overlay_docked", value).apply();
+    public static OverlayPlacement overlayPlacement(Context c) {
+        SharedPreferences prefs = get(c);
+        return switch (prefs.getString("overlay_placement", "")) {
+            case "FREE" -> OverlayPlacement.FREE;
+            case "CORNERS" -> OverlayPlacement.CORNERS;
+            case "GRID" -> OverlayPlacement.GRID;
+            default -> prefs.getBoolean("overlay_docked", false)
+                    ? OverlayPlacement.CORNERS : OverlayPlacement.FREE;
+        };
+    }
+
+    public static void setOverlayPlacement(Context c, OverlayPlacement placement) {
+        get(c).edit().putString("overlay_placement", placement.name()).apply();
     }
 
     public static int overlayCorner(Context c, String key) {
