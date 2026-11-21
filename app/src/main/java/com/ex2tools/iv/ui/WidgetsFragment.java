@@ -166,6 +166,8 @@ public final class WidgetsFragment extends Fragment {
         speedColorGroup = view.findViewById(R.id.widgetSpeedColorGroup);
         speedSizeRow = view.findViewById(R.id.widgetSpeedSizeRow);
         speedSize = view.findViewById(R.id.widgetSpeedSizeSeek);
+        speedSize.setMax(Prefs.WIDGET_SIZE_MAX_PCT);
+        speedSize.setMin(Prefs.WIDGET_SIZE_MIN_PCT);
         speedSizeValue = view.findViewById(R.id.widgetSpeedSizeValue);
         speedAlpha = view.findViewById(R.id.widgetSpeedAlphaSeek);
         speedAlphaValue = view.findViewById(R.id.widgetSpeedAlphaValue);
@@ -455,8 +457,7 @@ public final class WidgetsFragment extends Fragment {
         }
         speedSize.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                int pct = progress + 50;
+            public void onProgressChanged(SeekBar seekBar, int pct, boolean fromUser) {
                 if (speedSizeValue != null) {
                     speedSizeValue.setText(getString(R.string.widgets_percent_fmt, pct));
                 }
@@ -773,7 +774,7 @@ public final class WidgetsFragment extends Fragment {
         }
 
         int speedPct = Prefs.widgetSizePct(c, WidgetsCommon.SIZE_SPEED);
-        if (speedSize != null) speedSize.setProgress(speedPct - 50);
+        if (speedSize != null) speedSize.setProgress(speedPct);
         if (speedSizeValue != null) {
             speedSizeValue.setText(getString(R.string.widgets_percent_fmt, speedPct));
         }
