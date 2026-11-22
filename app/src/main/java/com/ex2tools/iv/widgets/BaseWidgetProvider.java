@@ -3,8 +3,10 @@ package com.ex2tools.iv.widgets;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.Context;
-import com.ex2tools.iv.Prefs;
+import android.os.Bundle;
 import android.widget.RemoteViews;
+
+import com.ex2tools.iv.Prefs;
 
 abstract class BaseWidgetProvider extends AppWidgetProvider {
 
@@ -13,9 +15,22 @@ abstract class BaseWidgetProvider extends AppWidgetProvider {
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
         for (int id : appWidgetIds) {
-            appWidgetManager.updateAppWidget(id, build(WidgetIconSizes.appWidgetContext(context, id)));
+            updateWidget(context, appWidgetManager, id);
         }
         WidgetUpdateService.start(context);
+    }
+
+    @Override
+    public void onAppWidgetOptionsChanged(Context context, AppWidgetManager manager,
+                                          int id, Bundle options) {
+        if (WidgetAppearance.usesGlass(context)) updateWidget(context, manager, id);
+    }
+
+    private void updateWidget(Context context, AppWidgetManager manager, int id) {
+        WidgetGrid.Slot slot = WidgetGrid.appWidgetSlot(context, manager, id);
+        RemoteViews views = build(WidgetIconSizes.appWidgetContext(context, id, slot.scale()));
+        WidgetGrid.scaleContent(context, views, slot.scale());
+        manager.updateAppWidget(id, slot.wrap(context, views));
     }
 
     @Override

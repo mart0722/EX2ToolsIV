@@ -6,6 +6,8 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.Process;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -55,6 +57,7 @@ public final class WidgetsFragment extends Fragment {
             WidgetsCommon.SIZE_VENT_FAN,
             WidgetsCommon.SIZE_HEATING,
             WidgetsCommon.SIZE_WINDSHIELD_HEAT,
+            WidgetsCommon.SIZE_WHEEL_HEAT,
             WidgetsCommon.SIZE_BATTERY_RANGE,
             WidgetsCommon.SIZE_WIPERS,
             WidgetsCommon.SIZE_POWER_OFF,
@@ -74,6 +77,7 @@ public final class WidgetsFragment extends Fragment {
             R.string.widgets_size_vent_fan,
             R.string.widgets_size_heating,
             R.string.widget_name_windshield_heat,
+            R.string.widget_name_wheel_heat,
             R.string.widgets_size_battery_range,
             R.string.widget_name_wipers,
             R.string.widget_name_power_off,
@@ -113,6 +117,11 @@ public final class WidgetsFragment extends Fragment {
     private FlymeSegmentedGroup overlayPlacement;
     private View overlayNeighborHint;
     private FlymeSegmentedGroup climateIconStyle;
+    private FlymeSegmentedGroup ventMode;
+    private View glassScaleControls;
+    private final List<View> individualScaleControls = new ArrayList<>();
+    private final Handler scaleHandler = new Handler(Looper.getMainLooper());
+    private final Runnable applyGlassScale = this::refreshGlassScale;
     private FlymeSwitchRow widgetCardBorder;
     private FlymeSwitchRow widgetButtonBorder;
     private FlymeSwitchRow widgetPowerOffWithoutConfirmation;
@@ -196,6 +205,14 @@ public final class WidgetsFragment extends Fragment {
             WidgetUpdateService.sync(context);
         });
         setupClimateIconControls();
+        setupGlassScale(view, c);
+        ventMode = view.findViewById(R.id.widgetVentMode);
+        ventMode.addOnButtonCheckedListener((group, id, checked) -> {
+            if (binding || !checked) return;
+            Prefs.setVentDirectionButtons(c, id == R.id.widgetVentThree);
+            OverlayWidgetService.restart(c);
+            WidgetUpdateService.sync(c);
+        });
 
         setupModeControls(c);
         setupSpeedControls(c);
@@ -210,7 +227,7 @@ public final class WidgetsFragment extends Fragment {
             else if (checkedId == R.id.widgetClimateIconChromeThin) style = Prefs.ClimateIconStyle.CHROME_THIN;
             else style = Prefs.ClimateIconStyle.CHROME;
             Prefs.setClimateIconStyle(context, style);
-            updateAccentControl(context);
+            updateAppearanceControls(context);
             if (opacityPreview != null) {
                 opacityPreview.setBackgroundResource(WidgetsCommon.bgDrawableResForPct(context));
             }
@@ -258,6 +275,8 @@ public final class WidgetsFragment extends Fragment {
         for (AppWidgetProviderInfo provider : manager.getInstalledProvidersForPackage(
                 c.getPackageName(), Process.myUserHandle())) {
             if (!WidgetIconSizes.supportsLayout(provider.initialLayout)) continue;
+            if (usesGlass(c) && provider.initialLayout != R.layout.widget_heating_test
+                    && !hasIndividualLabels(provider.initialLayout)) continue;
             int[] instances = manager.getAppWidgetIds(provider.provider);
             CharSequence name = provider.loadLabel(c.getPackageManager());
             for (int id : instances) {
@@ -270,7 +289,8 @@ public final class WidgetsFragment extends Fragment {
                 .setTitle(R.string.widgets_individual_icon_sizes)
                 .setNegativeButton(android.R.string.cancel, null);
         if (ids.isEmpty()) {
-            dialog.setMessage(R.string.widgets_individual_icon_sizes_empty).show();
+            dialog.setMessage(usesGlass(c) ? R.string.widgets_individual_settings_empty_glass
+                    : R.string.widgets_individual_icon_sizes_empty).show();
             return;
         }
         dialog.setItems(labels.toArray(new CharSequence[0]), (d, which) -> {
@@ -283,19 +303,23 @@ public final class WidgetsFragment extends Fragment {
             FlymeSwitchRow singleRow = provider.initialLayout == R.layout.widget_heating_test
                     ? heatingLayoutSwitch(c) : null;
             if (singleRow != null) row.addView(singleRow);
-            FlymeSwitchRow iconLabels = provider.initialLayout == R.layout.widget_wipers
-                    || provider.initialLayout == R.layout.widget_power_off ? iconLabelsSwitch(c, key) : null;
+            FlymeSwitchRow iconLabels = hasIndividualLabels(provider.initialLayout)
+                    ? iconLabelsSwitch(c, key) : null;
             if (iconLabels != null) row.addView(iconLabels);
             int padding = getResources().getDimensionPixelSize(R.dimen.card_padding);
             row.setPadding(padding, padding, padding, 0);
             SeekBar size = bindIconSize(row, Prefs.climateIconSizePct(c, key), pct -> {});
+            if (usesGlass(c)) {
+                row.getChildAt(0).setVisibility(View.GONE);
+                size.setVisibility(View.GONE);
+            }
             new MaterialAlertDialogBuilder(c)
                     .setTitle(labels.get(which))
                     .setView(row)
                     .setNegativeButton(android.R.string.cancel, null)
                     .setPositiveButton(android.R.string.ok, (sizeDialog, button) -> {
                         if (manager.getAppWidgetInfo(id) == null) return;
-                        Prefs.setClimateIconSizePct(c, key, size.getProgress());
+                        if (!usesGlass(c)) Prefs.setClimateIconSizePct(c, key, size.getProgress());
                         if (iconLabels != null && iconLabels.isChecked() != Prefs.climateIconLabels(c, key)) {
                             Prefs.setClimateIconLabels(c, key, iconLabels.isChecked());
                         }
@@ -304,6 +328,11 @@ public final class WidgetsFragment extends Fragment {
                     })
                     .show();
         }).show();
+    }
+
+    private static boolean hasIndividualLabels(int layout) {
+        return layout == R.layout.widget_wipers || layout == R.layout.widget_power_off
+                || layout == R.layout.widget_wheel_heat;
     }
 
     private FlymeSwitchRow heatingLayoutSwitch(Context c) {
@@ -328,10 +357,15 @@ public final class WidgetsFragment extends Fragment {
     }
 
     private SeekBar bindIconSize(View row, int pct, java.util.function.IntConsumer onChange) {
+        return bindScale(row, Prefs.CLIMATE_ICON_MIN_PCT, Prefs.CLIMATE_ICON_MAX_PCT, pct, onChange);
+    }
+
+    private SeekBar bindScale(View row, int min, int max, int pct,
+                              java.util.function.IntConsumer onChange) {
         SeekBar size = row.findViewById(R.id.widgetIconSize);
         TextView value = row.findViewById(R.id.widgetIconSizeValue);
-        size.setMin(Prefs.CLIMATE_ICON_MIN_PCT);
-        size.setMax(Prefs.CLIMATE_ICON_MAX_PCT);
+        size.setMin(min);
+        size.setMax(max);
         size.setProgress(pct);
         value.setText(getString(R.string.widgets_percent_fmt, pct));
         size.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -362,9 +396,65 @@ public final class WidgetsFragment extends Fragment {
         });
     }
 
-    private void updateAccentControl(Context c) {
-        widgetAccentBoost.setVisibility(Prefs.climateIconStyle(c) == Prefs.ClimateIconStyle.STANDARD
-                ? View.GONE : View.VISIBLE);
+    private static boolean usesGlass(Context c) {
+        return Prefs.climateIconStyle(c) != Prefs.ClimateIconStyle.STANDARD;
+    }
+
+    private void updateAppearanceControls(Context c) {
+        boolean glass = usesGlass(c);
+        TextView speedColorDefault = speedColorGroup.findViewById(R.id.widgetSpeedColorWhite);
+        speedColorDefault.setText(Prefs.climateIconStyle(c).isChrome()
+                ? R.string.widgets_speed_color_chrome : R.string.widgets_speed_color_white);
+        widgetAccentBoost.setVisibility(glass ? View.VISIBLE : View.GONE);
+        glassScaleControls.setVisibility(glass ? View.VISIBLE : View.GONE);
+        for (View control : individualScaleControls) {
+            control.setVisibility(glass ? View.GONE : View.VISIBLE);
+        }
+        boolean legacySpeedScale = !glass && WidgetModes.current(c) == Prefs.WIDGET_MODE_STOCK;
+        speedSizeRow.setVisibility(legacySpeedScale ? View.VISIBLE : View.GONE);
+        speedSize.setVisibility(legacySpeedScale ? View.VISIBLE : View.GONE);
+        updateWindshieldOpacityControls(glass);
+    }
+
+    private void updateWindshieldOpacityControls(boolean glass) {
+        SeekBar seek = overlayAlphaSeeks.get(WidgetsCommon.SIZE_WINDSHIELD_HEAT);
+        TextView value = overlayAlphaValues.get(WidgetsCommon.SIZE_WINDSHIELD_HEAT);
+        if (seek != null && value != null && value.getParent() instanceof View row) {
+            int visibility = glass ? View.GONE : View.VISIBLE;
+            seek.setVisibility(visibility);
+            row.setVisibility(visibility);
+        }
+    }
+
+    private void setupGlassScale(View view, Context c) {
+        glassScaleControls = view.findViewById(R.id.widgetGlassScaleControls);
+        bindGlassScale(view.findViewById(R.id.widgetGlassSize), R.string.widgets_glass_scale,
+                Prefs.WIDGET_SIZE_MIN_PCT, Prefs.WIDGET_SIZE_MAX_PCT,
+                Prefs.glassWidgetSizePct(c), pct -> Prefs.setGlassWidgetSizePct(c, pct));
+        bindGlassScale(view.findViewById(R.id.widgetGlassIconSize), R.string.widgets_glass_icon_scale,
+                Prefs.CLIMATE_ICON_MIN_PCT, Prefs.CLIMATE_ICON_MAX_PCT,
+                Prefs.glassWidgetIconSizePct(c), pct -> Prefs.setGlassWidgetIconSizePct(c, pct));
+    }
+
+    private void bindGlassScale(View row, int label, int min, int max, int current,
+                                java.util.function.IntConsumer save) {
+        TextView title = row.findViewById(R.id.widgetIconSizeLabel);
+        title.setText(label);
+        SeekBar size = row.findViewById(R.id.widgetIconSize);
+        size.setContentDescription(getString(label));
+        bindScale(row, min, max, current, pct -> {
+            save.accept(pct);
+            scaleHandler.removeCallbacks(applyGlassScale);
+            scaleHandler.postDelayed(applyGlassScale, 200);
+        });
+    }
+
+    private void refreshGlassScale() {
+        if (!isAdded()) return;
+        Context c = requireContext();
+        refreshSpeed();
+        ClockWidgetProvider.refreshAll(c);
+        WidgetUpdateService.sync(c);
     }
 
     private void setupModeControls(Context c) {
@@ -565,11 +655,13 @@ public final class WidgetsFragment extends Fragment {
         date.setChecked(Prefs.clockDate(c));
         date.setOnCheckedChangeListener((b, checked) -> {
             if (binding) return;
-            Prefs.setClockDate(requireContext(), checked);
+            Context context = requireContext();
+            Prefs.setClockDate(context, checked);
             updateClockPreview();
-            ClockWidgetProvider.refreshAll(requireContext());
-            OverlayWidgetService.requestUpdate(requireContext());
-            WidgetUpdateService.refreshOpacity(requireContext());
+            ClockWidgetProvider.refreshAll(context);
+            if (usesGlass(context)) OverlayWidgetService.restart(context);
+            else OverlayWidgetService.requestUpdate(context);
+            WidgetUpdateService.refreshOpacity(context);
         });
     }
 
@@ -588,6 +680,7 @@ public final class WidgetsFragment extends Fragment {
 
     private void resetOverlayRows() {
         overlayList.removeAllViews();
+        individualScaleControls.clear();
         overlayHeatingSingleRow = null;
         overlayToggles.clear();
         overlayIconLabels.clear();
@@ -626,6 +719,8 @@ public final class WidgetsFragment extends Fragment {
         SeekBar alphaSeek = card.findViewById(R.id.overlayAlphaSeek);
         TextView sizeValue = card.findViewById(R.id.overlaySizeValue);
         TextView alphaValue = card.findViewById(R.id.overlayAlphaValue);
+        addIndividualScaleControl(c, card.findViewById(R.id.overlaySizeRow));
+        addIndividualScaleControl(c, sizeSeek);
         if (WidgetsCommon.isStandaloneVehicleButton(key)) {
             card.findViewById(R.id.overlayAlphaRow).setVisibility(View.GONE);
             alphaSeek.setVisibility(View.GONE);
@@ -648,6 +743,8 @@ public final class WidgetsFragment extends Fragment {
             LinearLayout iconSize = (LinearLayout) inflater.inflate(
                     R.layout.item_widget_icon_size, controls, false);
             controls.addView(iconSize, controls.indexOfChild(sizeSeek) + 1);
+            addIndividualScaleControl(c, iconSize.getChildAt(0));
+            addIndividualScaleControl(c, iconSize.findViewById(R.id.widgetIconSize));
             if (WidgetsCommon.isStandaloneVehicleButton(key)) {
                 FlymeSwitchRow iconLabels = iconLabelsSwitch(c, key);
                 iconSize.addView(iconLabels);
@@ -761,7 +858,15 @@ public final class WidgetsFragment extends Fragment {
         overlayAlphaSeeks.put(key, alphaSeek);
         overlaySizeValues.put(key, sizeValue);
         overlayAlphaValues.put(key, alphaValue);
+        if (WidgetsCommon.SIZE_WINDSHIELD_HEAT.equals(key)) {
+            updateWindshieldOpacityControls(usesGlass(c));
+        }
         overlayList.addView(card);
+    }
+
+    private void addIndividualScaleControl(Context c, View view) {
+        individualScaleControls.add(view);
+        view.setVisibility(usesGlass(c) ? View.GONE : View.VISIBLE);
     }
 
     private void updateAll() {
@@ -810,7 +915,8 @@ public final class WidgetsFragment extends Fragment {
             case CHROME_THIN -> R.id.widgetClimateIconChromeThin;
             case CHROME -> R.id.widgetClimateIconChrome;
         });
-        updateAccentControl(c);
+        updateAppearanceControls(c);
+        ventMode.check(Prefs.ventDirectionButtons(c) ? R.id.widgetVentThree : R.id.widgetVentFive);
         widgetCardBorder.setChecked(Prefs.widgetCardBorder(c));
         widgetButtonBorder.setChecked(Prefs.widgetButtonBorder(c));
         widgetPowerOffWithoutConfirmation.setChecked(Prefs.widgetPowerOffWithoutConfirmation(c));
@@ -895,10 +1001,10 @@ public final class WidgetsFragment extends Fragment {
         speedPinned.setVisibility(stock ? View.VISIBLE : View.GONE);
         speedReset.setVisibility(stock ? View.VISIBLE : View.GONE);
         if (speedSizeRow != null) {
-            speedSizeRow.setVisibility(stock ? View.VISIBLE : View.GONE);
+            speedSizeRow.setVisibility(stock && !usesGlass(c) ? View.VISIBLE : View.GONE);
         }
         if (speedSize != null) {
-            speedSize.setVisibility(stock ? View.VISIBLE : View.GONE);
+            speedSize.setVisibility(stock && !usesGlass(c) ? View.VISIBLE : View.GONE);
         }
         if (speedAlphaRow != null) {
             speedAlphaRow.setVisibility(stock ? View.VISIBLE : View.GONE);

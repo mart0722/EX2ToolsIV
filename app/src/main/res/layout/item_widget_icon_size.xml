@@ -12,6 +12,7 @@
         android:orientation="horizontal">
 
         <TextView
+            android:id="@+id/widgetIconSizeLabel"
             style="@style/Text.EX2.ListMeta"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -29,6 +30,7 @@
         android:id="@+id/widgetIconSize"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:saveEnabled="false"
         android:contentDescription="@string/widgets_climate_icon_size"
         android:progressTint="@color/flyme_blue"
         android:thumbTint="@color/flyme_blue" />

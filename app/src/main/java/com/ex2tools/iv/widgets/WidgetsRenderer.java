@@ -22,26 +22,23 @@ public final class WidgetsRenderer {
     }
 
     public static RemoteViews driveRegen(Context c, Integer drive, Integer regen) {
-        RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_drive_regen);
+        RemoteViews v = new RemoteViews(c.getPackageName(), WidgetGrid.layout(c, R.layout.widget_drive_regen));
         bg(v, c);
+        if (WidgetAppearance.usesGlass(c)) {
+            ClimateWidgetIcons.forRemote(c, OverlayWidgetViews.themeContext(c), v).driveAndRegen();
+        }
         titles(v, c, R.id.txt_drive_header, R.id.txt_regen_header);
         v.setTextViewText(R.id.txt_drive_header, c.getString(R.string.wg_drive_header));
         v.setTextViewText(R.id.txt_regen_header, c.getString(R.string.wg_regen_header));
-        v.setTextViewText(R.id.txt_drive_eco, c.getString(R.string.wg_drive_eco));
-        v.setTextViewText(R.id.txt_drive_comfort, c.getString(R.string.wg_drive_comfort));
-        v.setTextViewText(R.id.txt_drive_sport, c.getString(R.string.wg_drive_sport));
-        v.setTextViewText(R.id.txt_regen_low, c.getString(R.string.wg_regen_low));
-        v.setTextViewText(R.id.txt_regen_mid, c.getString(R.string.wg_regen_mid));
-        v.setTextViewText(R.id.txt_regen_high, c.getString(R.string.wg_regen_high));
-        chip(v, c, R.id.chip_drive_eco, R.id.txt_drive_eco,
+        chip(v, c, R.id.chip_drive_eco, R.id.txt_drive_eco, R.string.wg_drive_eco,
                 drive != null && drive == CarProps.DRIVE_ECO, 1);
-        chip(v, c, R.id.chip_drive_comfort, R.id.txt_drive_comfort,
+        chip(v, c, R.id.chip_drive_comfort, R.id.txt_drive_comfort, R.string.wg_drive_comfort,
                 drive != null && drive == CarProps.DRIVE_COMFORT, 0);
-        chip(v, c, R.id.chip_drive_sport, R.id.txt_drive_sport,
+        chip(v, c, R.id.chip_drive_sport, R.id.txt_drive_sport, R.string.wg_drive_sport,
                 drive != null && drive == CarProps.DRIVE_SPORT, 2);
-        chip(v, c, R.id.chip_regen_low, R.id.txt_regen_low, regen != null && regen == CarProps.REGEN_WEAK);
-        chip(v, c, R.id.chip_regen_mid, R.id.txt_regen_mid, regen != null && regen == CarProps.REGEN_MEDIUM);
-        chip(v, c, R.id.chip_regen_high, R.id.txt_regen_high, regen != null && regen == CarProps.REGEN_STRONG);
+        chip(v, c, R.id.chip_regen_low, R.id.txt_regen_low, R.string.wg_regen_low, regen != null && regen == CarProps.REGEN_WEAK);
+        chip(v, c, R.id.chip_regen_mid, R.id.txt_regen_mid, R.string.wg_regen_mid, regen != null && regen == CarProps.REGEN_MEDIUM);
+        chip(v, c, R.id.chip_regen_high, R.id.txt_regen_high, R.string.wg_regen_high, regen != null && regen == CarProps.REGEN_STRONG);
         click(v, c, R.id.chip_drive_eco, WidgetsCommon.DRIVE_ECO);
         click(v, c, R.id.chip_drive_comfort, WidgetsCommon.DRIVE_COMFORT);
         click(v, c, R.id.chip_drive_sport, WidgetsCommon.DRIVE_SPORT);
@@ -52,7 +49,7 @@ public final class WidgetsRenderer {
     }
 
     public static RemoteViews driveVertical(Context c, Integer drive) {
-        RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_drive_mode_vertical);
+        RemoteViews v = new RemoteViews(c.getPackageName(), WidgetGrid.layout(c, R.layout.widget_drive_mode_vertical));
         bg(v, c);
         titles(v, c, R.id.widget_title);
         int icon;
@@ -67,8 +64,14 @@ public final class WidgetsRenderer {
             icon = R.drawable.wg_ic_drive_comfort;
             label = R.string.wg_drive_comfort;
         }
-        v.setImageViewResource(R.id.img_drive_mode, icon);
-        v.setTextViewText(R.id.tv_drive_mode_label, c.getString(label));
+        if (WidgetAppearance.usesGlass(c)) {
+            ClimateWidgetIcons icons = ClimateWidgetIcons.forRemote(c, OverlayWidgetViews.themeContext(c), v);
+            icons.chromeGlyph(R.id.img_drive_mode, icon, ClimateWidgetIcons.ACTION_ICON_DP);
+            climateCaption(v, icons, R.id.img_drive_mode, R.id.tv_drive_mode_label, c.getString(label));
+        } else {
+            v.setImageViewResource(R.id.img_drive_mode, icon);
+            v.setTextViewText(R.id.tv_drive_mode_label, c.getString(label));
+        }
         v.setTextViewText(R.id.widget_title, c.getString(R.string.wg_footer_drive));
         roundControls(v, c, R.id.btn_drive_next, R.id.btn_drive_prev);
         click(v, c, R.id.btn_drive_next, WidgetsCommon.DRIVE_NEXT);
@@ -77,7 +80,7 @@ public final class WidgetsRenderer {
     }
 
     public static RemoteViews regenVertical(Context c, Integer regen) {
-        RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_regen_vertical);
+        RemoteViews v = new RemoteViews(c.getPackageName(), WidgetGrid.layout(c, R.layout.widget_regen_vertical));
         bg(v, c);
         titles(v, c, R.id.widget_title);
         int icon;
@@ -92,8 +95,16 @@ public final class WidgetsRenderer {
             icon = R.drawable.wg_ic_regen_mid;
             label = R.string.wg_regen_mid;
         }
-        v.setImageViewResource(R.id.img_regen_level, icon);
-        v.setTextViewText(R.id.tv_regen_level_label, c.getString(label));
+        if (WidgetAppearance.usesGlass(c)) {
+            ClimateWidgetIcons icons = ClimateWidgetIcons.forRemote(c, OverlayWidgetViews.themeContext(c), v);
+            icons.regen(R.id.img_regen_level,
+                    regen != null && regen == CarProps.REGEN_WEAK ? 1
+                            : regen != null && regen == CarProps.REGEN_STRONG ? 3 : 2);
+            climateCaption(v, icons, R.id.img_regen_level, R.id.tv_regen_level_label, c.getString(label));
+        } else {
+            v.setImageViewResource(R.id.img_regen_level, icon);
+            v.setTextViewText(R.id.tv_regen_level_label, c.getString(label));
+        }
         v.setTextViewText(R.id.widget_title, c.getString(R.string.wg_footer_regen));
         roundControls(v, c, R.id.btn_regen_next, R.id.btn_regen_prev);
         click(v, c, R.id.btn_regen_next, WidgetsCommon.REGEN_NEXT);
@@ -102,9 +113,13 @@ public final class WidgetsRenderer {
     }
 
     public static RemoteViews fan(Context c, Integer fan, int layout) {
-        RemoteViews v = new RemoteViews(c.getPackageName(), layout);
+        RemoteViews v = new RemoteViews(c.getPackageName(), WidgetGrid.layout(c, layout));
         bg(v, c);
         titles(v, c, R.id.widget_title);
+        if (WidgetAppearance.usesGlass(c)) {
+            ClimateWidgetIcons.forRemote(c, OverlayWidgetViews.themeContext(c), v)
+                    .chromeGlyph(R.id.img_fan_title, R.drawable.wg_ic_fan, 20);
+        }
         v.setTextViewText(R.id.tv_fan_value, fan == null ? "—" : String.valueOf(fan));
         v.setTextViewText(layout == R.layout.widget_fan_speed_vertical
                 ? R.id.widget_title : R.id.tv_fan_label, c.getString(R.string.wg_fan));
@@ -119,9 +134,13 @@ public final class WidgetsRenderer {
     }
 
     public static RemoteViews temperature(Context c, Float temp, int layout) {
-        RemoteViews v = new RemoteViews(c.getPackageName(), layout);
+        RemoteViews v = new RemoteViews(c.getPackageName(), WidgetGrid.layout(c, layout));
         bg(v, c);
         titles(v, c, R.id.widget_title);
+        if (WidgetAppearance.usesGlass(c)) {
+            ClimateWidgetIcons.forRemote(c, OverlayWidgetViews.themeContext(c), v)
+                    .chromeGlyph(R.id.img_temp_title, R.drawable.wg_ic_temp, 20);
+        }
         v.setTextViewText(R.id.tv_temp_value,
                 temp == null ? "—" : String.valueOf(Math.round(temp)));
         v.setTextViewText(R.id.tv_temp_unit, "°C");
@@ -139,20 +158,21 @@ public final class WidgetsRenderer {
 
     public static RemoteViews vent(Context c, Integer vent, Boolean recirc) {
         Context widgetContext = c;
-        RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_hvac_direction);
+        RemoteViews v = new RemoteViews(c.getPackageName(), WidgetGrid.layout(c, R.layout.widget_hvac_direction));
         c = OverlayWidgetViews.themeContext(c);
         bg(v, c);
-        titles(v, c, R.id.widget_title);
+        if (WidgetAppearance.usesGlass(c)) {
+            v.setViewVisibility(R.id.widget_vent_fan_row, View.GONE);
+            titles(v, c, R.id.txt_vent_header);
+        } else {
+            titles(v, c, R.id.widget_title);
+        }
         v.setTextViewText(R.id.txt_vent_header, c.getString(R.string.wg_vent_header));
         boolean directions = Prefs.ventDirectionButtons(c);
         boolean transparent = Prefs.widgetBgOpacity(c) < 10;
         int mode = vent == null ? 0 : vent;
         ClimateWidgetIcons icons = ClimateWidgetIcons.forRemote(widgetContext, c, v);
         icons.ventButtons(vent == null ? 0 : vent, directions);
-        v.setInt(R.id.btn_vent_mode, "setBackgroundResource",
-                WidgetAppearance.controlBackground(c, transparent, R.drawable.bg_wg_chip));
-        v.setTextViewText(R.id.btn_vent_mode, c.getString(directions
-                ? R.string.widgets_vent_directions : R.string.widgets_vent_presets));
         v.setViewVisibility(R.id.chip_vent_face_floor, directions ? android.view.View.GONE : android.view.View.VISIBLE);
         ventChip(v, icons, transparent, R.id.chip_vent_face_floor, R.id.txt_vent_face_floor, mode == 3);
         v.setViewVisibility(R.id.chip_vent_floor_windshield, directions ? android.view.View.GONE : android.view.View.VISIBLE);
@@ -166,14 +186,13 @@ public final class WidgetsRenderer {
         click(v, c, R.id.chip_vent_windshield, WidgetsCommon.VENT_WINDSHIELD);
         click(v, c, R.id.chip_vent_face_floor, WidgetsCommon.VENT_FACE_FLOOR);
         click(v, c, R.id.chip_vent_floor_windshield, WidgetsCommon.VENT_FLOOR_WINDSHIELD);
-        click(v, c, R.id.btn_vent_mode, WidgetsCommon.VENT_WIDGET_MODE);
         click(v, c, R.id.chip_recirc, WidgetsCommon.RECIRC_TOGGLE);
         return v;
     }
 
     public static RemoteViews ventVertical(Context c, Integer vent, Boolean recirc) {
         Context widgetContext = c;
-        RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_hvac_direction_vertical);
+        RemoteViews v = new RemoteViews(c.getPackageName(), WidgetGrid.layout(c, R.layout.widget_hvac_direction_vertical));
         c = OverlayWidgetViews.themeContext(c);
         bg(v, c);
         titles(v, c, R.id.widget_title);
@@ -201,19 +220,21 @@ public final class WidgetsRenderer {
     public static RemoteViews ventFan(Context c, Integer vent, Boolean recirc,
                                       Integer fan, Boolean ac) {
         Context widgetContext = c;
-        RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_hvac_direction_fan);
+        RemoteViews v = new RemoteViews(c.getPackageName(), WidgetGrid.layout(c, R.layout.widget_hvac_direction_fan));
         c = OverlayWidgetViews.themeContext(c);
         bg(v, c);
-        titles(v, c, R.id.widget_title);
+        if (WidgetAppearance.usesGlass(c)) {
+            v.setViewVisibility(R.id.widget_vent_fan_row, View.VISIBLE);
+            v.setTextViewText(R.id.txt_vent_header, c.getString(R.string.widgets_size_vent_fan));
+            titles(v, c, R.id.txt_vent_header);
+        } else {
+            titles(v, c, R.id.widget_title);
+        }
         int mode = vent == null ? 1 : vent;
         boolean directions = Prefs.ventDirectionButtons(c);
         boolean transparent = Prefs.widgetBgOpacity(c) < 10;
         ClimateWidgetIcons icons = ClimateWidgetIcons.forRemote(widgetContext, c, v);
         icons.ventButtons(vent == null ? 0 : vent, directions);
-        v.setInt(R.id.btn_vent_mode, "setBackgroundResource",
-                WidgetAppearance.controlBackground(c, transparent, R.drawable.bg_wg_chip));
-        v.setTextViewText(R.id.btn_vent_mode, c.getString(directions
-                ? R.string.widgets_vent_directions : R.string.widgets_vent_presets));
         v.setViewVisibility(R.id.chip_vent_face_floor, directions ? android.view.View.GONE : android.view.View.VISIBLE);
         ventChip(v, icons, transparent, R.id.chip_vent_face_floor, R.id.txt_vent_face_floor, mode == 3);
         v.setViewVisibility(R.id.chip_vent_floor_windshield, directions ? android.view.View.GONE : android.view.View.VISIBLE);
@@ -233,7 +254,6 @@ public final class WidgetsRenderer {
         click(v, c, R.id.chip_vent_windshield, WidgetsCommon.VENT_WINDSHIELD);
         click(v, c, R.id.chip_vent_face_floor, WidgetsCommon.VENT_FACE_FLOOR);
         click(v, c, R.id.chip_vent_floor_windshield, WidgetsCommon.VENT_FLOOR_WINDSHIELD);
-        click(v, c, R.id.btn_vent_mode, WidgetsCommon.VENT_WIDGET_MODE);
         click(v, c, R.id.chip_recirc, WidgetsCommon.RECIRC_TOGGLE);
         int controlBackground = WidgetAppearance.controlBackground(c, transparent, R.drawable.bg_wg_round);
         v.setInt(R.id.btn_fan_minus, "setBackgroundResource", controlBackground);
@@ -248,12 +268,15 @@ public final class WidgetsRenderer {
                                       boolean wheelPending) {
         Context widgetContext = c;
         boolean singleRow = Prefs.heatingSingleRow(c);
-        RemoteViews v = new RemoteViews(c.getPackageName(), singleRow
-                ? R.layout.widget_heating_single_row : R.layout.widget_heating_test);
+        RemoteViews v = new RemoteViews(c.getPackageName(), WidgetGrid.layout(c, singleRow
+                ? R.layout.widget_heating_single_row : R.layout.widget_heating_test));
         c = OverlayWidgetViews.themeContext(c);
         bg(v, c);
         titles(v, c, R.id.widget_title);
         ClimateWidgetIcons icons = ClimateWidgetIcons.forRemote(widgetContext, c, v);
+        if (icons.usesOutline()) {
+            icons.chromeGlyph(R.id.img_heating_title, R.drawable.wg_ic_heat, singleRow ? 14 : 20);
+        }
         icons.heating(wheel, rear, windshield, seatDriver, seatPassenger);
         if (!singleRow) {
             boolean front = Boolean.TRUE.equals(WidgetsCommon.readFrontMaxDefrost());
@@ -281,15 +304,28 @@ public final class WidgetsRenderer {
         return v;
     }
 
-    static RemoteViews windshieldHeat(Context c, Boolean state) {
-        Context widgetContext = c;
-        RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_windshield_heat);
-        c = OverlayWidgetViews.themeContext(c);
-        bg(v, c);
+    static RemoteViews wheelHeat(Context widgetContext, Boolean state) {
+        Context c = OverlayWidgetViews.themeContext(widgetContext);
+        RemoteViews views = new RemoteViews(c.getPackageName(), R.layout.widget_wheel_heat);
+        ClimateWidgetIcons icons = ClimateWidgetIcons.forRemote(widgetContext, c, views);
+        icons.wheelHeat(state);
+        toggle(views, c, icons, R.id.chip_wheel_heat, R.id.txt_wheel_heat, Boolean.TRUE.equals(state),
+                WidgetsCommon.wheelHeatPending(c), c.getString(R.string.widget_name_wheel_heat), false);
+        click(views, c, R.id.chip_wheel_heat, WidgetsCommon.WHEEL_HEAT_TOGGLE);
+        return views;
+    }
+
+    static RemoteViews windshieldHeat(Context widgetContext, Boolean state) {
+        Context c = OverlayWidgetViews.themeContext(widgetContext);
+        int layout = WidgetGrid.layout(c, R.layout.widget_windshield_heat);
+        RemoteViews v = new RemoteViews(c.getPackageName(), layout);
+        boolean glass = layout == R.layout.widget_glass_windshield_heat;
+        if (!glass) bg(v, c);
         ClimateWidgetIcons icons = ClimateWidgetIcons.forRemote(widgetContext, c, v);
         icons.windshieldHeat(state);
         toggle(v, c, icons, R.id.chip_windshield_heat, R.id.txt_windshield_heat,
-                Boolean.TRUE.equals(state), c.getString(R.string.widget_name_windshield_heat));
+                Boolean.TRUE.equals(state), false, c.getString(R.string.widget_name_windshield_heat),
+                !glass && Prefs.widgetBgOpacity(c) < 10);
         click(v, c, R.id.chip_windshield_heat, WidgetsCommon.WINDSHIELD_HEAT_TOGGLE);
         return v;
     }
@@ -324,7 +360,7 @@ public final class WidgetsRenderer {
     }
 
     public static RemoteViews batteryRange(Context c, Integer soc, Float range, Float energyKwh) {
-        RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_battery_range);
+        RemoteViews v = new RemoteViews(c.getPackageName(), WidgetGrid.layout(c, R.layout.widget_battery_range));
         bg(v, c);
         Context tc = OverlayWidgetViews.themeContext(c);
         int primary = tc.getColor(R.color.wg_text);
@@ -359,10 +395,15 @@ public final class WidgetsRenderer {
     }
 
     public static RemoteViews lock(Context c) {
-        RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_lock);
+        RemoteViews v = new RemoteViews(c.getPackageName(), WidgetGrid.layout(c, R.layout.widget_lock));
         bg(v, c);
         Context tc = OverlayWidgetViews.themeContext(c);
-        v.setInt(R.id.img_lock, "setColorFilter", tc.getColor(R.color.wg_text));
+        if (WidgetAppearance.usesGlass(c)) {
+            ClimateWidgetIcons.forRemote(c, tc, v)
+                    .chromeGlyph(R.id.img_lock, R.drawable.wg_ic_lock, ClimateWidgetIcons.ACTION_ICON_DP);
+        } else {
+            v.setInt(R.id.img_lock, "setColorFilter", tc.getColor(R.color.wg_text));
+        }
         Intent intent = new Intent(c, LockActivity.class)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pending = PendingIntent.getActivity(c, 0x4c4f434b, intent,
@@ -381,16 +422,21 @@ public final class WidgetsRenderer {
                 WidgetsCommon.bgDrawableResForPct(c));
     }
 
-    private static void chip(RemoteViews v, Context c, int chipId, int textId, boolean active) {
-        chip(v, c, chipId, textId, active, 0);
+    private static void chip(RemoteViews v, Context c, int chipId, int textId, int label, boolean active) {
+        chip(v, c, chipId, textId, label, active, 0);
     }
 
     /** accent: 0 — синий, 1 — зелёный, 2 — красный. */
-    private static void chip(RemoteViews v, Context c, int chipId, int textId,
+    private static void chip(RemoteViews v, Context c, int chipId, int textId, int label,
                              boolean active, int accent) {
         v.setInt(chipId, "setBackgroundResource", WidgetAppearance.chipBackground(
                 c, Prefs.widgetBgOpacity(c) < 10, active, accent));
         v.setTextColor(textId, WidgetAppearance.chipTextColor(c, active, accent));
+        boolean showLabel = !WidgetAppearance.usesGlass(c) || WidgetIconSizes.appWidgetLabels(c);
+        String caption = c.getString(label);
+        v.setTextViewText(textId, caption);
+        v.setViewVisibility(textId, showLabel ? View.VISIBLE : View.GONE);
+        v.setContentDescription(chipId, showLabel ? null : caption);
     }
 
     private static void roundControls(RemoteViews v, Context c, int first, int second) {
@@ -404,6 +450,9 @@ public final class WidgetsRenderer {
                                  int chipId, int textId, boolean active) {
         v.setInt(chipId, "setBackgroundResource",
                 icons.buttonBackground(transparent, active, false, true));
+        if (v.getLayoutId() == R.layout.widget_glass_vent) {
+            v.setViewPadding(chipId, 2, 0, 2, 2);
+        }
         climateCaption(v, icons, chipId, textId, icons.ventCaption(textId));
         v.setTextColor(textId, icons.buttonTextColor(active, true));
     }

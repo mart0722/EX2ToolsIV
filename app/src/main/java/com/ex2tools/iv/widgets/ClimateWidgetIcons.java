@@ -5,11 +5,11 @@ import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
-import android.graphics.Shader;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.text.SpannableString;
@@ -29,15 +29,12 @@ import com.ex2tools.iv.R;
 
 /** Shared icon artwork and state for launcher and overlay climate widgets. */
 final class ClimateWidgetIcons {
+    static final int ACTION_ICON_DP = 38;
     private static final int VIEWPORT = 96;
     private static final int MAX_BITMAP_SIZE = 144;
     private static final float FIGMA_TO_VIEWPORT = VIEWPORT / 44f;
     private static final int SEAT_GAP_LEFT = 36;
     private static final int SEAT_GAP_RIGHT = 50;
-    private static final int[] STEEL = {0xFF24384C, 0xFF60788F, 0xFF324A60, 0xFF30495F};
-    private static final int[] TITANIUM = {0xFFA6BED5, 0xFFF7FAFF, 0xFF8AA4C0, 0xFFCAD8E9};
-    private static final float[] STEEL_STOPS = {0f, .27f, .47f, 1f};
-    private static final float[] TITANIUM_STOPS = {0f, .27f, .52f, 1f};
     private static final LruCache<String, Bitmap> CACHE = new LruCache<>(64);
 
     private static final int[] COOL_GRADIENTS = {R.drawable.bg_wg_climate_air,
@@ -60,6 +57,7 @@ final class ClimateWidgetIcons {
         FACE_FLOOR(R.array.wg_chrome_face_floor),
         WIPERS(R.array.wg_icon_wipers),
         POWER_OFF(R.array.wg_icon_power_off),
+        REGEN(R.array.wg_icon_regen),
         FLOOR_GLASS(R.array.wg_chrome_floor_glass);
 
         final int pathResource;
@@ -102,12 +100,12 @@ final class ClimateWidgetIcons {
     private Float airflowDelta;
     private Integer airflowGradient;
 
-    private ClimateWidgetIcons(Context c, int iconSizePct, boolean showLabels, Target target) {
+    private ClimateWidgetIcons(Context c, float iconScale, boolean showLabels, Target target) {
         context = c;
         this.target = target;
         resources = c.getResources();
         style = Prefs.climateIconStyle(c);
-        iconScale = iconSizePct / 100f;
+        this.iconScale = iconScale;
         this.showLabels = showLabels;
         accentBoost = usesOutline() && Prefs.widgetAccentBoost(c);
         night = (resources.getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK)
@@ -151,15 +149,17 @@ final class ClimateWidgetIcons {
     }
 
     static ClimateWidgetIcons forRemote(Context widgetContext, Context theme, RemoteViews views) {
-        return new ClimateWidgetIcons(theme, WidgetIconSizes.appWidgetSize(widgetContext),
+        return new ClimateWidgetIcons(theme, WidgetIconSizes.appWidgetIconScale(widgetContext),
                 WidgetIconSizes.appWidgetLabels(widgetContext), views::setImageViewBitmap);
     }
 
     static ClimateWidgetIcons forOverlay(Context c, View root, String key) {
-        return new ClimateWidgetIcons(c, Prefs.climateIconSizePct(c, key),
+        int pct = WidgetAppearance.usesGlass(c) ? Prefs.glassWidgetIconSizePct(c)
+                : Prefs.climateIconSizePct(c, key);
+        return new ClimateWidgetIcons(c, pct / 100f,
                 Prefs.climateIconLabels(c, key), (id, bitmap) -> {
             ImageView image = root.findViewById(id);
-            image.setImageBitmap(bitmap);
+            if (image != null) image.setImageBitmap(bitmap);
         });
     }
 
@@ -171,13 +171,41 @@ final class ClimateWidgetIcons {
         vent(R.id.img_vent_face, 1, directions ? (mode & 1) != 0 : mode == 1);
         vent(R.id.img_vent_floor, 2, directions ? (mode & 2) != 0 : mode == 2);
         vent(R.id.img_vent_windshield, 4, directions ? (mode & 4) != 0 : mode == 4);
-        vent(R.id.img_vent_face_floor, 3, mode == 3);
-        vent(R.id.img_vent_floor_windshield, 6, mode == 6);
+        if (!directions) {
+            vent(R.id.img_vent_face_floor, 3, mode == 3);
+            vent(R.id.img_vent_floor_windshield, 6, mode == 6);
+        }
         recirculation(R.id.img_recirc);
     }
 
     void recirculation(int id) {
-        set(id, R.drawable.wg_ic_recirc, false, null, 0);
+        if (usesOutline()) {
+            chromeGlyph(id, R.drawable.wg_ic_recirc, id == R.id.img_recirc_v ? 22 : ACTION_ICON_DP);
+        } else {
+            set(id, R.drawable.wg_ic_recirc, false, null, 0);
+        }
+    }
+
+    void driveAndRegen() {
+        chromeGlyph(R.id.img_drive_eco, R.drawable.wg_ic_drive_eco, ACTION_ICON_DP);
+        chromeGlyph(R.id.img_drive_comfort, R.drawable.wg_ic_drive_comfort, ACTION_ICON_DP);
+        chromeGlyph(R.id.img_drive_sport, R.drawable.wg_ic_drive_sport, ACTION_ICON_DP);
+        regen(R.id.img_regen_low, 1);
+        regen(R.id.img_regen_mid, 2);
+        regen(R.id.img_regen_high, 3);
+    }
+
+    void regen(int id, int level) {
+        target.set(id, bitmap(Shape.REGEN, level, pixels(ACTION_ICON_DP), null, false));
+    }
+
+    void chromeGlyph(int id, int resource, int baseDp) {
+        target.set(id, drawableBitmap(resource, false, pixels(baseDp), false, true));
+    }
+
+    private int pixels(int baseDp) {
+        return Math.max(1, Math.round(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                baseDp * iconScale, resources.getDisplayMetrics())));
     }
 
     void vent(int id, int mode, boolean active) {
@@ -194,13 +222,17 @@ final class ClimateWidgetIcons {
 
     void heating(Boolean wheel, Boolean rear, Boolean windshield,
                  Integer driver, Integer passenger) {
-        set(R.id.img_wheel_heat, night ? R.drawable.wg_ic_wheel_heat_dark
-                : R.drawable.wg_ic_wheel_heat_light, false, Shape.WHEEL, on(wheel) ? 3 : 0);
+        wheelHeat(wheel);
         set(R.id.img_front_rear_defrost, night ? R.drawable.wg_ic_rear_heat_dark
                 : R.drawable.wg_ic_rear_heat_light, false, Shape.REAR, on(rear) ? 1 : 0);
         windshieldHeat(windshield);
         set(R.id.img_seat_heat_driver, R.drawable.wg_ic_seat, true, Shape.SEAT, seatLevel(driver));
         set(R.id.img_seat_heat_passenger, R.drawable.wg_ic_seat, true, Shape.SEAT, seatLevel(passenger));
+    }
+
+    void wheelHeat(Boolean wheel) {
+        set(R.id.img_wheel_heat, night ? R.drawable.wg_ic_wheel_heat_dark
+                : R.drawable.wg_ic_wheel_heat_light, false, Shape.WHEEL, on(wheel) ? 3 : 0);
     }
 
     void windshieldHeat(Boolean windshield) {
@@ -296,11 +328,10 @@ final class ClimateWidgetIcons {
     }
 
     private void set(int id, int resource, boolean tinted, Shape shape, int level) {
-        int baseSize = 38;
-        if (id == R.id.img_vent_mode) baseSize = 64;
+        int baseSize = ACTION_ICON_DP;
+        if (id == R.id.img_vent_mode && !usesOutline()) baseSize = 64;
         else if (id == R.id.img_recirc_v) baseSize = 22;
-        int size = Math.max(1, Math.round(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
-                baseSize * iconScale, resources.getDisplayMetrics())));
+        int size = pixels(baseSize);
         boolean mirrored = id == R.id.img_seat_heat_passenger;
         SeatMark mark = null;
         if (shape == Shape.SEAT && !showLabels) {
@@ -308,12 +339,14 @@ final class ClimateWidgetIcons {
         }
         Bitmap icon = (usesOutline() && shape != null) || mark != null
                 ? bitmap(shape, level, size, mark, mirrored)
-                : legacyBitmap(resource, tinted, size, mirrored);
+                : drawableBitmap(resource, tinted, size, mirrored, false);
         target.set(id, icon);
     }
 
-    private Bitmap legacyBitmap(int resource, boolean tinted, int size, boolean mirrored) {
+    private Bitmap drawableBitmap(int resource, boolean tinted, int size, boolean mirrored,
+                                  boolean chrome) {
         String key = "drawable:" + resource + ':' + size + ':' + night + ':' + (tinted ? ink : 0)
+                + ':' + (chrome ? style : "")
                 + ':' + resources.getDisplayMetrics().densityDpi + ':' + mirrored;
         Bitmap cached = CACHE.get(key);
         if (cached != null) return cached;
@@ -331,6 +364,13 @@ final class ClimateWidgetIcons {
         Canvas canvas = new Canvas(icon);
         if (mirrored) mirrorHorizontally(canvas, icon.getWidth());
         drawable.draw(canvas);
+        if (chrome) {
+            Paint metal = new Paint(Paint.ANTI_ALIAS_FLAG);
+            metal.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
+            if (style == Prefs.ClimateIconStyle.THIN) metal.setColor(neutral);
+            else metal.setShader(WidgetAppearance.chromeGradient(night, top, top + height));
+            canvas.drawRect(0, 0, icon.getWidth(), icon.getHeight(), metal);
+        }
         CACHE.put(key, icon);
         return icon;
     }
@@ -352,6 +392,7 @@ final class ClimateWidgetIcons {
     private Bitmap bitmap(Shape shape, int level, int size, SeatMark mark, boolean mirrored) {
         int accent = level == 0 ? neutral : switch (shape) {
             case FRONT_AIR, FACE, FLOOR, FACE_FLOOR, FLOOR_GLASS -> airflowColor();
+            case REGEN -> blue;
             default -> amber;
         };
         String key = shape.name() + ':' + style + ':' + level + ':' + night + ':' + accent + ':' + size
@@ -380,7 +421,7 @@ final class ClimateWidgetIcons {
             boolean active = layer > 0 && layer <= level;
             paint.setShader(null);
             paint.setColor(active || (waves && level > 0) ? accent
-                    : multiLevelHeat && layer > 0 ? inactiveHeat : neutral);
+                    : layer > 0 && (multiLevelHeat || shape == Shape.REGEN) ? inactiveHeat : neutral);
             float width;
             if (extraThin) width = 0.25f;
             else if (thinChrome) width = 0.75f;
@@ -395,15 +436,14 @@ final class ClimateWidgetIcons {
             if ((thick || thinChrome || extraThin || seatGap) && layer == 0) {
                 RectF bounds = new RectF();
                 path.computeBounds(bounds, true);
-                paint.setShader(new LinearGradient(0, bounds.top, 0, bounds.bottom,
-                        night ? TITANIUM : STEEL, night ? TITANIUM_STOPS : STEEL_STOPS,
-                        Shader.TileMode.CLAMP));
+                paint.setShader(WidgetAppearance.chromeGradient(night, bounds.top, bounds.bottom));
             }
             if (seatGap) {
                 canvas.save();
                 canvas.clipOutRect(SEAT_GAP_LEFT, 73, SEAT_GAP_RIGHT, VIEWPORT);
             }
-            if (!waves && shape != Shape.WIPERS && shape != Shape.POWER_OFF) {
+            if (!waves && shape != Shape.WIPERS && shape != Shape.POWER_OFF
+                    && !(shape == Shape.REGEN && layer == 0)) {
                 paint.setStyle(Paint.Style.FILL);
                 canvas.drawPath(path, paint);
             }

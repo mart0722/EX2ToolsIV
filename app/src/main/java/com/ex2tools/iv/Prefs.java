@@ -528,12 +528,34 @@ public final class Prefs {
         return get(c).getBoolean("vent_direction_buttons", false);
     }
 
-    public static void toggleVentDirectionButtons(Context c) {
-        get(c).edit().putBoolean("vent_direction_buttons", !ventDirectionButtons(c)).apply();
+    public static void setVentDirectionButtons(Context c, boolean enabled) {
+        get(c).edit().putBoolean("vent_direction_buttons", enabled).apply();
+    }
+
+    public static int glassWidgetSizePct(Context c) {
+        return Math.max(WIDGET_SIZE_MIN_PCT,
+                Math.min(WIDGET_SIZE_MAX_PCT, get(c).getInt("glass_widget_size_pct", 100)));
+    }
+
+    public static void setGlassWidgetSizePct(Context c, int pct) {
+        get(c).edit().putInt("glass_widget_size_pct",
+                Math.max(WIDGET_SIZE_MIN_PCT, Math.min(WIDGET_SIZE_MAX_PCT, pct))).apply();
+    }
+
+    public static int glassWidgetIconSizePct(Context c) {
+        return clampClimateIconSize(get(c).getInt("glass_widget_icon_size_pct", 100));
+    }
+
+    public static void setGlassWidgetIconSizePct(Context c, int pct) {
+        get(c).edit().putInt("glass_widget_icon_size_pct", clampClimateIconSize(pct)).apply();
     }
 
     public enum ClimateIconStyle {
-        STANDARD, THIN, EXTRA_THIN, CHROME_THIN, CHROME
+        STANDARD, THIN, EXTRA_THIN, CHROME_THIN, CHROME;
+
+        public boolean isChrome() {
+            return this == CHROME || this == CHROME_THIN;
+        }
     }
 
     public static ClimateIconStyle climateIconStyle(Context c) {

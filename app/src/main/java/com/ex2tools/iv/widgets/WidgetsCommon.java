@@ -29,7 +29,6 @@ public final class WidgetsCommon {
     public static final String FAN_PLUS = "com.ex2tools.iv.widget.FAN_PLUS";
     public static final String TEMP_MINUS = "com.ex2tools.iv.widget.TEMP_MINUS";
     public static final String TEMP_PLUS = "com.ex2tools.iv.widget.TEMP_PLUS";
-    public static final String VENT_WIDGET_MODE = "com.ex2tools.iv.widget.VENT_WIDGET_MODE";
     public static final String VENT_FACE = "com.ex2tools.iv.widget.VENT_FACE";
     public static final String VENT_FLOOR = "com.ex2tools.iv.widget.VENT_FLOOR";
     public static final String VENT_FACE_FLOOR = "com.ex2tools.iv.widget.VENT_FACE_FLOOR";
@@ -58,6 +57,7 @@ public final class WidgetsCommon {
     public static final String SIZE_TEMP = "temp";
     public static final String SIZE_VENT = "vent";
     public static final String SIZE_VENT_FAN = "vent_fan";
+    public static final String SIZE_WHEEL_HEAT = "wheel_heat";
     public static final String SIZE_WINDSHIELD_HEAT = "windshield_heat";
     public static final String SIZE_HEATING = "heating";
     public static final String SIZE_SPEED = "speed";
@@ -71,7 +71,7 @@ public final class WidgetsCommon {
     public static final String SIZE_CLIMATE = "climate";
 
     public static boolean isStandaloneVehicleButton(String key) {
-        return SIZE_WIPERS.equals(key) || SIZE_POWER_OFF.equals(key);
+        return SIZE_WIPERS.equals(key) || SIZE_POWER_OFF.equals(key) || SIZE_WHEEL_HEAT.equals(key);
     }
 
     public static final String CLIMATE_TARGET_MINUS = "com.ex2tools.iv.widget.CLIMATE_TARGET_MINUS";

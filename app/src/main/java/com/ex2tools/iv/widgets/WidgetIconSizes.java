@@ -14,6 +14,7 @@ public final class WidgetIconSizes {
                 || layout == R.layout.widget_hvac_direction_vertical
                 || layout == R.layout.widget_hvac_direction_fan
                 || layout == R.layout.widget_heating_test
+                || layout == R.layout.widget_wheel_heat
                 || layout == R.layout.widget_windshield_heat
                 || layout == R.layout.widget_wipers
                 || layout == R.layout.widget_power_off;
@@ -27,12 +28,19 @@ public final class WidgetIconSizes {
         return "app_widget_" + id;
     }
 
-    static Context appWidgetContext(Context context, int id) {
-        return new IconSizeContext(context, appWidgetKey(id));
+    static Context appWidgetContext(Context context, int id, float scale) {
+        return new IconSizeContext(context, appWidgetKey(id), scale);
     }
 
-    static int appWidgetSize(Context context) {
-        return Prefs.climateIconSizePct(context, appWidgetKey(context));
+    static float appWidgetScale(Context context) {
+        return context instanceof IconSizeContext sized ? sized.scale : 1f;
+    }
+
+    static float appWidgetIconScale(Context context) {
+        if (WidgetAppearance.usesGlass(context)) {
+            return Prefs.glassWidgetIconSizePct(context) / 100f * appWidgetScale(context);
+        }
+        return Prefs.climateIconSizePct(context, appWidgetKey(context)) / 100f;
     }
 
     static boolean appWidgetLabels(Context context) {
@@ -45,10 +53,12 @@ public final class WidgetIconSizes {
 
     private static final class IconSizeContext extends ContextWrapper {
         final String key;
+        final float scale;
 
-        IconSizeContext(Context context, String key) {
+        IconSizeContext(Context context, String key, float scale) {
             super(context);
             this.key = key;
+            this.scale = scale;
         }
     }
 }

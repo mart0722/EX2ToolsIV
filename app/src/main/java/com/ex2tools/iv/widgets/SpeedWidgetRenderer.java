@@ -30,7 +30,8 @@ final class SpeedWidgetRenderer {
                 ? Math.round(255f * Prefs.widgetBgOpacity(c) / 100f) : 0;
         float trip = WidgetsCommon.readTripKm(c);
         boolean showTrip = Prefs.speedShowTrip(c);
-        Bitmap bitmap = SpeedGaugePainter.render(c, BITMAP_SIZE, BITMAP_SIZE,
+        Context theme = Prefs.climateIconStyle(c).isChrome() ? OverlayWidgetViews.themeContext(c) : c;
+        Bitmap bitmap = SpeedGaugePainter.render(theme, BITMAP_SIZE, BITMAP_SIZE,
                 kmh, digital, backgroundAlpha, trip, showTrip && !digital);
         views.setImageViewBitmap(R.id.speed_gauge, bitmap);
 
@@ -46,6 +47,7 @@ final class SpeedWidgetRenderer {
                             | android.app.PendingIntent.FLAG_IMMUTABLE);
             views.setOnClickPendingIntent(R.id.speed_trip_tap, pending);
         }
-        return views;
+        return WidgetGrid.appWidgetSlot(c, AppWidgetManager.getInstance(c), appWidgetId,
+                R.layout.widget_speed).wrap(c, views);
     }
 }
