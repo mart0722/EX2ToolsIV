@@ -516,6 +516,24 @@ public final class Prefs {
         get(c).edit().putBoolean("overlay_" + key + "_enabled", value).apply();
     }
 
+    public static boolean overlayAlternateSelected(Context c, String primary, String alternate) {
+        SharedPreferences prefs = get(c);
+        boolean primaryEnabled = prefs.getBoolean("overlay_" + primary + "_enabled", false);
+        boolean alternateEnabled = prefs.getBoolean("overlay_" + alternate + "_enabled", false);
+        // App versions before the format selector only stored enabled widget keys.
+        if (primaryEnabled != alternateEnabled) return alternateEnabled;
+        return prefs.getBoolean("overlay_" + primary + "_alternate", false);
+    }
+
+    public static void setOverlayVariant(Context c, String primary, String alternate,
+                                         boolean useAlternate, boolean enabled) {
+        get(c).edit()
+                .putBoolean("overlay_" + primary + "_alternate", useAlternate)
+                .putBoolean("overlay_" + primary + "_enabled", enabled && !useAlternate)
+                .putBoolean("overlay_" + alternate + "_enabled", enabled && useAlternate)
+                .apply();
+    }
+
     public static boolean overlayPinned(Context c, String key) {
         return get(c).getBoolean("overlay_" + key + "_pinned", false);
     }

@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/widgetSettingsSpeed"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <TextView
+        style="@style/Text.EX2.Section"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="22dp"
+        android:text="@string/widgets_speed_mode" />
+
+    <com.ex2tools.iv.ui.FlymeSegmentedGroup
+        android:id="@+id/widgetSpeedModeGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/widgetSpeedDigital"
+            style="@style/Widget.EX2.Toggle"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:layout_weight="1"
+            android:minWidth="0dp"
+            android:text="@string/widgets_speed_digital" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/widgetSpeedAnalog"
+            style="@style/Widget.EX2.Toggle"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:layout_weight="1"
+            android:minWidth="0dp"
+            android:text="@string/widgets_speed_analog" />
+    </com.ex2tools.iv.ui.FlymeSegmentedGroup>
+
+    <com.ex2tools.iv.ui.FlymeSwitchRow
+        android:id="@+id/widgetSpeedBackground"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:text="@string/widgets_speed_bg"
+        android:textColor="@color/flyme_label_level1"
+        android:textSize="22sp" />
+
+    <com.ex2tools.iv.ui.FlymeSwitchRow
+        android:id="@+id/widgetSpeedTrip"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:text="@string/widgets_speed_trip"
+        android:textColor="@color/flyme_label_level1"
+        android:textSize="22sp" />
+
+    <TextView
+        style="@style/Text.EX2.Section"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:text="@string/widgets_speed_color" />
+
+    <com.ex2tools.iv.ui.FlymeSegmentedGroup
+        android:id="@+id/widgetSpeedColorGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/widgetSpeedColorWhite"
+            style="@style/Widget.EX2.Toggle"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:layout_weight="1"
+            android:minWidth="0dp"
+            android:text="@string/widgets_speed_color_white" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/widgetSpeedColorBlue"
+            style="@style/Widget.EX2.Toggle"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:layout_weight="1"
+            android:minWidth="0dp"
+            android:text="@string/widgets_speed_color_blue" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/widgetSpeedColorBlack"
+            style="@style/Widget.EX2.Toggle"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:layout_weight="1"
+            android:minWidth="0dp"
+            android:text="@string/widgets_speed_color_black" />
+    </com.ex2tools.iv.ui.FlymeSegmentedGroup>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/widgetSpeedTripReset"
+        style="@style/Widget.EX2.SecondaryButton"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_marginTop="14dp"
+        android:text="@string/widgets_speed_trip_reset"
+        android:textSize="18sp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/widgetSpeedReset"
+        style="@style/Widget.EX2.SecondaryButton"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_marginTop="14dp"
+        android:text="@string/widgets_overlay_reset"
+        android:textSize="18sp" />
+</LinearLayout>

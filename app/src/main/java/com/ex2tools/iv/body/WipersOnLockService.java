@@ -21,6 +21,7 @@ import com.ex2tools.iv.servicemode.ServiceModeManager;
 import com.ex2tools.iv.vehicle.VhalGateway;
 
 public final class WipersOnLockService extends Service {
+    private static final int IDLE = 0;
     private static final int LOCK = 1;
     private static final int UNLOCK = 3;
     private static final long MAX_EVENT_AGE_NS = 150_000_000L;
@@ -30,8 +31,9 @@ public final class WipersOnLockService extends Service {
     private Handler handler;
     private Car connection;
     private CarPropertyManager manager;
-    private boolean armed;
+    private boolean lockHandled;
     private long listenFromNs;
+    private long lastRequestNs;
     private volatile boolean stopping;
 
     private final Runnable subscribe = new Runnable() {
@@ -39,26 +41,24 @@ public final class WipersOnLockService extends Service {
         public void run() {
             if (stopping || manager != null || !enabled(WipersOnLockService.this)) return;
             if (gateway.ensure(WipersOnLockService.this)) {
-                CarPropertyValue<?> baseline = gateway.readValue(CarProps.ALL_DOORS_LOCK_REQUEST, 0);
-                if (baseline != null && baseline.getValue() instanceof Integer request) {
-                    armed = request == 0 || request == UNLOCK;
-                    listenFromNs = SystemClock.elapsedRealtimeNanos();
-                    try {
-                        if (connection == null) connection = Car.createCar(WipersOnLockService.this, handler);
-                        if (connection != null
-                                && connection.getCarManager("property") instanceof CarPropertyManager current
-                                && current.registerCallback(callback, CarProps.ALL_DOORS_LOCK_REQUEST, 0f)) {
+                try {
+                    if (connection == null) connection = Car.createCar(WipersOnLockService.this, handler);
+                    if (connection != null
+                            && connection.getCarManager("property") instanceof CarPropertyManager current) {
+                        // Registration may replay the retained value of this momentary request.
+                        listenFromNs = SystemClock.elapsedRealtimeNanos();
+                        if (current.registerCallback(callback, CarProps.ALL_DOORS_LOCK_REQUEST, 0f)) {
                             manager = current;
                             LogStore.add(WipersOnLockService.this, "wipers on lock: subscribed");
                             return;
                         }
-                    } catch (LinkageError e) {
-                        LogStore.add(WipersOnLockService.this, "wipers on lock unsupported: " + e);
-                        stopSelf();
-                        return;
-                    } catch (RuntimeException e) {
-                        LogStore.add(WipersOnLockService.this, "wipers on lock subscription: " + e);
                     }
+                } catch (LinkageError e) {
+                    LogStore.add(WipersOnLockService.this, "wipers on lock unsupported: " + e);
+                    stopSelf();
+                    return;
+                } catch (RuntimeException e) {
+                    LogStore.add(WipersOnLockService.this, "wipers on lock subscription: " + e);
                 }
             }
             handler.postDelayed(this, 2000L);
@@ -73,32 +73,39 @@ public final class WipersOnLockService extends Service {
                             || value.getAreaId() != 0 || !(value.getValue() instanceof Integer request)) {
                         return;
                     }
-                    long timestamp = value.getTimestamp();
-                    long age = SystemClock.elapsedRealtimeNanos() - timestamp;
-                    if (timestamp < listenFromNs || age < 0 || age > MAX_EVENT_AGE_NS) {
-                        if (request == LOCK && timestamp >= listenFromNs) {
-                            LogStore.add(WipersOnLockService.this, "wipers on lock: stale signal age=" + age / 1_000_000L + " ms");
-                        }
-                        return;
-                    }
-
                     // Flyme marks these request pulses with status 3, including genuine key lock events.
-                    if (request == UNLOCK) {
-                        armed = true;
-                    } else if (request == LOCK && armed && enabled(WipersOnLockService.this)) {
-                        armed = false;
-                        boolean sent = BodyController.get().raiseWipersOnLock();
-                        long elapsed = (SystemClock.elapsedRealtimeNanos() - timestamp) / 1_000_000L;
-                        LogStore.add(WipersOnLockService.this, "wipers on lock: "
-                                + (sent ? "request sent" : "request skipped or rejected")
-                                + ", received=" + age / 1_000_000L + " ms, completed=" + elapsed + " ms");
-                    }
+                    handleRequest(request, value.getTimestamp());
                 }
 
                 @Override
                 public void onErrorEvent(int propertyId, int areaId) {
                 }
             };
+
+    private void handleRequest(int request, long timestamp) {
+        if (request != IDLE && request != LOCK && request != UNLOCK) return;
+        long age = SystemClock.elapsedRealtimeNanos() - timestamp;
+        if (timestamp < listenFromNs || timestamp <= lastRequestNs || age < 0L) return;
+        lastRequestNs = timestamp;
+
+        // The request returns to neutral after each pulse. That transition can arrive
+        // after the actuation window and still ends the current pulse.
+        if (request == IDLE || request == UNLOCK) {
+            lockHandled = false;
+            return;
+        }
+        if (age > MAX_EVENT_AGE_NS) {
+            LogStore.add(this, "wipers on lock: stale signal age=" + age / 1_000_000L + " ms");
+            return;
+        }
+        if (lockHandled || !enabled(this)) return;
+        lockHandled = true;
+        BodyController.WipersOnLockResult result =
+                BodyController.get().raiseWipersOnLock(timestamp + MAX_EVENT_AGE_NS);
+        long elapsed = (SystemClock.elapsedRealtimeNanos() - timestamp) / 1_000_000L;
+        LogStore.add(this, "wipers on lock: " + result
+                + ", received=" + age / 1_000_000L + " ms, completed=" + elapsed + " ms");
+    }
 
     private static boolean enabled(Context context) {
         return Prefs.wipersOnLock(context) && !ServiceModeManager.isActive(context);

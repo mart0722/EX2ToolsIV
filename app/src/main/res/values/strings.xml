@@ -292,6 +292,16 @@
     <string name="widgets_mode_hint">Режим меняет только отображаемые настройки. Overlay-виджеты и обычные AppWidget работают одновременно.</string>
     <string name="widgets_overlay_group">Overlay-виджеты (поверх любого лаунчера)</string>
     <string name="widgets_overlay_size">Размер overlay</string>
+    <string name="widgets_scale_minus">Уменьшить масштаб на 5 процентов</string>
+    <string name="widgets_scale_plus">Увеличить масштаб на 5 процентов</string>
+    <string name="widgets_standard_empty">Добавьте виджет на рабочий стол лаунчера, чтобы открыть его настройки.</string>
+    <string name="widgets_variant_clock_regular">Обычные</string>
+    <string name="widgets_variant_clock_large">Большие</string>
+    <string name="widgets_variant_outside_temp">Температура за бортом</string>
+    <string name="widgets_variant_square">1×1</string>
+    <string name="widgets_variant_wide">2×1</string>
+    <string name="widgets_variant_airflow">Направление</string>
+    <string name="widgets_variant_airflow_fan">С вентилятором</string>
     <string name="widgets_overlay_alpha">Прозрачность overlay</string>
     <string name="widgets_overlay_settings_note">Размер и прозрачность overlay</string>
     <string name="widgets_overlay_note">Overlay-виджеты рисуются поверх текущего рабочего стола и скрываются при открытии приложений.</string>
