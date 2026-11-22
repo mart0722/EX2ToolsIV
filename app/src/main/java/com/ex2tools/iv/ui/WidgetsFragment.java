@@ -12,6 +12,7 @@ import android.os.Process;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextClock;
@@ -25,11 +26,13 @@ import androidx.fragment.app.Fragment;
 
 import com.ex2tools.iv.Prefs;
 import com.ex2tools.iv.R;
+import com.ex2tools.iv.car.RangeModel;
 import com.ex2tools.iv.state.VehicleState;
 import com.ex2tools.iv.widgets.ClockWidgetProvider;
 import com.ex2tools.iv.widgets.OverlayWidgetService;
 import com.ex2tools.iv.widgets.SpeedWidgetProvider;
 import com.ex2tools.iv.widgets.WidgetModes;
+import com.ex2tools.iv.widgets.WidgetCatalog;
 import com.ex2tools.iv.widgets.WidgetIconSizes;
 import com.ex2tools.iv.widgets.WidgetUpdateService;
 import com.ex2tools.iv.widgets.WidgetsCommon;
@@ -38,26 +41,25 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Date;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.IntConsumer;
 
 public final class WidgetsFragment extends Fragment {
 
     private static final String[] OVERLAY_KEYS = {
+            WidgetsCommon.SIZE_SPEED,
             WidgetsCommon.SIZE_CLOCK,
-            WidgetsCommon.SIZE_CLOCK_LARGE,
             WidgetsCommon.SIZE_OUTSIDE_TEMP,
-            WidgetsCommon.SIZE_OUTSIDE_TEMP_WIDE,
             WidgetsCommon.SIZE_DRIVE_REGEN,
             WidgetsCommon.SIZE_DRIVE_MODE,
             WidgetsCommon.SIZE_REGEN,
             WidgetsCommon.SIZE_FAN,
             WidgetsCommon.SIZE_TEMP,
             WidgetsCommon.SIZE_VENT,
-            WidgetsCommon.SIZE_VENT_FAN,
             WidgetsCommon.SIZE_RECIRC,
             WidgetsCommon.SIZE_HEATING,
             WidgetsCommon.SIZE_WINDSHIELD_HEAT,
@@ -68,30 +70,6 @@ public final class WidgetsFragment extends Fragment {
             WidgetsCommon.SIZE_LOCK,
             WidgetsCommon.SIZE_APPS,
             WidgetsCommon.SIZE_CLIMATE
-    };
-
-    private static final int[] OVERLAY_LABELS = {
-            R.string.widgets_size_clock,
-            R.string.widget_name_clock_large,
-            R.string.widget_name_outside_temp,
-            R.string.widget_name_outside_temp_wide,
-            R.string.widgets_size_drive_regen,
-            R.string.widgets_size_drive_mode,
-            R.string.widgets_size_regen,
-            R.string.widgets_size_fan,
-            R.string.widgets_size_temp,
-            R.string.widgets_size_vent,
-            R.string.widgets_size_vent_fan,
-            R.string.widget_name_recirc,
-            R.string.widgets_size_heating,
-            R.string.widget_name_windshield_heat,
-            R.string.widget_name_wheel_heat,
-            R.string.widgets_size_battery_range,
-            R.string.widget_name_wipers,
-            R.string.widget_name_power_off,
-            R.string.widgets_size_lock,
-            R.string.widgets_size_apps,
-            R.string.climate_title
     };
 
     private SeekBar opacity;
@@ -107,17 +85,17 @@ public final class WidgetsFragment extends Fragment {
     private View overlayPanel;
     private View standardPanel;
     private LinearLayout overlayList;
-    private FlymeSwitchRow speedEnabled;
-    private FlymeSwitchRow speedPinned;
+    private LinearLayout standardList;
+    private View standardEmpty;
+    private View clockSettings;
+    private View speedSettings;
+    private View ventSettings;
+    private View rangeSettings;
+    private View powerSettings;
+    private int rangeRefresh;
     private FlymeSwitchRow speedBackground;
     private FlymeSegmentedGroup speedModeGroup;
     private FlymeSegmentedGroup speedColorGroup;
-    private View speedSizeRow;
-    private SeekBar speedSize;
-    private TextView speedSizeValue;
-    private SeekBar speedAlpha;
-    private TextView speedAlphaValue;
-    private View speedAlphaRow;
     private View speedReset;
     private FlymeSwitchRow speedTrip;
     private View speedTripReset;
@@ -128,7 +106,6 @@ public final class WidgetsFragment extends Fragment {
     private FlymeSegmentedGroup ventMode;
     private FlymeSwitchRow ventShowRecirc;
     private View glassScaleControls;
-    private final List<View> individualScaleControls = new ArrayList<>();
     private final Handler scaleHandler = new Handler(Looper.getMainLooper());
     private final Runnable applyGlassScale = this::refreshGlassScale;
     private FlymeSwitchRow widgetCardBorder;
@@ -137,20 +114,16 @@ public final class WidgetsFragment extends Fragment {
     private FlymeSwitchRow widgetAccentBoost;
     private FlymeSwitchRow climateIconLabels;
     private FlymeSwitchRow widgetShowTitles;
-    private FlymeSwitchRow overlayHeatingSingleRow;
-    private FlymeSwitchRow overlayHeatingHideMaxAir;
-    private final Map<String, FlymeSwitchRow> overlayToggles = new LinkedHashMap<>();
-    private final Map<String, FlymeSwitchRow> overlayIconLabels = new LinkedHashMap<>();
-    private final Map<String, SeekBar> overlaySizeSeeks = new LinkedHashMap<>();
-    private final Map<String, SeekBar> overlayAlphaSeeks = new LinkedHashMap<>();
-    private final Map<String, TextView> overlaySizeValues = new LinkedHashMap<>();
-    private final Map<String, TextView> overlayAlphaValues = new LinkedHashMap<>();
+    private final List<OverlayCard> overlayCards = new ArrayList<>();
+    private final Map<String, FlymeSwitchRow> individualIconLabels = new LinkedHashMap<>();
+    private final Map<String, Integer> selectedAppWidgets = new LinkedHashMap<>();
     private FlymeSegmentedGroup appsModeGroup;
     private TextView appsCount;
     private TextView appsSelect;
     private boolean binding;
     private int nextOverlayRow;
     private Boolean overlayRowsClimateEnabled;
+    private Boolean showingOverlay;
     private final Runnable loadOverlayRows = this::appendOverlayRows;
 
     @Nullable
@@ -171,26 +144,22 @@ public final class WidgetsFragment extends Fragment {
         date = view.findViewById(R.id.clockDate);
         clockPreview = view.findViewById(R.id.clockPreview);
         clockDatePreview = view.findViewById(R.id.clockDatePreview);
-        wireRangeReset(view, c);
+        clockSettings = view.findViewById(R.id.widgetSettingsClock);
+        speedSettings = view.findViewById(R.id.widgetSettingsSpeed);
+        ventSettings = view.findViewById(R.id.widgetSettingsVent);
+        rangeSettings = view.findViewById(R.id.widgetSettingsRange);
+        powerSettings = view.findViewById(R.id.widgetSettingsPower);
+        wireRangeReset(c);
 
         modeGroup = view.findViewById(R.id.widgetModeGroup);
         overlayPanel = view.findViewById(R.id.widgetOverlayPanel);
         standardPanel = view.findViewById(R.id.widgetStandardPanel);
-        view.findViewById(R.id.widgetIndividualIconSizes).setOnClickListener(v -> showAppWidgetIconSizes());
         overlayList = view.findViewById(R.id.widgetOverlayList);
-        speedEnabled = view.findViewById(R.id.widgetSpeedOverlayEnabled);
-        speedPinned = view.findViewById(R.id.widgetSpeedOverlayPinned);
+        standardList = view.findViewById(R.id.widgetStandardList);
+        standardEmpty = view.findViewById(R.id.widgetStandardEmpty);
         speedBackground = view.findViewById(R.id.widgetSpeedBackground);
         speedModeGroup = view.findViewById(R.id.widgetSpeedModeGroup);
         speedColorGroup = view.findViewById(R.id.widgetSpeedColorGroup);
-        speedSizeRow = view.findViewById(R.id.widgetSpeedSizeRow);
-        speedSize = view.findViewById(R.id.widgetSpeedSizeSeek);
-        speedSize.setMax(Prefs.WIDGET_SIZE_MAX_PCT);
-        speedSize.setMin(Prefs.WIDGET_SIZE_MIN_PCT);
-        speedSizeValue = view.findViewById(R.id.widgetSpeedSizeValue);
-        speedAlpha = view.findViewById(R.id.widgetSpeedAlphaSeek);
-        speedAlphaValue = view.findViewById(R.id.widgetSpeedAlphaValue);
-        speedAlphaRow = view.findViewById(R.id.widgetSpeedAlphaRow);
         speedReset = view.findViewById(R.id.widgetSpeedReset);
         speedTrip = view.findViewById(R.id.widgetSpeedTrip);
         speedTripReset = view.findViewById(R.id.widgetSpeedTripReset);
@@ -232,8 +201,9 @@ public final class WidgetsFragment extends Fragment {
             WidgetUpdateService.sync(c);
         });
 
-        setupModeControls(c);
-        setupSpeedControls(c);
+        setupModeControls();
+        setupSpeedControls();
+        setupPlacementControls();
         setupStandardControls(c);
         climateIconStyle.addOnButtonCheckedListener((group, checkedId, checked) -> {
             if (binding || !checked) return;
@@ -246,6 +216,7 @@ public final class WidgetsFragment extends Fragment {
             else style = Prefs.ClimateIconStyle.CHROME;
             Prefs.setClimateIconStyle(context, style);
             updateAppearanceControls(context);
+            if (Boolean.FALSE.equals(showingOverlay)) renderStandardWidgets(context);
             if (opacityPreview != null) {
                 opacityPreview.setBackgroundResource(WidgetsCommon.bgDrawableResForPct(context));
             }
@@ -285,75 +256,120 @@ public final class WidgetsFragment extends Fragment {
         WidgetUpdateService.sync(context);
     }
 
-    private void showAppWidgetIconSizes() {
-        Context c = requireContext();
+    private record AppWidgetSetting(int id, int layout, CharSequence name) {}
+
+    private void renderStandardWidgets(Context c) {
+        standardList.removeAllViews();
+        individualIconLabels.clear();
         AppWidgetManager manager = AppWidgetManager.getInstance(c);
-        List<Integer> ids = new ArrayList<>();
-        List<CharSequence> labels = new ArrayList<>();
+        Map<String, List<AppWidgetSetting>> widgets = new LinkedHashMap<>();
         for (AppWidgetProviderInfo provider : manager.getInstalledProvidersForPackage(
                 c.getPackageName(), Process.myUserHandle())) {
-            if (!WidgetIconSizes.supportsLayout(provider.initialLayout)) continue;
-            if (usesGlass(c) && provider.initialLayout != R.layout.widget_heating_test
-                    && !hasIndividualLabels(provider.initialLayout)) continue;
-            int[] instances = manager.getAppWidgetIds(provider.provider);
+            int layout = provider.initialLayout;
+            String key = standardSettingsKey(layout);
+            if (key == null || (sharedSettings(key) == null
+                    && !hasAppWidgetOptions(c, layout))) continue;
+            int[] ids = manager.getAppWidgetIds(provider.provider);
             CharSequence name = provider.loadLabel(c.getPackageManager());
-            for (int id : instances) {
-                ids.add(id);
-                labels.add(instances.length == 1 ? name
-                        : getString(R.string.widgets_icon_size_instance, name, id));
+            for (int id : ids) {
+                CharSequence label = ids.length == 1 ? name
+                        : getString(R.string.widgets_icon_size_instance, name, id);
+                widgets.computeIfAbsent(key, unused -> new ArrayList<>())
+                        .add(new AppWidgetSetting(id, layout, label));
             }
         }
-        MaterialAlertDialogBuilder dialog = new MaterialAlertDialogBuilder(c)
-                .setTitle(R.string.widgets_individual_icon_sizes)
-                .setNegativeButton(android.R.string.cancel, null);
-        if (ids.isEmpty()) {
-            dialog.setMessage(usesGlass(c) ? R.string.widgets_individual_settings_empty_glass
-                    : R.string.widgets_individual_icon_sizes_empty).show();
-            return;
+        for (String key : OVERLAY_KEYS) {
+            List<AppWidgetSetting> instances = widgets.get(key);
+            if (instances != null) addStandardWidget(c, key, instances);
         }
-        dialog.setItems(labels.toArray(new CharSequence[0]), (d, which) -> {
-            int id = ids.get(which);
-            AppWidgetProviderInfo provider = manager.getAppWidgetInfo(id);
-            if (provider == null) return;
-            String key = WidgetIconSizes.appWidgetKey(id);
-            LinearLayout row = (LinearLayout) getLayoutInflater().inflate(
-                    R.layout.item_widget_icon_size, null);
-            FlymeSwitchRow singleRow = provider.initialLayout == R.layout.widget_heating_test
-                    ? heatingLayoutSwitch(c) : null;
-            FlymeSwitchRow hideMaxAir = singleRow == null ? null : heatingMaxAirSwitch(c);
-            if (singleRow != null) {
-                row.addView(singleRow);
-                row.addView(hideMaxAir);
-                singleRow.setOnCheckedChangeListener((button, checked) ->
-                        hideMaxAir.setVisibility(checked ? View.VISIBLE : View.GONE));
+        standardEmpty.setVisibility(widgets.isEmpty() ? View.VISIBLE : View.GONE);
+    }
+
+    private void addStandardWidget(Context c, String key, List<AppWidgetSetting> instances) {
+        View card = getLayoutInflater().inflate(R.layout.item_overlay_widget, standardList, false);
+        card.findViewById(R.id.overlayToggle).setVisibility(View.GONE);
+        TextView title = card.findViewById(R.id.standardWidgetTitle);
+        title.setText(widgetLabel(key));
+        title.setVisibility(View.VISIBLE);
+
+        LinearLayout body = card.findViewById(R.id.widgetSettingsBody);
+        body.setVisibility(View.VISIBLE);
+        addSharedSettings(key, body, true);
+        if (instances.stream().anyMatch(instance -> hasAppWidgetOptions(c, instance.layout()))) {
+            if (instances.size() == 1) {
+                addAppWidgetOptions(c, body, instances.get(0));
+            } else {
+                addAppWidgetSelector(c, body, key, instances);
             }
-            FlymeSwitchRow iconLabels = hasIndividualLabels(provider.initialLayout)
-                    ? iconLabelsSwitch(c, key) : null;
-            if (iconLabels != null) row.addView(iconLabels);
-            int padding = getResources().getDimensionPixelSize(R.dimen.card_padding);
-            row.setPadding(padding, padding, padding, 0);
-            SeekBar size = bindIconSize(row, Prefs.climateIconSizePct(c, key), pct -> {});
-            if (usesGlass(c)) {
-                row.getChildAt(0).setVisibility(View.GONE);
-                size.setVisibility(View.GONE);
+        }
+        if (WidgetsCommon.SIZE_HEATING.equals(key)) addHeatingSettings(c, body);
+        standardList.addView(card);
+    }
+
+    private void addAppWidgetSelector(Context c, LinearLayout body, String key,
+                                      List<AppWidgetSetting> instances) {
+        Button selector = new Button(c);
+        LinearLayout options = new LinearLayout(c);
+        options.setOrientation(LinearLayout.VERTICAL);
+        body.addView(selector);
+        body.addView(options);
+        CharSequence[] names = new CharSequence[instances.size()];
+        int selected = 0;
+        for (int i = 0; i < instances.size(); i++) {
+            AppWidgetSetting instance = instances.get(i);
+            names[i] = instance.name();
+            if (instance.id() == selectedAppWidgets.getOrDefault(key, -1)) selected = i;
+        }
+        IntConsumer select = index -> {
+            AppWidgetSetting instance = instances.get(index);
+            selectedAppWidgets.put(key, instance.id());
+            selector.setText(instance.name());
+            options.removeAllViews();
+            addAppWidgetOptions(c, options, instance);
+        };
+        select.accept(selected);
+        selector.setOnClickListener(v -> {
+            int checked = 0;
+            for (int i = 0; i < instances.size(); i++) {
+                if (instances.get(i).id() == selectedAppWidgets.getOrDefault(key, -1)) checked = i;
             }
             new MaterialAlertDialogBuilder(c)
-                    .setTitle(labels.get(which))
-                    .setView(row)
-                    .setNegativeButton(android.R.string.cancel, null)
-                    .setPositiveButton(android.R.string.ok, (sizeDialog, button) -> {
-                        if (manager.getAppWidgetInfo(id) == null) return;
-                        if (!usesGlass(c)) Prefs.setClimateIconSizePct(c, key, size.getProgress());
-                        if (iconLabels != null && iconLabels.isChecked() != Prefs.climateIconLabels(c, key)) {
-                            Prefs.setClimateIconLabels(c, key, iconLabels.isChecked());
-                        }
-                        if (singleRow != null) {
-                            setHeatingLayout(c, singleRow.isChecked(), hideMaxAir.isChecked());
-                        }
-                        WidgetUpdateService.sync(c);
+                    .setTitle(widgetLabel(key))
+                    .setSingleChoiceItems(names, checked, (dialog, index) -> {
+                        select.accept(index);
+                        dialog.dismiss();
                     })
+                    .setNegativeButton(android.R.string.cancel, null)
                     .show();
-        }).show();
+        });
+    }
+
+    private String standardSettingsKey(int layout) {
+        if (layout == R.layout.widget_clock_classic || layout == R.layout.widget_clock_classic_date
+                || layout == R.layout.widget_clock_large) return WidgetsCommon.SIZE_CLOCK;
+        if (layout == R.layout.widget_hvac_direction_vertical
+                || layout == R.layout.widget_hvac_direction_fan) return WidgetsCommon.SIZE_VENT;
+        for (String key : OVERLAY_KEYS) {
+            if (WidgetCatalog.layout(key) == layout) return key;
+        }
+        return null;
+    }
+
+    private static boolean hasAppWidgetOptions(Context c, int layout) {
+        return hasIndividualLabels(layout)
+                || (!usesGlass(c) && WidgetIconSizes.supportsLayout(layout));
+    }
+
+    private void addAppWidgetOptions(Context c, LinearLayout body, AppWidgetSetting widget) {
+        String key = WidgetIconSizes.appWidgetKey(widget.id());
+        if (hasIndividualLabels(widget.layout())) {
+            addIconLabels(c, body, key, () -> WidgetUpdateService.sync(c));
+        }
+        if (!usesGlass(c) && WidgetIconSizes.supportsLayout(widget.layout())) {
+            addPercentRow(body, R.string.widgets_climate_icon_size, Prefs.CLIMATE_ICON_MIN_PCT,
+                    Prefs.CLIMATE_ICON_MAX_PCT, Prefs.climateIconSizePct(c, key), true,
+                    pct -> Prefs.setClimateIconSizePct(c, key, pct), () -> WidgetUpdateService.sync(c));
+        }
     }
 
     private static boolean hasIndividualLabels(int layout) {
@@ -361,65 +377,119 @@ public final class WidgetsFragment extends Fragment {
                 || layout == R.layout.widget_wheel_heat || layout == R.layout.widget_recirc;
     }
 
-    private FlymeSwitchRow heatingLayoutSwitch(Context c) {
-        FlymeSwitchRow row = new FlymeSwitchRow(c);
-        row.setText(getString(R.string.widgets_heating_single_row));
-        row.setChecked(Prefs.heatingSingleRow(c));
-        return row;
-    }
-
-    private FlymeSwitchRow heatingMaxAirSwitch(Context c) {
-        FlymeSwitchRow row = new FlymeSwitchRow(c);
-        row.setText(getString(R.string.widgets_heating_hide_max_air));
-        row.setChecked(Prefs.heatingHideMaxAir(c));
-        row.setVisibility(Prefs.heatingSingleRow(c) ? View.VISIBLE : View.GONE);
-        return row;
-    }
-
-    private FlymeSwitchRow iconLabelsSwitch(Context c, String key) {
+    private void addIconLabels(Context c, LinearLayout body, String key, Runnable onChange) {
         FlymeSwitchRow row = new FlymeSwitchRow(c);
         row.setText(getString(R.string.widgets_climate_icon_labels));
         row.setChecked(Prefs.climateIconLabels(c, key));
+        row.setOnCheckedChangeListener((button, checked) -> {
+            if (binding || checked == Prefs.climateIconLabels(c, key)) return;
+            Prefs.setClimateIconLabels(c, key, checked);
+            onChange.run();
+        });
+        individualIconLabels.put(key, row);
+        body.addView(row);
+    }
+
+    private void addHeatingSettings(Context c, LinearLayout body) {
+        FlymeSwitchRow singleRow = new FlymeSwitchRow(c);
+        singleRow.setText(getString(R.string.widgets_heating_single_row));
+        singleRow.setChecked(Prefs.heatingSingleRow(c));
+        FlymeSwitchRow hideMaxAir = new FlymeSwitchRow(c);
+        hideMaxAir.setText(getString(R.string.widgets_heating_hide_max_air));
+        hideMaxAir.setChecked(Prefs.heatingHideMaxAir(c));
+        hideMaxAir.setVisibility(singleRow.isChecked() ? View.VISIBLE : View.GONE);
+        Runnable apply = () -> {
+            if (binding) return;
+            Prefs.setHeatingLayout(c, singleRow.isChecked(), hideMaxAir.isChecked());
+            hideMaxAir.setVisibility(singleRow.isChecked() ? View.VISIBLE : View.GONE);
+            OverlayWidgetService.restart(c);
+            WidgetUpdateService.sync(c);
+        };
+        singleRow.setOnCheckedChangeListener((button, checked) -> apply.run());
+        hideMaxAir.setOnCheckedChangeListener((button, checked) -> apply.run());
+        body.addView(singleRow);
+        body.addView(hideMaxAir);
+    }
+
+    private View sharedSettings(String key) {
+        return switch (key) {
+            case WidgetsCommon.SIZE_CLOCK -> clockSettings;
+            case WidgetsCommon.SIZE_SPEED -> speedSettings;
+            case WidgetsCommon.SIZE_VENT -> ventSettings;
+            case WidgetsCommon.SIZE_BATTERY_RANGE -> rangeSettings;
+            case WidgetsCommon.SIZE_POWER_OFF -> powerSettings;
+            default -> null;
+        };
+    }
+
+    private void addSharedSettings(String key, LinearLayout body, boolean standard) {
+        View settings = sharedSettings(key);
+        if (settings == null) return;
+        if (settings.getParent() instanceof ViewGroup oldParent) oldParent.removeView(settings);
+        body.addView(settings);
+        if (settings == speedSettings) speedReset.setVisibility(standard ? View.GONE : View.VISIBLE);
+        if (settings == rangeSettings) refreshRangeInfo();
+    }
+
+    private View addPercentRow(LinearLayout body, int label, int min, int max, int pct,
+                               boolean scale, IntConsumer save, Runnable onFinish) {
+        View row = getLayoutInflater().inflate(R.layout.item_widget_icon_size, body, false);
+        ((TextView) row.findViewById(R.id.widgetIconSizeLabel)).setText(label);
+        row.findViewById(R.id.widgetIconSize).setContentDescription(getString(label));
+        bindPercent(row, min, max, pct, scale, save, onFinish);
+        body.addView(row);
         return row;
     }
 
-    private void setHeatingLayout(Context c, boolean singleRow, boolean hideMaxAir) {
-        if (Prefs.heatingSingleRow(c) == singleRow && Prefs.heatingHideMaxAir(c) == hideMaxAir) return;
-        Prefs.setHeatingLayout(c, singleRow, hideMaxAir);
-        if (overlayHeatingSingleRow != null) overlayHeatingSingleRow.setChecked(singleRow);
-        if (overlayHeatingHideMaxAir != null) {
-            overlayHeatingHideMaxAir.setChecked(hideMaxAir);
-            overlayHeatingHideMaxAir.setVisibility(singleRow ? View.VISIBLE : View.GONE);
-        }
-        OverlayWidgetService.restart(c);
-    }
-
-    private SeekBar bindIconSize(View row, int pct, java.util.function.IntConsumer onChange) {
-        return bindScale(row, Prefs.CLIMATE_ICON_MIN_PCT, Prefs.CLIMATE_ICON_MAX_PCT, pct, onChange);
-    }
-
-    private SeekBar bindScale(View row, int min, int max, int pct,
-                              java.util.function.IntConsumer onChange) {
-        SeekBar size = row.findViewById(R.id.widgetIconSize);
+    private void bindPercent(View row, int min, int max, int pct,
+                             boolean scale, IntConsumer save, Runnable onFinish) {
+        SeekBar seek = row.findViewById(R.id.widgetIconSize);
         TextView value = row.findViewById(R.id.widgetIconSizeValue);
-        size.setMin(min);
-        size.setMax(max);
-        size.setProgress(pct);
-        value.setText(getString(R.string.widgets_percent_fmt, pct));
-        size.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+        View minus = row.findViewById(R.id.widgetScaleMinus);
+        View plus = row.findViewById(R.id.widgetScalePlus);
+        row.findViewById(R.id.widgetScaleSteps).setVisibility(scale ? View.VISIBLE : View.GONE);
+        seek.setMax(max);
+        seek.setMin(min);
+        seek.setProgress(pct);
+        IntConsumer showValue = progress -> {
+            value.setText(getString(R.string.widgets_percent_fmt, progress));
+            minus.setEnabled(progress > min);
+            plus.setEnabled(progress < max);
+        };
+        showValue.accept(seek.getProgress());
+        seek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            private boolean dragging;
+
             @Override
             public void onProgressChanged(SeekBar bar, int progress, boolean fromUser) {
-                value.setText(getString(R.string.widgets_percent_fmt, progress));
-                if (fromUser) onChange.accept(progress);
+                showValue.accept(progress);
+                if (fromUser) {
+                    save.accept(progress);
+                    if (!dragging) onFinish.run();
+                }
             }
 
             @Override
-            public void onStartTrackingTouch(SeekBar bar) {}
+            public void onStartTrackingTouch(SeekBar bar) {
+                dragging = true;
+            }
 
             @Override
-            public void onStopTrackingTouch(SeekBar bar) {}
+            public void onStopTrackingTouch(SeekBar bar) {
+                dragging = false;
+                onFinish.run();
+            }
         });
-        return size;
+        IntConsumer step = delta -> {
+            int current = seek.getProgress();
+            int progress = Math.max(min, Math.min(max, current + delta));
+            if (progress == current) return;
+            seek.setProgress(progress);
+            save.accept(progress);
+            onFinish.run();
+        };
+        minus.setOnClickListener(v -> step.accept(-5));
+        plus.setOnClickListener(v -> step.accept(5));
     }
 
     private void setupClimateIconControls() {
@@ -427,7 +497,10 @@ public final class WidgetsFragment extends Fragment {
             if (binding) return;
             Context c = requireContext();
             Prefs.setClimateIconLabels(c, checked);
-            overlayIconLabels.forEach((key, row) -> row.setChecked(Prefs.climateIconLabels(c, key)));
+            binding = true;
+            individualIconLabels.forEach((key, row) ->
+                    row.setChecked(Prefs.climateIconLabels(c, key)));
+            binding = false;
             VehicleState.get().requestDisplayRefresh();
             OverlayWidgetService.requestUpdate(c);
             WidgetUpdateService.sync(c);
@@ -445,23 +518,7 @@ public final class WidgetsFragment extends Fragment {
                 ? R.string.widgets_speed_color_chrome : R.string.widgets_speed_color_white);
         widgetAccentBoost.setVisibility(glass ? View.VISIBLE : View.GONE);
         glassScaleControls.setVisibility(glass ? View.VISIBLE : View.GONE);
-        for (View control : individualScaleControls) {
-            control.setVisibility(glass ? View.GONE : View.VISIBLE);
-        }
-        boolean legacySpeedScale = !glass && WidgetModes.current(c) == Prefs.WIDGET_MODE_STOCK;
-        speedSizeRow.setVisibility(legacySpeedScale ? View.VISIBLE : View.GONE);
-        speedSize.setVisibility(legacySpeedScale ? View.VISIBLE : View.GONE);
-        updateWindshieldOpacityControls(glass);
-    }
-
-    private void updateWindshieldOpacityControls(boolean glass) {
-        SeekBar seek = overlayAlphaSeeks.get(WidgetsCommon.SIZE_WINDSHIELD_HEAT);
-        TextView value = overlayAlphaValues.get(WidgetsCommon.SIZE_WINDSHIELD_HEAT);
-        if (seek != null && value != null && value.getParent() instanceof View row) {
-            int visibility = glass ? View.GONE : View.VISIBLE;
-            seek.setVisibility(visibility);
-            row.setVisibility(visibility);
-        }
+        for (OverlayCard card : overlayCards) card.updateAppearance();
     }
 
     private void setupGlassScale(View view, Context c) {
@@ -475,16 +532,16 @@ public final class WidgetsFragment extends Fragment {
     }
 
     private void bindGlassScale(View row, int label, int min, int max, int current,
-                                java.util.function.IntConsumer save) {
+                                IntConsumer save) {
         TextView title = row.findViewById(R.id.widgetIconSizeLabel);
         title.setText(label);
         SeekBar size = row.findViewById(R.id.widgetIconSize);
         size.setContentDescription(getString(label));
-        bindScale(row, min, max, current, pct -> {
+        bindPercent(row, min, max, current, true, pct -> {
             save.accept(pct);
             scaleHandler.removeCallbacks(applyGlassScale);
             scaleHandler.postDelayed(applyGlassScale, 200);
-        });
+        }, () -> {});
     }
 
     private void refreshGlassScale() {
@@ -495,7 +552,7 @@ public final class WidgetsFragment extends Fragment {
         WidgetUpdateService.sync(c);
     }
 
-    private void setupModeControls(Context c) {
+    private void setupModeControls() {
         View info = requireView().findViewById(R.id.widgetInfo);
         if (info != null) {
             info.setOnClickListener(v -> {
@@ -517,7 +574,7 @@ public final class WidgetsFragment extends Fragment {
             int current = WidgetModes.current(requireContext());
             if (mode == current) return;
             WidgetModes.set(requireContext(), mode);
-            updateModeUi();
+            updateModeUi(false);
         });
     }
 
@@ -526,7 +583,7 @@ public final class WidgetsFragment extends Fragment {
                 ? View.VISIBLE : View.GONE);
     }
 
-    private void setupSpeedControls(Context c) {
+    private void setupSpeedControls() {
         speedModeGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
             if (!isChecked || binding) return;
             Prefs.setSpeedMode(requireContext(), checkedId == R.id.widgetSpeedAnalog ? 1 : 0);
@@ -565,6 +622,14 @@ public final class WidgetsFragment extends Fragment {
                                 android.widget.Toast.LENGTH_SHORT).show();
                     });
         });
+        speedReset.setOnClickListener(v -> {
+            Context c = requireContext();
+            Prefs.setOverlayPos(c, WidgetsCommon.SIZE_SPEED, 40, 160);
+            OverlayWidgetService.restart(c);
+        });
+    }
+
+    private void setupPlacementControls() {
         overlayPlacement.addOnButtonCheckedListener((group, checkedId, checked) -> {
             if (binding || !checked) return;
             Context context = requireContext();
@@ -580,62 +645,6 @@ public final class WidgetsFragment extends Fragment {
             overlayLock.setOnCheckedChangeListener((b, checked) -> {
                 if (binding) return;
                 Prefs.setOverlayLock(requireContext(), checked);
-                OverlayWidgetService.restart(requireContext());
-            });
-        }
-        speedSize.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int pct, boolean fromUser) {
-                if (speedSizeValue != null) {
-                    speedSizeValue.setText(getString(R.string.widgets_percent_fmt, pct));
-                }
-                if (fromUser) {
-                    Prefs.setWidgetSizePct(requireContext(), WidgetsCommon.SIZE_SPEED, pct);
-                }
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-                OverlayWidgetService.restart(requireContext());
-            }
-        });
-        speedAlpha.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if (speedAlphaValue != null) {
-                    speedAlphaValue.setText(getString(R.string.widgets_percent_fmt, progress));
-                }
-                if (fromUser) {
-                    Prefs.setOverlayAlphaPct(requireContext(), WidgetsCommon.SIZE_SPEED, progress);
-                }
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-                OverlayWidgetService.restart(requireContext());
-            }
-        });
-        speedEnabled.setOnCheckedChangeListener((b, checked) -> {
-            if (binding) return;
-            Prefs.setOverlayEnabled(requireContext(), WidgetsCommon.SIZE_SPEED, checked);
-            OverlayWidgetService.sync(requireContext());
-        });
-        speedPinned.setOnCheckedChangeListener((b, checked) -> {
-            if (binding) return;
-            Prefs.setOverlayPinned(requireContext(), WidgetsCommon.SIZE_SPEED, checked);
-            OverlayWidgetService.sync(requireContext());
-        });
-        if (speedReset != null) {
-            speedReset.setOnClickListener(v -> {
-                Prefs.setOverlayPos(requireContext(), WidgetsCommon.SIZE_SPEED, 40, 160);
                 OverlayWidgetService.restart(requireContext());
             });
         }
@@ -706,9 +715,8 @@ public final class WidgetsFragment extends Fragment {
     private void ensureOverlayRows(Context c) {
         boolean climateEnabled = Prefs.climateEnabled(c);
         if (overlayRowsClimateEnabled == null || overlayRowsClimateEnabled != climateEnabled) {
-            overlayRowsClimateEnabled = climateEnabled;
-            nextOverlayRow = 0;
             resetOverlayRows();
+            overlayRowsClimateEnabled = climateEnabled;
         }
         if (nextOverlayRow < OVERLAY_KEYS.length) {
             overlayList.removeCallbacks(loadOverlayRows);
@@ -717,203 +725,224 @@ public final class WidgetsFragment extends Fragment {
     }
 
     private void resetOverlayRows() {
+        overlayList.removeCallbacks(loadOverlayRows);
         overlayList.removeAllViews();
-        individualScaleControls.clear();
-        overlayHeatingSingleRow = null;
-        overlayHeatingHideMaxAir = null;
-        overlayToggles.clear();
-        overlayIconLabels.clear();
-        overlaySizeSeeks.clear();
-        overlayAlphaSeeks.clear();
-        overlaySizeValues.clear();
-        overlayAlphaValues.clear();
+        overlayRowsClimateEnabled = null;
+        nextOverlayRow = 0;
+        overlayCards.clear();
+        individualIconLabels.clear();
         appsModeGroup = null;
         appsCount = null;
         appsSelect = null;
     }
 
     private void appendOverlayRows() {
-        if (getView() == null || overlayPanel.getVisibility() != View.VISIBLE) return;
+        if (getView() == null || !Boolean.TRUE.equals(showingOverlay)) return;
         Context c = requireContext();
-        LayoutInflater inflater = LayoutInflater.from(c);
         int end = Math.min(nextOverlayRow + 3, OVERLAY_KEYS.length);
         while (nextOverlayRow < end) {
-            appendOverlayRow(c, inflater, nextOverlayRow++);
+            String key = OVERLAY_KEYS[nextOverlayRow++];
+            if (!WidgetsCommon.SIZE_CLIMATE.equals(key) || Prefs.climateEnabled(c)) {
+                overlayCards.add(new OverlayCard(c, key));
+            }
         }
         if (nextOverlayRow < OVERLAY_KEYS.length) overlayList.postOnAnimation(loadOverlayRows);
-        else updateAppsUi();
     }
 
-    private void appendOverlayRow(Context c, LayoutInflater inflater, int i) {
-        final String key = OVERLAY_KEYS[i];
-        if (WidgetsCommon.SIZE_CLIMATE.equals(key) && !Prefs.climateEnabled(c)) {
-            return;
+    private static int widgetLabel(String key) {
+        return WidgetsCommon.SIZE_OUTSIDE_TEMP.equals(key)
+                ? R.string.widgets_variant_outside_temp : WidgetCatalog.get(key).labelRes;
+    }
+
+    private record OverlayVariants(String alternate, int primaryLabel, int alternateLabel) {
+        static OverlayVariants forWidget(String key) {
+            return switch (key) {
+                case WidgetsCommon.SIZE_CLOCK -> new OverlayVariants(WidgetsCommon.SIZE_CLOCK_LARGE,
+                        R.string.widgets_variant_clock_regular, R.string.widgets_variant_clock_large);
+                case WidgetsCommon.SIZE_OUTSIDE_TEMP -> new OverlayVariants(WidgetsCommon.SIZE_OUTSIDE_TEMP_WIDE,
+                        R.string.widgets_variant_square, R.string.widgets_variant_wide);
+                case WidgetsCommon.SIZE_VENT -> new OverlayVariants(WidgetsCommon.SIZE_VENT_FAN,
+                        R.string.widgets_variant_airflow, R.string.widgets_variant_airflow_fan);
+                default -> null;
+            };
         }
-        boolean apps = WidgetsCommon.SIZE_APPS.equals(key);
-        View card = inflater.inflate(apps
-                ? R.layout.item_overlay_apps
-                : R.layout.item_overlay_widget, overlayList, false);
-        FlymeSwitchRow toggle = card.findViewById(R.id.overlayToggle);
-        SeekBar sizeSeek = card.findViewById(R.id.overlaySizeSeek);
-        SeekBar alphaSeek = card.findViewById(R.id.overlayAlphaSeek);
-        TextView sizeValue = card.findViewById(R.id.overlaySizeValue);
-        TextView alphaValue = card.findViewById(R.id.overlayAlphaValue);
-        addIndividualScaleControl(c, card.findViewById(R.id.overlaySizeRow));
-        addIndividualScaleControl(c, sizeSeek);
-        if (WidgetsCommon.isStandaloneVehicleButton(key)) {
-            card.findViewById(R.id.overlayAlphaRow).setVisibility(View.GONE);
-            alphaSeek.setVisibility(View.GONE);
-        }
-        if (WidgetsCommon.SIZE_TEMP.equals(key)) {
-            LinearLayout controls = card.findViewById(R.id.overlayWidgetControls);
-            FlymeSwitchRow wideTemperature = new FlymeSwitchRow(c);
-            wideTemperature.setText(getString(R.string.widgets_overlay_wide_temperature));
-            wideTemperature.setChecked(Prefs.overlayWideTemperature(c));
-            wideTemperature.setOnCheckedChangeListener((button, checked) -> {
+    }
+
+    private final class OverlayCard {
+        private final Context context;
+        private final String key;
+        private final OverlayVariants variants;
+        private final FlymeSwitchRow toggle;
+        private final LinearLayout body;
+        private final LinearLayout options;
+        private FlymeSegmentedGroup format;
+        private String configuredKey;
+        private View sizeRow;
+        private View alphaRow;
+        private View iconRow;
+
+        OverlayCard(Context context, String key) {
+            this.context = context;
+            this.key = key;
+            variants = OverlayVariants.forWidget(key);
+            LayoutInflater inflater = getLayoutInflater();
+            View card = inflater.inflate(R.layout.item_overlay_widget, overlayList, false);
+            toggle = card.findViewById(R.id.overlayToggle);
+            toggle.setText(getString(widgetLabel(key)));
+            body = card.findViewById(R.id.widgetSettingsBody);
+            if (variants != null) {
+                format = (FlymeSegmentedGroup) inflater.inflate(
+                        R.layout.item_overlay_widget_variants, body, false);
+                ((TextView) format.findViewById(R.id.overlayVariantDefault))
+                        .setText(variants.primaryLabel());
+                ((TextView) format.findViewById(R.id.overlayVariantAlternate))
+                        .setText(variants.alternateLabel());
+                format.addOnButtonCheckedListener((group, id, checked) -> {
+                    if (binding || !checked || !toggle.isChecked()) return;
+                    Prefs.setOverlayVariant(context, key, variants.alternate(),
+                            id == R.id.overlayVariantAlternate, true);
+                    refresh();
+                    OverlayWidgetService.restart(context);
+                });
+                body.addView(format);
+            }
+            options = new LinearLayout(context);
+            options.setOrientation(LinearLayout.VERTICAL);
+            body.addView(options);
+            toggle.setOnCheckedChangeListener((button, checked) -> {
                 if (binding) return;
-                Prefs.setOverlayWideTemperature(c, checked);
-                OverlayWidgetService.restart(c);
+                if (variants == null) {
+                    Prefs.setOverlayEnabled(context, key, checked);
+                } else {
+                    Prefs.setOverlayVariant(context, key, variants.alternate(), alternateSelected(), checked);
+                }
+                refresh();
+                OverlayWidgetService.sync(context);
+                if (checked && WidgetsCommon.SIZE_APPS.equals(key) && Prefs.overlayApps(context).isEmpty()) {
+                    toggle.post(WidgetsFragment.this::openAppsPicker);
+                }
             });
-            controls.addView(wideTemperature, controls.indexOfChild(sizeSeek) + 1);
+            overlayList.addView(card);
+            refresh();
         }
 
-        if (WidgetIconSizes.supportsOverlay(key)) {
-            LinearLayout controls = card.findViewById(R.id.overlayWidgetControls);
-            LinearLayout iconSize = (LinearLayout) inflater.inflate(
-                    R.layout.item_widget_icon_size, controls, false);
-            controls.addView(iconSize, controls.indexOfChild(sizeSeek) + 1);
-            addIndividualScaleControl(c, iconSize.getChildAt(0));
-            addIndividualScaleControl(c, iconSize.findViewById(R.id.widgetIconSize));
-            if (WidgetsCommon.isStandaloneVehicleButton(key)) {
-                FlymeSwitchRow iconLabels = iconLabelsSwitch(c, key);
-                iconSize.addView(iconLabels);
-                iconLabels.setOnCheckedChangeListener((button, checked) -> {
-                    if (binding || checked == Prefs.climateIconLabels(c, key)) return;
-                    Prefs.setClimateIconLabels(c, key, checked);
-                    OverlayWidgetService.requestUpdate(c);
-                });
-                overlayIconLabels.put(key, iconLabels);
-            }
-            if (WidgetsCommon.SIZE_HEATING.equals(key)) {
-                overlayHeatingSingleRow = heatingLayoutSwitch(c);
-                overlayHeatingHideMaxAir = heatingMaxAirSwitch(c);
-                int heatingSettingsIndex = controls.indexOfChild(iconSize) + 1;
-                controls.addView(overlayHeatingSingleRow, heatingSettingsIndex);
-                controls.addView(overlayHeatingHideMaxAir, heatingSettingsIndex + 1);
-                overlayHeatingSingleRow.setOnCheckedChangeListener((button, checked) -> {
-                    if (binding || Prefs.heatingSingleRow(c) == checked) return;
-                    setHeatingLayout(c, checked, Prefs.heatingHideMaxAir(c));
-                    WidgetUpdateService.sync(c);
-                });
-                overlayHeatingHideMaxAir.setOnCheckedChangeListener((button, checked) -> {
-                    if (binding || !Prefs.heatingSingleRow(c) || Prefs.heatingHideMaxAir(c) == checked) return;
-                    setHeatingLayout(c, true, checked);
-                    WidgetUpdateService.sync(c);
-                });
-            }
-            bindIconSize(iconSize, Prefs.climateIconSizePct(c, key), pct -> {
-                Prefs.setClimateIconSizePct(c, key, pct);
-                OverlayWidgetService.requestUpdate(c);
-            });
+        private boolean alternateSelected() {
+            return variants != null && Prefs.overlayAlternateSelected(context, key, variants.alternate());
         }
 
-        toggle.setText(getString(OVERLAY_LABELS[i]));
-        int size = Prefs.overlaySizePct(c, key);
-        int alpha = Prefs.overlayAlphaPct(c, key);
-        toggle.setChecked(Prefs.overlayEnabled(c, key));
-        sizeSeek.setProgress(size - 50);
-        alphaSeek.setProgress(alpha);
-        sizeValue.setText(getString(R.string.widgets_percent_fmt, size));
-        alphaValue.setText(getString(R.string.widgets_percent_fmt, alpha));
-
-        toggle.setOnCheckedChangeListener((b, checked) -> {
-            if (binding) return;
-            Prefs.setOverlayEnabled(requireContext(), key, checked);
-            OverlayWidgetService.sync(requireContext());
-            if (apps && checked && Prefs.overlayApps(requireContext()).isEmpty()) {
-                b.post(this::openAppsPicker);
-            }
-        });
-
-        FlymeSwitchRow pin = card.findViewById(R.id.overlayPinned);
-        if (pin != null) {
-            pin.setText(getString(R.string.widgets_pin_over_apps));
-            pin.setChecked(Prefs.overlayPinned(c, key));
-            pin.setOnCheckedChangeListener((b, checked) -> {
-                if (binding) return;
-                Prefs.setOverlayPinned(requireContext(), key, checked);
-                OverlayWidgetService.restart(requireContext());
-            });
-        }
-
-        if (apps) {
-            appsModeGroup = card.findViewById(R.id.appsModeGroup);
-            appsCount = card.findViewById(R.id.appsCount);
-            appsSelect = card.findViewById(R.id.appsSelect);
+        void refresh() {
+            boolean enabled = Prefs.overlayEnabled(context, key)
+                    || (variants != null && Prefs.overlayEnabled(context, variants.alternate()));
+            boolean alternate = alternateSelected();
+            boolean wasExpanded = body.getVisibility() == View.VISIBLE;
+            boolean wasBinding = binding;
             binding = true;
-            appsModeGroup.check(Prefs.overlayAppsLayout(c) == 1
-                    ? R.id.appsModeGrid : R.id.appsModeRow);
-            binding = false;
-            appsModeGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
-                if (!isChecked || binding) return;
-                Prefs.setOverlayAppsLayout(requireContext(),
-                        checkedId == R.id.appsModeGrid ? 1 : 0);
-                OverlayWidgetService.restart(requireContext());
-            });
-            appsSelect.setOnClickListener(v -> openAppsPicker());
+            toggle.setChecked(enabled);
+            if (format != null) {
+                format.check(alternate ? R.id.overlayVariantAlternate : R.id.overlayVariantDefault);
+            }
+            binding = wasBinding;
+            body.setVisibility(enabled ? View.VISIBLE : View.GONE);
+            if (!enabled) return;
+
+            String selectedKey = alternate ? variants.alternate() : key;
+            if (!selectedKey.equals(configuredKey)) {
+                configure(selectedKey);
+            } else if (!wasExpanded && WidgetsCommon.SIZE_BATTERY_RANGE.equals(key)) {
+                refreshRangeInfo();
+            }
         }
-        sizeSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                int pct = progress + 50;
-                sizeValue.setText(getString(R.string.widgets_percent_fmt, pct));
-                if (fromUser) {
-                    Prefs.setOverlaySizePct(requireContext(), key, pct);
+
+        private void configure(String selectedKey) {
+            configuredKey = selectedKey;
+            options.removeAllViews();
+            sizeRow = null;
+            alphaRow = null;
+            iconRow = null;
+            addSharedSettings(key, options, false);
+
+            boolean apps = WidgetsCommon.SIZE_APPS.equals(key);
+            boolean speed = WidgetsCommon.SIZE_SPEED.equals(key);
+            if (apps) {
+                addAppsSettings(context, options);
+            } else {
+                FlymeSwitchRow pin = new FlymeSwitchRow(context);
+                pin.setText(getString(R.string.widgets_pin_over_apps));
+                pin.setChecked(Prefs.overlayPinned(context, selectedKey));
+                pin.setOnCheckedChangeListener((button, checked) -> {
+                    if (binding) return;
+                    Prefs.setOverlayPinned(context, selectedKey, checked);
+                    OverlayWidgetService.restart(context);
+                });
+                options.addView(pin);
+            }
+
+            Runnable restart = () -> OverlayWidgetService.restart(context);
+            sizeRow = addPercentRow(options,
+                    speed ? R.string.widgets_speed_size : R.string.widgets_overlay_size,
+                    Prefs.WIDGET_SIZE_MIN_PCT, speed ? Prefs.WIDGET_SIZE_MAX_PCT : 200,
+                    speed ? Prefs.widgetSizePct(context, selectedKey)
+                            : Prefs.overlaySizePct(context, selectedKey),
+                    true, pct -> {
+                        if (speed) Prefs.setWidgetSizePct(context, selectedKey, pct);
+                        else Prefs.setOverlaySizePct(context, selectedKey, pct);
+                    }, restart);
+            if (!WidgetsCommon.isStandaloneVehicleButton(selectedKey)) {
+                alphaRow = addPercentRow(options, R.string.widgets_overlay_alpha, 0, 100,
+                        Prefs.overlayAlphaPct(context, selectedKey), false,
+                        pct -> Prefs.setOverlayAlphaPct(context, selectedKey, pct), restart);
+            }
+
+            if (WidgetsCommon.SIZE_TEMP.equals(key)) {
+                FlymeSwitchRow wide = new FlymeSwitchRow(context);
+                wide.setText(getString(R.string.widgets_overlay_wide_temperature));
+                wide.setChecked(Prefs.overlayWideTemperature(context));
+                wide.setOnCheckedChangeListener((button, checked) -> {
+                    if (binding) return;
+                    Prefs.setOverlayWideTemperature(context, checked);
+                    restart.run();
+                });
+                options.addView(wide);
+            }
+            if (WidgetIconSizes.supportsOverlay(selectedKey)) {
+                iconRow = addPercentRow(options, R.string.widgets_climate_icon_size,
+                        Prefs.CLIMATE_ICON_MIN_PCT, Prefs.CLIMATE_ICON_MAX_PCT,
+                        Prefs.climateIconSizePct(context, selectedKey), true,
+                        pct -> Prefs.setClimateIconSizePct(context, selectedKey, pct),
+                        () -> OverlayWidgetService.requestUpdate(context));
+                if (WidgetsCommon.isStandaloneVehicleButton(selectedKey)) {
+                    addIconLabels(context, options, selectedKey,
+                            () -> OverlayWidgetService.requestUpdate(context));
                 }
             }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-                OverlayWidgetService.restart(requireContext());
-            }
-        });
-        alphaSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                alphaValue.setText(getString(R.string.widgets_percent_fmt, progress));
-                if (fromUser) {
-                    Prefs.setOverlayAlphaPct(requireContext(), key, progress);
-                }
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-                OverlayWidgetService.restart(requireContext());
-            }
-        });
-
-        overlayToggles.put(key, toggle);
-        overlaySizeSeeks.put(key, sizeSeek);
-        overlayAlphaSeeks.put(key, alphaSeek);
-        overlaySizeValues.put(key, sizeValue);
-        overlayAlphaValues.put(key, alphaValue);
-        if (WidgetsCommon.SIZE_WINDSHIELD_HEAT.equals(key)) {
-            updateWindshieldOpacityControls(usesGlass(c));
+            if (WidgetsCommon.SIZE_HEATING.equals(key)) addHeatingSettings(context, options);
+            updateAppearance();
         }
-        overlayList.addView(card);
+
+        void updateAppearance() {
+            boolean glass = usesGlass(context);
+            if (sizeRow != null) sizeRow.setVisibility(glass ? View.GONE : View.VISIBLE);
+            if (iconRow != null) iconRow.setVisibility(glass ? View.GONE : View.VISIBLE);
+            if (alphaRow != null && WidgetsCommon.SIZE_WINDSHIELD_HEAT.equals(key)) {
+                alphaRow.setVisibility(glass ? View.GONE : View.VISIBLE);
+            }
+        }
     }
 
-    private void addIndividualScaleControl(Context c, View view) {
-        individualScaleControls.add(view);
-        view.setVisibility(usesGlass(c) ? View.GONE : View.VISIBLE);
+    private void addAppsSettings(Context c, LinearLayout body) {
+        View settings = getLayoutInflater().inflate(R.layout.widget_settings_apps, body, false);
+        appsModeGroup = settings.findViewById(R.id.appsModeGroup);
+        appsCount = settings.findViewById(R.id.appsCount);
+        appsSelect = settings.findViewById(R.id.appsSelect);
+        appsModeGroup.check(Prefs.overlayAppsLayout(c) == 1 ? R.id.appsModeGrid : R.id.appsModeRow);
+        appsModeGroup.addOnButtonCheckedListener((group, id, checked) -> {
+            if (binding || !checked) return;
+            Prefs.setOverlayAppsLayout(c, id == R.id.appsModeGrid ? 1 : 0);
+            OverlayWidgetService.restart(c);
+        });
+        appsSelect.setOnClickListener(v -> openAppsPicker());
+        body.addView(settings);
+        updateAppsUi();
     }
 
     private void updateAll() {
@@ -923,17 +952,6 @@ public final class WidgetsFragment extends Fragment {
         updateOpacityText(p);
         if (opacityPreview != null) {
             opacityPreview.setBackgroundResource(WidgetsCommon.bgDrawableResForPct(c));
-        }
-
-        int speedPct = Prefs.widgetSizePct(c, WidgetsCommon.SIZE_SPEED);
-        if (speedSize != null) speedSize.setProgress(speedPct);
-        if (speedSizeValue != null) {
-            speedSizeValue.setText(getString(R.string.widgets_percent_fmt, speedPct));
-        }
-        int speedAlphaPct = Prefs.overlayAlphaPct(c, WidgetsCommon.SIZE_SPEED);
-        if (speedAlpha != null) speedAlpha.setProgress(speedAlphaPct);
-        if (speedAlphaValue != null) {
-            speedAlphaValue.setText(getString(R.string.widgets_percent_fmt, speedAlphaPct));
         }
 
         binding = true;
@@ -971,57 +989,36 @@ public final class WidgetsFragment extends Fragment {
         widgetAccentBoost.setChecked(Prefs.widgetAccentBoost(c));
         climateIconLabels.setChecked(Prefs.climateIconLabels(c));
         widgetShowTitles.setChecked(Prefs.widgetTitles(c));
-        speedEnabled.setChecked(Prefs.overlayEnabled(c, WidgetsCommon.SIZE_SPEED));
-        speedPinned.setChecked(Prefs.overlayPinned(c, WidgetsCommon.SIZE_SPEED));
-        if (appsModeGroup != null) {
-            appsModeGroup.check(Prefs.overlayAppsLayout(c) == 1
-                    ? R.id.appsModeGrid : R.id.appsModeRow);
-        }
-        for (String key : OVERLAY_KEYS) {
-            FlymeSwitchRow toggle = overlayToggles.get(key);
-            SeekBar sizeSeek = overlaySizeSeeks.get(key);
-            SeekBar alphaSeek = overlayAlphaSeeks.get(key);
-            TextView sizeValue = overlaySizeValues.get(key);
-            TextView alphaValue = overlayAlphaValues.get(key);
-            if (toggle != null) toggle.setChecked(Prefs.overlayEnabled(c, key));
-            int size = Prefs.overlaySizePct(c, key);
-            int alpha = Prefs.overlayAlphaPct(c, key);
-            if (sizeSeek != null) sizeSeek.setProgress(size - 50);
-            if (alphaSeek != null) alphaSeek.setProgress(alpha);
-            if (sizeValue != null) sizeValue.setText(getString(R.string.widgets_percent_fmt, size));
-            if (alphaValue != null) alphaValue.setText(getString(R.string.widgets_percent_fmt, alpha));
-        }
         binding = false;
 
         updateClockPreview();
-        updateModeUi();
-        updateAppsUi();
+        updateModeUi(true);
+        if (Boolean.TRUE.equals(showingOverlay) && rangeSettings.isShown()) refreshRangeInfo();
     }
 
-    private void wireRangeReset(View view, Context c) {
-        TextView info = view.findViewById(R.id.widgetRangeInfo);
-        View reset = view.findViewById(R.id.widgetRangeReset);
-        Context app = c.getApplicationContext();
-        if (info != null) {
-            new Thread(() -> {
-                float estimate = com.ex2tools.iv.car.RangeModel.estimateKm(app);
-                float learned = com.ex2tools.iv.car.RangeModel.learnedKm(app);
-                info.post(() -> {
-                    if (getView() == view && info.getTag() == null) showRangeInfo(info, estimate, learned);
-                });
-            }, "ex2-widget-range").start();
-        }
-        if (reset != null) {
-            reset.setOnClickListener(v -> {
-                com.ex2tools.iv.car.RangeModel.reset(c);
-                if (info != null) {
-                    info.setTag(Boolean.TRUE);
-                    showRangeInfo(info, Float.NaN, 0f);
-                }
-                Toast.makeText(c, R.string.widgets_range_reset_done, Toast.LENGTH_SHORT).show();
-                WidgetUpdateService.start(c);
+    private void wireRangeReset(Context c) {
+        rangeSettings.findViewById(R.id.widgetRangeReset).setOnClickListener(v -> {
+            rangeRefresh++;
+            RangeModel.reset(c);
+            showRangeInfo(rangeSettings.findViewById(R.id.widgetRangeInfo), Float.NaN, 0f);
+            Toast.makeText(c, R.string.widgets_range_reset_done, Toast.LENGTH_SHORT).show();
+            WidgetUpdateService.sync(c);
+            OverlayWidgetService.requestUpdate(c);
+        });
+    }
+
+    private void refreshRangeInfo() {
+        Context app = requireContext().getApplicationContext();
+        View view = getView();
+        TextView info = rangeSettings.findViewById(R.id.widgetRangeInfo);
+        int refresh = ++rangeRefresh;
+        new Thread(() -> {
+            float estimate = RangeModel.estimateKm(app);
+            float learned = RangeModel.learnedKm(app);
+            scaleHandler.post(() -> {
+                if (getView() == view && refresh == rangeRefresh) showRangeInfo(info, estimate, learned);
             });
-        }
+        }, "ex2-widget-range").start();
     }
 
     private void showRangeInfo(TextView info, float estimate, float learned) {
@@ -1029,9 +1026,10 @@ public final class WidgetsFragment extends Fragment {
                 ? getString(R.string.widgets_range_info, String.format(Locale.US, "%.0f", learned))
                 : getString(R.string.widgets_range_learned, String.format(Locale.US, "%.0f", estimate));
         info.setText(text);
+        info.setVisibility(View.VISIBLE);
     }
 
-    private void updateModeUi() {
+    private void updateModeUi(boolean refreshStandard) {
         if (!isAdded() || modeGroup == null) return;
         Context c = requireContext();
         int mode = WidgetModes.current(c);
@@ -1041,24 +1039,20 @@ public final class WidgetsFragment extends Fragment {
         binding = false;
 
         boolean stock = mode == Prefs.WIDGET_MODE_STOCK;
-        // The selector only changes the settings panel. Both widget types can run together.
+        boolean modeChanged = showingOverlay == null || showingOverlay != stock;
+        showingOverlay = stock;
         overlayPanel.setVisibility(stock ? View.VISIBLE : View.GONE);
-        if (stock) ensureOverlayRows(c);
         standardPanel.setVisibility(stock ? View.GONE : View.VISIBLE);
-        speedEnabled.setVisibility(stock ? View.VISIBLE : View.GONE);
-        speedPinned.setVisibility(stock ? View.VISIBLE : View.GONE);
-        speedReset.setVisibility(stock ? View.VISIBLE : View.GONE);
-        if (speedSizeRow != null) {
-            speedSizeRow.setVisibility(stock && !usesGlass(c) ? View.VISIBLE : View.GONE);
+        if (modeChanged) {
+            resetOverlayRows();
+            standardList.removeAllViews();
         }
-        if (speedSize != null) {
-            speedSize.setVisibility(stock && !usesGlass(c) ? View.VISIBLE : View.GONE);
-        }
-        if (speedAlphaRow != null) {
-            speedAlphaRow.setVisibility(stock ? View.VISIBLE : View.GONE);
-        }
-        if (speedAlpha != null) {
-            speedAlpha.setVisibility(stock ? View.VISIBLE : View.GONE);
+        if (stock) {
+            ensureOverlayRows(c);
+            for (OverlayCard card : overlayCards) card.refresh();
+            updateAppsUi();
+        } else if (modeChanged || refreshStandard) {
+            renderStandardWidgets(c);
         }
     }
 
@@ -1073,8 +1067,9 @@ public final class WidgetsFragment extends Fragment {
     }
 
     private void openAppsPicker() {
-        if (!isAdded()) return;
+        if (!isAdded() || !Boolean.TRUE.equals(showingOverlay)) return;
         Context c = requireContext();
+        if (!Prefs.overlayEnabled(c, WidgetsCommon.SIZE_APPS)) return;
         AppsPickerDialog.show(c, () -> {
             if (!isAdded()) return;
             updateAppsUi();
@@ -1153,10 +1148,6 @@ public final class WidgetsFragment extends Fragment {
         return R.id.clockColorAuto;
     }
 
-    private int dp(int value) {
-        return Math.round(value * getResources().getDisplayMetrics().density);
-    }
-
     @Override
     public void onResume() {
         super.onResume();
@@ -1165,15 +1156,17 @@ public final class WidgetsFragment extends Fragment {
         view.postDelayed(() -> {
             if (getView() != view) return;
             OverlayWidgetService.sync(requireContext());
-            updateModeUi();
+            updateModeUi(false);
         }, 100);
     }
 
     @Override
     public void onDestroyView() {
-        overlayList.removeCallbacks(loadOverlayRows);
-        overlayRowsClimateEnabled = null;
-        nextOverlayRow = 0;
+        resetOverlayRows();
+        standardList.removeAllViews();
+        individualIconLabels.clear();
+        showingOverlay = null;
+        rangeRefresh++;
         super.onDestroyView();
     }
 }

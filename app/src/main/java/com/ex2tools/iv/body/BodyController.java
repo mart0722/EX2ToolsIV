@@ -2,6 +2,7 @@ package com.ex2tools.iv.body;
 
 import android.car.hardware.CarPropertyValue;
 import android.content.Context;
+import android.os.SystemClock;
 import android.util.Log;
 
 import com.ex2tools.iv.car.CarProps;
@@ -13,6 +14,12 @@ import com.ex2tools.iv.vehicle.VhalGateway;
 public final class BodyController {
 
     public enum PowerOffResult { SENT, NOT_PARKED, UNAVAILABLE }
+
+    enum WipersOnLockResult {
+        SENT, PARK_NOT_CONFIRMED, SPEED_UNAVAILABLE, VEHICLE_MOVING,
+        POSITION_UNAVAILABLE, ALREADY_RAISED, IGNITION_UNAVAILABLE, IGNITION_NOT_POWERED,
+        SIGNAL_EXPIRED, WRITE_REJECTED
+    }
 
     private static volatile BodyController instance;
 
@@ -91,17 +98,24 @@ public final class BodyController {
         return setWiperServicePosition(!active);
     }
 
-    public boolean raiseWipersOnLock() {
-        if (!Boolean.TRUE.equals(parkSelected())) return false;
+    WipersOnLockResult raiseWipersOnLock(long deadlineNs) {
+        if (!Boolean.TRUE.equals(parkSelected())) return WipersOnLockResult.PARK_NOT_CONFIRMED;
         Number speed = availableValue(CarProps.PERF_VEHICLE_SPEED);
-        if (speed == null || speed.floatValue() != 0f) return false;
-        if (!Boolean.FALSE.equals(wiperServicePosition())) return false;
+        if (speed == null || !Float.isFinite(speed.floatValue())) return WipersOnLockResult.SPEED_UNAVAILABLE;
+        if (speed.floatValue() != 0f) return WipersOnLockResult.VEHICLE_MOVING;
+        Boolean raised = wiperServicePosition();
+        if (raised == null) return WipersOnLockResult.POSITION_UNAVAILABLE;
+        if (raised) return WipersOnLockResult.ALREADY_RAISED;
         CarPropertyValue<?> ignition = availableProperty(CarProps.IGNITION_STATE_VENDOR);
-        if (ignition == null || !(ignition.getValue() instanceof Integer state)) return false;
+        if (ignition == null || !(ignition.getValue() instanceof Integer state)) {
+            return WipersOnLockResult.IGNITION_UNAVAILABLE;
+        }
         // Flyme maps raw OFF/ACC/ON to 2/3/4 when it returns the Android property ID.
         boolean powered = ignition.getPropertyId() == CarProps.IGNITION_STATE
                 ? state == 4 || state == 5 : state == 2 || state == 4;
-        return powered && setWiperServicePosition(true);
+        if (!powered) return WipersOnLockResult.IGNITION_NOT_POWERED;
+        if (SystemClock.elapsedRealtimeNanos() > deadlineNs) return WipersOnLockResult.SIGNAL_EXPIRED;
+        return setWiperServicePosition(true) ? WipersOnLockResult.SENT : WipersOnLockResult.WRITE_REJECTED;
     }
 
     private boolean setWiperServicePosition(boolean active) {

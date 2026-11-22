@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/widgetSettingsVent"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <com.ex2tools.iv.ui.FlymeSegmentedGroup
+        android:id="@+id/widgetVentMode"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/widgetVentFive"
+            style="@style/Widget.EX2.Toggle"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:layout_weight="1"
+            android:minWidth="0dp"
+            android:text="@string/widgets_vent_presets" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/widgetVentThree"
+            style="@style/Widget.EX2.Toggle"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:layout_weight="1"
+            android:minWidth="0dp"
+            android:text="@string/widgets_vent_directions" />
+    </com.ex2tools.iv.ui.FlymeSegmentedGroup>
+
+    <com.ex2tools.iv.ui.FlymeSwitchRow
+        android:id="@+id/widgetVentShowRecirc"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/widgets_vent_show_recirc" />
+</LinearLayout>

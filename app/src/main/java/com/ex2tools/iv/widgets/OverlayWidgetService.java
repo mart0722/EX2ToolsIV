@@ -773,7 +773,8 @@ public final class OverlayWidgetService extends Service {
                     WidgetsCommon.SIZE_WIPERS,
                     WidgetsCommon.SIZE_POWER_OFF,
                     WidgetsCommon.SIZE_LOCK,
-                    WidgetsCommon.SIZE_APPS
+                    WidgetsCommon.SIZE_APPS,
+                    WidgetsCommon.SIZE_CLIMATE
             };
         }
     }

@@ -34,4 +34,30 @@
         android:contentDescription="@string/widgets_climate_icon_size"
         android:progressTint="@color/flyme_blue"
         android:thumbTint="@color/flyme_blue" />
+
+    <LinearLayout
+        android:id="@+id/widgetScaleSteps"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="end"
+        android:orientation="horizontal"
+        android:visibility="gone">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/widgetScaleMinus"
+            style="@style/Widget.EX2.SecondaryButton"
+            android:layout_width="72dp"
+            android:layout_height="56dp"
+            android:contentDescription="@string/widgets_scale_minus"
+            android:text="−" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/widgetScalePlus"
+            style="@style/Widget.EX2.SecondaryButton"
+            android:layout_width="72dp"
+            android:layout_height="56dp"
+            android:layout_marginStart="8dp"
+            android:contentDescription="@string/widgets_scale_plus"
+            android:text="+" />
+    </LinearLayout>
 </LinearLayout>
