@@ -50,7 +50,7 @@
 
             <TextView
                 android:id="@+id/btn_temp_minus"
-                style="@style/WgRoundButton"
+                style="@style/WgClimateRoundButton"
                 android:text="−" />
 
             <LinearLayout
@@ -87,7 +87,7 @@
 
             <TextView
                 android:id="@+id/btn_temp_plus"
-                style="@style/WgRoundButton"
+                style="@style/WgClimateRoundButton"
                 android:text="+" />
         </LinearLayout>
 

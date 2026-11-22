@@ -21,26 +21,39 @@ import java.util.Locale;
 public class ClockWidgetProvider extends AppWidgetProvider {
 
     static final float GLASS_DATE_TEXT_SP = 13f;
+    static final float LARGE_TIME_TEXT_SP = 72f;
+    static final float LARGE_DATE_TEXT_SP = 20f;
+
+    protected boolean isLarge() {
+        return false;
+    }
 
     @Override
     public void onUpdate(Context context, AppWidgetManager manager, int[] ids) {
-        update(context, manager, ids, false);
+        update(context, manager, ids, false, isLarge());
     }
 
     @Override
     public void onAppWidgetOptionsChanged(Context context, AppWidgetManager manager,
                                           int appWidgetId, Bundle options) {
-        update(context, manager, new int[]{appWidgetId}, false);
+        update(context, manager, new int[]{appWidgetId}, false, isLarge());
     }
 
     public static void refreshAll(Context context) {
         AppWidgetManager manager = AppWidgetManager.getInstance(context);
         int[] ids = manager.getAppWidgetIds(new ComponentName(context, ClockWidgetProvider.class));
         if (ids != null && ids.length > 0) update(context, manager, ids, false);
+        int[] largeIds = manager.getAppWidgetIds(new ComponentName(context, LargeClockWidgetProvider.class));
+        if (largeIds.length > 0) update(context, manager, largeIds, false, true);
         ClockDateWidgetProvider.refreshAll(context);
     }
 
     static void update(Context context, AppWidgetManager manager, int[] ids, boolean forceDate) {
+        update(context, manager, ids, forceDate, false);
+    }
+
+    private static void update(Context context, AppWidgetManager manager, int[] ids,
+                               boolean forceDate, boolean large) {
         if (ids == null) return;
         int font = Prefs.clockFont(context);
         int color = color(context);
@@ -53,7 +66,7 @@ public class ClockWidgetProvider extends AppWidgetProvider {
         } else {
             layout = font == 1 ? R.layout.widget_clock_condensed : R.layout.widget_clock_classic;
         }
-        String dateText = dateText(context);
+        String dateText = date ? dateText() : "";
         for (int id : ids) {
             RemoteViews views = new RemoteViews(context.getPackageName(), layout);
             int background = WidgetsCommon.bgDrawableResForPct(context);
@@ -63,19 +76,21 @@ public class ClockWidgetProvider extends AppWidgetProvider {
                 views.setTextColor(R.id.clockDate, color);
                 views.setTextViewText(R.id.clockDate, dateText);
             }
-            WidgetGrid.Slot slot = WidgetGrid.appWidgetSlot(context, manager, id, layout);
-            if (WidgetAppearance.usesGlass(context)) {
-                views.setTextViewTextSize(R.id.clockTime, TypedValue.COMPLEX_UNIT_SP, 42f * slot.scale());
+            WidgetGrid.Slot slot = WidgetGrid.appWidgetSlot(context, manager, id,
+                    large ? R.layout.widget_clock_large : layout);
+            if (WidgetAppearance.usesGlass(context) || large) {
+                views.setTextViewTextSize(R.id.clockTime, TypedValue.COMPLEX_UNIT_SP,
+                        (large ? LARGE_TIME_TEXT_SP : 42f) * slot.scale());
                 if (date) {
                     views.setTextViewTextSize(R.id.clockDate, TypedValue.COMPLEX_UNIT_SP,
-                            GLASS_DATE_TEXT_SP * slot.scale());
+                            (large ? LARGE_DATE_TEXT_SP : GLASS_DATE_TEXT_SP) * slot.scale());
                 }
             }
             manager.updateAppWidget(id, slot.wrap(context, views));
         }
     }
 
-    private static String dateText(Context c) {
+    static String dateText() {
         try {
             String value = new SimpleDateFormat("EEEE, d MMMM", new Locale("ru"))
                     .format(new Date());

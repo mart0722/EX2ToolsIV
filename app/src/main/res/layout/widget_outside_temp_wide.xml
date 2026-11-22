@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/widget_bg_layer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_wg_card_100" />
+
+    <LinearLayout
+        android:id="@+id/widget_glass_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:padding="@dimen/wg_glass_compact_inset">
+
+        <ImageView
+            android:id="@+id/img_outside_temp"
+            style="@style/WgClimateIcon"
+            android:contentDescription="@string/widget_outside_temp_description"
+            android:src="@drawable/wg_ic_temp" />
+
+        <TextView
+            android:id="@+id/tv_outside_temp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:fontFamily="sans-serif-medium"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:text="@string/widget_outside_temp_missing"
+            android:textColor="@color/wg_text"
+            android:textSize="36sp" />
+    </LinearLayout>
+</FrameLayout>

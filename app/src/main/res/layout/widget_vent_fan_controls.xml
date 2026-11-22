@@ -9,9 +9,9 @@
 
     <TextView
         android:id="@+id/btn_fan_minus"
-        style="@style/WgRoundButton"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
+        style="@style/WgClimateRoundButton"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
         android:text="−" />
 
     <LinearLayout
@@ -83,8 +83,8 @@
 
     <TextView
         android:id="@+id/btn_fan_plus"
-        style="@style/WgRoundButton"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
+        style="@style/WgClimateRoundButton"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
         android:text="+" />
 </LinearLayout>

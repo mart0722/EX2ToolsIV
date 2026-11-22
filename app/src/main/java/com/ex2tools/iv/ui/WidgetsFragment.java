@@ -48,6 +48,9 @@ public final class WidgetsFragment extends Fragment {
 
     private static final String[] OVERLAY_KEYS = {
             WidgetsCommon.SIZE_CLOCK,
+            WidgetsCommon.SIZE_CLOCK_LARGE,
+            WidgetsCommon.SIZE_OUTSIDE_TEMP,
+            WidgetsCommon.SIZE_OUTSIDE_TEMP_WIDE,
             WidgetsCommon.SIZE_DRIVE_REGEN,
             WidgetsCommon.SIZE_DRIVE_MODE,
             WidgetsCommon.SIZE_REGEN,
@@ -55,6 +58,7 @@ public final class WidgetsFragment extends Fragment {
             WidgetsCommon.SIZE_TEMP,
             WidgetsCommon.SIZE_VENT,
             WidgetsCommon.SIZE_VENT_FAN,
+            WidgetsCommon.SIZE_RECIRC,
             WidgetsCommon.SIZE_HEATING,
             WidgetsCommon.SIZE_WINDSHIELD_HEAT,
             WidgetsCommon.SIZE_WHEEL_HEAT,
@@ -68,6 +72,9 @@ public final class WidgetsFragment extends Fragment {
 
     private static final int[] OVERLAY_LABELS = {
             R.string.widgets_size_clock,
+            R.string.widget_name_clock_large,
+            R.string.widget_name_outside_temp,
+            R.string.widget_name_outside_temp_wide,
             R.string.widgets_size_drive_regen,
             R.string.widgets_size_drive_mode,
             R.string.widgets_size_regen,
@@ -75,6 +82,7 @@ public final class WidgetsFragment extends Fragment {
             R.string.widgets_size_temp,
             R.string.widgets_size_vent,
             R.string.widgets_size_vent_fan,
+            R.string.widget_name_recirc,
             R.string.widgets_size_heating,
             R.string.widget_name_windshield_heat,
             R.string.widget_name_wheel_heat,
@@ -118,6 +126,7 @@ public final class WidgetsFragment extends Fragment {
     private View overlayNeighborHint;
     private FlymeSegmentedGroup climateIconStyle;
     private FlymeSegmentedGroup ventMode;
+    private FlymeSwitchRow ventShowRecirc;
     private View glassScaleControls;
     private final List<View> individualScaleControls = new ArrayList<>();
     private final Handler scaleHandler = new Handler(Looper.getMainLooper());
@@ -129,6 +138,7 @@ public final class WidgetsFragment extends Fragment {
     private FlymeSwitchRow climateIconLabels;
     private FlymeSwitchRow widgetShowTitles;
     private FlymeSwitchRow overlayHeatingSingleRow;
+    private FlymeSwitchRow overlayHeatingHideMaxAir;
     private final Map<String, FlymeSwitchRow> overlayToggles = new LinkedHashMap<>();
     private final Map<String, FlymeSwitchRow> overlayIconLabels = new LinkedHashMap<>();
     private final Map<String, SeekBar> overlaySizeSeeks = new LinkedHashMap<>();
@@ -210,6 +220,14 @@ public final class WidgetsFragment extends Fragment {
         ventMode.addOnButtonCheckedListener((group, id, checked) -> {
             if (binding || !checked) return;
             Prefs.setVentDirectionButtons(c, id == R.id.widgetVentThree);
+            OverlayWidgetService.restart(c);
+            WidgetUpdateService.sync(c);
+        });
+
+        ventShowRecirc = view.findViewById(R.id.widgetVentShowRecirc);
+        ventShowRecirc.setOnCheckedChangeListener((button, checked) -> {
+            if (binding || Prefs.showVentRecirc(c) == checked) return;
+            Prefs.setShowVentRecirc(c, checked);
             OverlayWidgetService.restart(c);
             WidgetUpdateService.sync(c);
         });
@@ -302,7 +320,13 @@ public final class WidgetsFragment extends Fragment {
                     R.layout.item_widget_icon_size, null);
             FlymeSwitchRow singleRow = provider.initialLayout == R.layout.widget_heating_test
                     ? heatingLayoutSwitch(c) : null;
-            if (singleRow != null) row.addView(singleRow);
+            FlymeSwitchRow hideMaxAir = singleRow == null ? null : heatingMaxAirSwitch(c);
+            if (singleRow != null) {
+                row.addView(singleRow);
+                row.addView(hideMaxAir);
+                singleRow.setOnCheckedChangeListener((button, checked) ->
+                        hideMaxAir.setVisibility(checked ? View.VISIBLE : View.GONE));
+            }
             FlymeSwitchRow iconLabels = hasIndividualLabels(provider.initialLayout)
                     ? iconLabelsSwitch(c, key) : null;
             if (iconLabels != null) row.addView(iconLabels);
@@ -323,7 +347,9 @@ public final class WidgetsFragment extends Fragment {
                         if (iconLabels != null && iconLabels.isChecked() != Prefs.climateIconLabels(c, key)) {
                             Prefs.setClimateIconLabels(c, key, iconLabels.isChecked());
                         }
-                        if (singleRow != null) setHeatingLayout(c, singleRow.isChecked());
+                        if (singleRow != null) {
+                            setHeatingLayout(c, singleRow.isChecked(), hideMaxAir.isChecked());
+                        }
                         WidgetUpdateService.sync(c);
                     })
                     .show();
@@ -332,13 +358,21 @@ public final class WidgetsFragment extends Fragment {
 
     private static boolean hasIndividualLabels(int layout) {
         return layout == R.layout.widget_wipers || layout == R.layout.widget_power_off
-                || layout == R.layout.widget_wheel_heat;
+                || layout == R.layout.widget_wheel_heat || layout == R.layout.widget_recirc;
     }
 
     private FlymeSwitchRow heatingLayoutSwitch(Context c) {
         FlymeSwitchRow row = new FlymeSwitchRow(c);
         row.setText(getString(R.string.widgets_heating_single_row));
         row.setChecked(Prefs.heatingSingleRow(c));
+        return row;
+    }
+
+    private FlymeSwitchRow heatingMaxAirSwitch(Context c) {
+        FlymeSwitchRow row = new FlymeSwitchRow(c);
+        row.setText(getString(R.string.widgets_heating_hide_max_air));
+        row.setChecked(Prefs.heatingHideMaxAir(c));
+        row.setVisibility(Prefs.heatingSingleRow(c) ? View.VISIBLE : View.GONE);
         return row;
     }
 
@@ -349,10 +383,14 @@ public final class WidgetsFragment extends Fragment {
         return row;
     }
 
-    private void setHeatingLayout(Context c, boolean singleRow) {
-        if (Prefs.heatingSingleRow(c) == singleRow) return;
-        Prefs.setHeatingSingleRow(c, singleRow);
+    private void setHeatingLayout(Context c, boolean singleRow, boolean hideMaxAir) {
+        if (Prefs.heatingSingleRow(c) == singleRow && Prefs.heatingHideMaxAir(c) == hideMaxAir) return;
+        Prefs.setHeatingLayout(c, singleRow, hideMaxAir);
         if (overlayHeatingSingleRow != null) overlayHeatingSingleRow.setChecked(singleRow);
+        if (overlayHeatingHideMaxAir != null) {
+            overlayHeatingHideMaxAir.setChecked(hideMaxAir);
+            overlayHeatingHideMaxAir.setVisibility(singleRow ? View.VISIBLE : View.GONE);
+        }
         OverlayWidgetService.restart(c);
     }
 
@@ -682,6 +720,7 @@ public final class WidgetsFragment extends Fragment {
         overlayList.removeAllViews();
         individualScaleControls.clear();
         overlayHeatingSingleRow = null;
+        overlayHeatingHideMaxAir = null;
         overlayToggles.clear();
         overlayIconLabels.clear();
         overlaySizeSeeks.clear();
@@ -757,10 +796,18 @@ public final class WidgetsFragment extends Fragment {
             }
             if (WidgetsCommon.SIZE_HEATING.equals(key)) {
                 overlayHeatingSingleRow = heatingLayoutSwitch(c);
-                controls.addView(overlayHeatingSingleRow, controls.indexOfChild(iconSize) + 1);
+                overlayHeatingHideMaxAir = heatingMaxAirSwitch(c);
+                int heatingSettingsIndex = controls.indexOfChild(iconSize) + 1;
+                controls.addView(overlayHeatingSingleRow, heatingSettingsIndex);
+                controls.addView(overlayHeatingHideMaxAir, heatingSettingsIndex + 1);
                 overlayHeatingSingleRow.setOnCheckedChangeListener((button, checked) -> {
                     if (binding || Prefs.heatingSingleRow(c) == checked) return;
-                    setHeatingLayout(c, checked);
+                    setHeatingLayout(c, checked, Prefs.heatingHideMaxAir(c));
+                    WidgetUpdateService.sync(c);
+                });
+                overlayHeatingHideMaxAir.setOnCheckedChangeListener((button, checked) -> {
+                    if (binding || !Prefs.heatingSingleRow(c) || Prefs.heatingHideMaxAir(c) == checked) return;
+                    setHeatingLayout(c, true, checked);
                     WidgetUpdateService.sync(c);
                 });
             }
@@ -917,6 +964,7 @@ public final class WidgetsFragment extends Fragment {
         });
         updateAppearanceControls(c);
         ventMode.check(Prefs.ventDirectionButtons(c) ? R.id.widgetVentThree : R.id.widgetVentFive);
+        ventShowRecirc.setChecked(Prefs.showVentRecirc(c));
         widgetCardBorder.setChecked(Prefs.widgetCardBorder(c));
         widgetButtonBorder.setChecked(Prefs.widgetButtonBorder(c));
         widgetPowerOffWithoutConfirmation.setChecked(Prefs.widgetPowerOffWithoutConfirmation(c));

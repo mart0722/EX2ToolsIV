@@ -50,6 +50,9 @@ public final class WidgetsCommon {
     public static final String WHEEL_MODE_EXITED = "com.ex2tools.iv.widget.WHEEL_MODE_EXITED";
 
     public static final String SIZE_CLOCK = "clock";
+    public static final String SIZE_CLOCK_LARGE = "clock_large";
+    public static final String SIZE_OUTSIDE_TEMP = "outside_temp";
+    public static final String SIZE_OUTSIDE_TEMP_WIDE = "outside_temp_wide";
     public static final String SIZE_DRIVE_REGEN = "drive_regen";
     public static final String SIZE_DRIVE_MODE = "drive_mode";
     public static final String SIZE_REGEN = "regen";
@@ -57,6 +60,7 @@ public final class WidgetsCommon {
     public static final String SIZE_TEMP = "temp";
     public static final String SIZE_VENT = "vent";
     public static final String SIZE_VENT_FAN = "vent_fan";
+    public static final String SIZE_RECIRC = "recirc";
     public static final String SIZE_WHEEL_HEAT = "wheel_heat";
     public static final String SIZE_WINDSHIELD_HEAT = "windshield_heat";
     public static final String SIZE_HEATING = "heating";
@@ -71,7 +75,8 @@ public final class WidgetsCommon {
     public static final String SIZE_CLIMATE = "climate";
 
     public static boolean isStandaloneVehicleButton(String key) {
-        return SIZE_WIPERS.equals(key) || SIZE_POWER_OFF.equals(key) || SIZE_WHEEL_HEAT.equals(key);
+        return SIZE_WIPERS.equals(key) || SIZE_POWER_OFF.equals(key)
+                || SIZE_WHEEL_HEAT.equals(key) || SIZE_RECIRC.equals(key);
     }
 
     public static final String CLIMATE_TARGET_MINUS = "com.ex2tools.iv.widget.CLIMATE_TARGET_MINUS";
@@ -185,6 +190,12 @@ public final class WidgetsCommon {
         return power == null ? null : power != 0;
     }
 
+    static String outsideTemperatureText(Context c, float value) {
+        return Float.isFinite(value)
+                ? c.getString(R.string.widget_outside_temp_value, Math.round(value))
+                : c.getString(R.string.widget_outside_temp_missing);
+    }
+
     public static Boolean readRecirc() {
         Boolean pending = pendingRecirc;
         if (pending != null && fresh(pendingRecircAt)) return pending;
@@ -295,6 +306,7 @@ public final class WidgetsCommon {
         subscribe(state, CarProps.HVAC_FAN_DIRECTION, CarProps.FAN_DIRECTION_AREAS);
         subscribe(state, CarProps.HVAC_AC_ON, CarProps.AC_AREAS);
         subscribe(state, CarProps.HVAC_RECIRC_ON, CarProps.AC_AREAS);
+        subscribe(state, CarProps.HVAC_RECIRC_ON_AOSP, new int[]{117});
         subscribe(state, CarProps.HVAC_REAR_DEFROSTER_ON, new int[]{2});
         subscribe(state, CarProps.HVAC_FRONT_MAX_DEFROST_ON, new int[]{1});
         subscribe(state, CarProps.HVAC_WINDSHIELD_HEAT, new int[]{117});

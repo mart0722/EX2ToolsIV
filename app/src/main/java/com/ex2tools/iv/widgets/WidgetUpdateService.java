@@ -18,6 +18,7 @@ import com.ex2tools.iv.LogStore;
 import com.ex2tools.iv.NotificationHelper;
 import com.ex2tools.iv.Prefs;
 import com.ex2tools.iv.R;
+import com.ex2tools.iv.car.Telemetry;
 import com.ex2tools.iv.state.VehicleState;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -34,6 +35,9 @@ public final class WidgetUpdateService extends Service {
 
     private static final Class<?>[] PROVIDERS = {
             ClockWidgetProvider.class,
+            LargeClockWidgetProvider.class,
+            OutsideTemperatureWidgetProvider.class,
+            OutsideTemperatureWideWidgetProvider.class,
             ClockDateWidgetProvider.class,
             DriveRegenWidgetProvider.class,
             DriveModeVerticalWidgetProvider.class,
@@ -48,6 +52,7 @@ public final class WidgetUpdateService extends Service {
             HeatingTestWidgetProvider.class,
             WindshieldHeatWidgetProvider.class,
             WheelHeatWidgetProvider.class,
+            RecircWidgetProvider.class,
             SpeedWidgetProvider.class,
             BatteryRangeWidgetProvider.class,
             WipersWidgetProvider.class,
@@ -227,6 +232,9 @@ public final class WidgetUpdateService extends Service {
         int[] ventIds = ids(awm, HvacDirectionWidgetProvider.class);
         int[] ventVerticalIds = ids(awm, HvacDirectionVerticalWidgetProvider.class);
         int[] ventFanIds = ids(awm, HvacDirectionFanWidgetProvider.class);
+        int[] outsideTempIds = ids(awm, OutsideTemperatureWidgetProvider.class);
+        int[] outsideTempWideIds = ids(awm, OutsideTemperatureWideWidgetProvider.class);
+        int[] recircIds = ids(awm, RecircWidgetProvider.class);
         int[] wheelIds = ids(awm, WheelHeatWidgetProvider.class);
         int[] windshieldIds = ids(awm, WindshieldHeatWidgetProvider.class);
         int[] heatingIds = ids(awm, HeatingTestWidgetProvider.class);
@@ -247,8 +255,10 @@ public final class WidgetUpdateService extends Service {
         Integer regen = needRegen ? WidgetsCommon.readRegen() : null;
         Integer fan = needFan ? readFanCached() : null;
         Float temp = needTemp ? readTempCached() : null;
+        float outsideTemp = outsideTempIds.length > 0 || outsideTempWideIds.length > 0
+                ? Telemetry.outsideTemp(this) : Float.NaN;
         Integer vent = needVent ? WidgetsCommon.readVent() : null;
-        Boolean recirc = needVent ? WidgetsCommon.readRecirc() : null;
+        Boolean recirc = needVent || recircIds.length > 0 ? WidgetsCommon.readRecirc() : null;
         Boolean ac = needAc ? WidgetsCommon.readAc() : null;
         Integer batteryPercent = needBatteryRange ? WidgetsCommon.readSoc() : null;
         if (batteryPercent != null && batteryPercent < 0) batteryPercent = null;
@@ -270,6 +280,7 @@ public final class WidgetUpdateService extends Service {
         Integer driverHeat = seatDriver;
         Integer passengerHeat = seatPassenger;
         boolean any = false;
+        any |= update(awm, recircIds, c -> WidgetsRenderer.recirc(c, recirc));
         any |= update(awm, wheelIds, c -> WidgetsRenderer.wheelHeat(c, wheelHeat));
         any |= update(awm, windshieldIds, c -> WidgetsRenderer.windshieldHeat(c, windshield));
         any |= update(awm, driveRegenIds, c -> WidgetsRenderer.driveRegen(c, drive, regen));
@@ -280,6 +291,10 @@ public final class WidgetUpdateService extends Service {
         any |= update(awm, tempIds, c -> WidgetsRenderer.temperature(c, temp, R.layout.widget_temperature));
         any |= update(awm, tempVerticalIds,
                 c -> WidgetsRenderer.temperature(c, temp, R.layout.widget_temperature_vertical));
+        any |= update(awm, outsideTempIds,
+                c -> WidgetsRenderer.outsideTemperature(c, outsideTemp, R.layout.widget_outside_temp));
+        any |= update(awm, outsideTempWideIds,
+                c -> WidgetsRenderer.outsideTemperature(c, outsideTemp, R.layout.widget_outside_temp_wide));
         any |= update(awm, ventIds, c -> WidgetsRenderer.vent(c, vent, recirc));
         any |= update(awm, ventVerticalIds, c -> WidgetsRenderer.ventVertical(c, vent, recirc));
         any |= update(awm, ventFanIds,
@@ -302,12 +317,10 @@ public final class WidgetUpdateService extends Service {
         any |= update(awm, ids(awm, WipersWidgetProvider.class), WidgetsRenderer::wipers);
         any |= update(awm, ids(awm, PowerOffWidgetProvider.class), WidgetsRenderer::powerOff);
         any |= update(awm, lockIds, WidgetsRenderer::lock);
-        if (ids(awm, ClockWidgetProvider.class).length > 0) {
+        if (ids(awm, ClockWidgetProvider.class).length > 0
+                || ids(awm, ClockDateWidgetProvider.class).length > 0
+                || ids(awm, LargeClockWidgetProvider.class).length > 0) {
             ClockWidgetProvider.refreshAll(this);
-            any = true;
-        }
-        if (ids(awm, ClockDateWidgetProvider.class).length > 0) {
-            ClockDateWidgetProvider.refreshAll(this);
             any = true;
         }
 

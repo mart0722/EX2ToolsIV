@@ -15,6 +15,7 @@ import android.provider.Settings;
 import android.util.DisplayMetrics;
 import android.util.Size;
 import android.view.Gravity;
+import android.os.SystemClock;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
@@ -75,7 +76,8 @@ public final class OverlayWidgetService extends Service {
                     || WidgetsCommon.SIZE_HEATING.equals(key)
                     || WidgetsCommon.SIZE_WIPERS.equals(key)
                     || WidgetsCommon.SIZE_WINDSHIELD_HEAT.equals(key)
-                    || WidgetsCommon.SIZE_WHEEL_HEAT.equals(key)) {
+                    || WidgetsCommon.SIZE_WHEEL_HEAT.equals(key)
+                    || WidgetsCommon.SIZE_RECIRC.equals(key)) {
                 update(spec);
             }
         }
@@ -132,9 +134,22 @@ public final class OverlayWidgetService extends Service {
                 }
                 if (show) {
                     boolean created = ensure(spec);
+                    if (WidgetsCommon.SIZE_OUTSIDE_TEMP.equals(spec.key)
+                            || WidgetsCommon.SIZE_OUTSIDE_TEMP_WIDE.equals(spec.key)) {
+                        // Keep polling even when the vehicle sends no temperature events.
+                        long interval = SystemClock.elapsedRealtime() / 10000L;
+                        if (created) {
+                            spec.lastOutsideTempInterval = interval;
+                        } else if (spec.lastOutsideTempInterval != interval) {
+                            spec.lastOutsideTempInterval = interval;
+                            update(spec);
+                        }
+                        continue;
+                    }
                     // Retry climate reads even if the ECU emitted no event during boot.
                     if (render || created || WidgetsCommon.SIZE_TEMP.equals(spec.key)
-                            || (clockTick && WidgetsCommon.SIZE_CLOCK.equals(spec.key))) {
+                            || (clockTick && (WidgetsCommon.SIZE_CLOCK.equals(spec.key)
+                            || WidgetsCommon.SIZE_CLOCK_LARGE.equals(spec.key)))) {
                         update(spec);
                     }
                 } else {
@@ -459,6 +474,10 @@ public final class OverlayWidgetService extends Service {
                 ? WidgetCatalog.get(WidgetsCommon.SIZE_VENT).widthDp : spec.widthDp;
         int height = WidgetsCommon.SIZE_HEATING.equals(spec.key) && Prefs.heatingSingleRow(this)
                 ? 180 : spec.heightDp;
+        if (WidgetsCommon.SIZE_HEATING.equals(spec.key) && Prefs.heatingSingleRow(this)
+                && Prefs.showHeatingMaxAir(this)) {
+            width = width * 6 / 5;
+        }
         return new Size(width, height);
     }
 
@@ -663,6 +682,7 @@ public final class OverlayWidgetService extends Service {
 
     private static final class OverlaySpec {
         final String key;
+        long lastOutsideTempInterval = -1L;
         boolean dragging;
         final int widthDp;
         final int heightDp;
@@ -689,6 +709,9 @@ public final class OverlayWidgetService extends Service {
         static String[] keys() {
             return new String[]{
                     WidgetsCommon.SIZE_CLOCK,
+                    WidgetsCommon.SIZE_CLOCK_LARGE,
+                    WidgetsCommon.SIZE_OUTSIDE_TEMP,
+                    WidgetsCommon.SIZE_OUTSIDE_TEMP_WIDE,
                     WidgetsCommon.SIZE_SPEED,
                     WidgetsCommon.SIZE_DRIVE_REGEN,
                     WidgetsCommon.SIZE_DRIVE_MODE,
@@ -697,6 +720,7 @@ public final class OverlayWidgetService extends Service {
                     WidgetsCommon.SIZE_TEMP,
                     WidgetsCommon.SIZE_VENT,
                     WidgetsCommon.SIZE_VENT_FAN,
+                    WidgetsCommon.SIZE_RECIRC,
                     WidgetsCommon.SIZE_HEATING,
                     WidgetsCommon.SIZE_WINDSHIELD_HEAT,
                     WidgetsCommon.SIZE_WHEEL_HEAT,

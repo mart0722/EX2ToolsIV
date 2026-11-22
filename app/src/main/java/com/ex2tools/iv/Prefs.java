@@ -603,8 +603,27 @@ public final class Prefs {
         return get(c).getBoolean("widget_heating_single_row", false);
     }
 
-    public static void setHeatingSingleRow(Context c, boolean enabled) {
-        get(c).edit().putBoolean("widget_heating_single_row", enabled).apply();
+    public static boolean heatingHideMaxAir(Context c) {
+        return get(c).getBoolean("widget_heating_hide_max_air", false);
+    }
+
+    public static void setHeatingLayout(Context c, boolean singleRow, boolean hideMaxAir) {
+        get(c).edit()
+                .putBoolean("widget_heating_single_row", singleRow)
+                .putBoolean("widget_heating_hide_max_air", hideMaxAir)
+                .apply();
+    }
+
+    public static boolean showHeatingMaxAir(Context c) {
+        return !heatingSingleRow(c) || !heatingHideMaxAir(c);
+    }
+
+    public static boolean showVentRecirc(Context c) {
+        return get(c).getBoolean("widget_vent_show_recirc", true);
+    }
+
+    public static void setShowVentRecirc(Context c, boolean show) {
+        get(c).edit().putBoolean("widget_vent_show_recirc", show).apply();
     }
 
     public static boolean widgetTitles(Context c) {
