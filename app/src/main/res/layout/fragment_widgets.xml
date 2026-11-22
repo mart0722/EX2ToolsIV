@@ -261,6 +261,12 @@
                             android:minWidth="0dp"
                             android:text="@string/widgets_vent_directions" />
                     </com.ex2tools.iv.ui.FlymeSegmentedGroup>
+
+                    <com.ex2tools.iv.ui.FlymeSwitchRow
+                        android:id="@+id/widgetVentShowRecirc"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/widgets_vent_show_recirc" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

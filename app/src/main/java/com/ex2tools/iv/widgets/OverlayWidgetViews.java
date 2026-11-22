@@ -26,8 +26,6 @@ import com.ex2tools.iv.car.Telemetry;
 import com.ex2tools.iv.climate.Thermostat;
 import com.ex2tools.iv.lock.LockActivity;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -100,6 +98,9 @@ final class OverlayWidgetViews {
             case WidgetsCommon.SIZE_POWER_OFF:
                 updateVehicleControl(c, root, key);
                 break;
+            case WidgetsCommon.SIZE_RECIRC:
+                updateRecirc(c, root);
+                break;
             case WidgetsCommon.SIZE_WHEEL_HEAT:
                 updateWheelHeat(c, root);
                 break;
@@ -125,7 +126,14 @@ final class OverlayWidgetViews {
                 updateClimate(c, root);
                 break;
             case WidgetsCommon.SIZE_CLOCK:
-                updateClock(c, root);
+            case WidgetsCommon.SIZE_CLOCK_LARGE:
+                updateClock(c, root, WidgetsCommon.SIZE_CLOCK_LARGE.equals(key));
+                break;
+            case WidgetsCommon.SIZE_OUTSIDE_TEMP:
+            case WidgetsCommon.SIZE_OUTSIDE_TEMP_WIDE:
+                ClimateWidgetIcons.forOverlay(c, root, key).outsideTemperature();
+                text(root, R.id.tv_outside_temp,
+                        WidgetsCommon.outsideTemperatureText(c, Telemetry.outsideTemp(c)));
                 break;
             default:
                 break;
@@ -219,6 +227,9 @@ final class OverlayWidgetViews {
                 break;
             case WidgetsCommon.SIZE_WINDSHIELD_HEAT:
                 click(c, root, R.id.chip_windshield_heat, WidgetsCommon.WINDSHIELD_HEAT_TOGGLE);
+                break;
+            case WidgetsCommon.SIZE_RECIRC:
+                click(c, root, R.id.chip_recirc, WidgetsCommon.RECIRC_TOGGLE);
                 break;
             case WidgetsCommon.SIZE_WHEEL_HEAT:
                 click(c, root, R.id.chip_wheel_heat, WidgetsCommon.WHEEL_HEAT_TOGGLE);
@@ -468,6 +479,7 @@ final class OverlayWidgetViews {
         ventChip(icons, root, transparent, R.id.chip_vent_face, R.id.txt_vent_face, directions ? (mode & 1) != 0 : mode == 1);
         ventChip(icons, root, transparent, R.id.chip_vent_floor, R.id.txt_vent_floor, directions ? (mode & 2) != 0 : mode == 2);
         ventChip(icons, root, transparent, R.id.chip_vent_windshield, R.id.txt_vent_windshield, directions ? (mode & 4) != 0 : mode == 4);
+        visibility(root, R.id.chip_recirc, Prefs.showVentRecirc(c) ? View.VISIBLE : View.GONE);
         ventChip(icons, root, transparent, R.id.chip_recirc, R.id.txt_recirc, Boolean.TRUE.equals(recirc));
     }
 
@@ -490,6 +502,7 @@ final class OverlayWidgetViews {
         ventChip(icons, root, transparent, R.id.chip_vent_face, R.id.txt_vent_face, directions ? (mode & 1) != 0 : mode == 1);
         ventChip(icons, root, transparent, R.id.chip_vent_floor, R.id.txt_vent_floor, directions ? (mode & 2) != 0 : mode == 2);
         ventChip(icons, root, transparent, R.id.chip_vent_windshield, R.id.txt_vent_windshield, directions ? (mode & 4) != 0 : mode == 4);
+        visibility(root, R.id.chip_recirc, Prefs.showVentRecirc(c) ? View.VISIBLE : View.GONE);
         ventChip(icons, root, transparent, R.id.chip_recirc, R.id.txt_recirc, Boolean.TRUE.equals(recirc));
         controls(c, root, WidgetsCommon.SIZE_VENT_FAN, R.drawable.bg_wg_round,
                 R.id.btn_fan_minus, R.id.btn_fan_plus);
@@ -554,12 +567,14 @@ final class OverlayWidgetViews {
 
         text(root, R.id.txt_heat_header, c.getString(R.string.wg_heat_header));
         ClimateWidgetIcons icons = ClimateWidgetIcons.forOverlay(c, root, WidgetsCommon.SIZE_HEATING);
-        boolean singleRow = root.findViewById(R.id.chip_front_max_defrost) == null;
+        boolean singleRow = Prefs.heatingSingleRow(c);
         if (icons.usesOutline()) {
             icons.chromeGlyph(R.id.img_heating_title, R.drawable.wg_ic_heat, singleRow ? 14 : 20);
         }
         icons.heating(wheel, rear, windshield, seatDriver, seatPassenger);
-        if (!singleRow) {
+        boolean showMaxAir = Prefs.showHeatingMaxAir(c);
+        visibility(root, R.id.chip_front_max_defrost, showMaxAir ? View.VISIBLE : View.GONE);
+        if (showMaxAir) {
             boolean front = Boolean.TRUE.equals(WidgetsCommon.readFrontMaxDefrost());
             icons.frontMaxDefrost(front);
             toggle(c, root, icons, R.id.chip_front_max_defrost, R.id.txt_front_max_defrost,
@@ -589,6 +604,14 @@ final class OverlayWidgetViews {
         toggle(c, root, icons, chip, caption, active, false, c.getString(label), false);
     }
 
+    private static void updateRecirc(Context c, View root) {
+        ClimateWidgetIcons icons = ClimateWidgetIcons.forOverlay(c, root, WidgetsCommon.SIZE_RECIRC);
+        icons.recirculation(R.id.img_recirc);
+        toggle(c, root, icons, R.id.chip_recirc, R.id.txt_recirc,
+                Boolean.TRUE.equals(WidgetsCommon.readRecirc()), false,
+                c.getString(R.string.widget_name_recirc), false);
+    }
+
     private static void updateWheelHeat(Context c, View root) {
         Boolean state = WidgetsCommon.readWheelHeat();
         ClimateWidgetIcons icons = ClimateWidgetIcons.forOverlay(c, root, WidgetsCommon.SIZE_WHEEL_HEAT);
@@ -609,19 +632,11 @@ final class OverlayWidgetViews {
                 transparent);
     }
 
-    private static void updateClock(Context c, View root) {
+    private static void updateClock(Context c, View root, boolean large) {
         int color = Prefs.clockColor(c) == 1 ? android.graphics.Color.WHITE
                 : Prefs.clockColor(c) == 2 ? android.graphics.Color.BLACK
                 : c.getColor(R.color.clock_text);
-        String dateText;
-        try {
-            String value = new SimpleDateFormat("EEEE, d MMMM", new java.util.Locale("ru"))
-                    .format(new Date());
-            dateText = value.isEmpty() ? value
-                    : Character.toUpperCase(value.charAt(0)) + value.substring(1);
-        } catch (Throwable t) {
-            dateText = "";
-        }
+        String dateText = ClockWidgetProvider.dateText();
         android.graphics.Typeface typeface = android.graphics.Typeface.create(
                 Prefs.clockFont(c) == 1 ? "sans-serif-condensed" : "sans-serif-medium",
                 android.graphics.Typeface.NORMAL);
@@ -638,7 +653,8 @@ final class OverlayWidgetViews {
                     Prefs.clockFont(c) == 1 ? "sans-serif-condensed" : "sans-serif",
                     android.graphics.Typeface.NORMAL));
             if (WidgetAppearance.usesGlass(c)) {
-                date.setTextSize(TypedValue.COMPLEX_UNIT_SP, ClockWidgetProvider.GLASS_DATE_TEXT_SP);
+                date.setTextSize(TypedValue.COMPLEX_UNIT_SP, large
+                        ? ClockWidgetProvider.LARGE_DATE_TEXT_SP : ClockWidgetProvider.GLASS_DATE_TEXT_SP);
                 date.setMaxLines(1);
                 date.setEllipsize(TextUtils.TruncateAt.END);
             }
@@ -721,7 +737,11 @@ final class OverlayWidgetViews {
         firstControl.setBackgroundResource(background);
         secondControl.setBackgroundResource(background);
         if (WidgetAppearance.usesGlass(c)) {
-            int base = WidgetsCommon.SIZE_CLIMATE.equals(key) ? 22 : 24;
+            int base = switch (key) {
+                case WidgetsCommon.SIZE_CLIMATE -> 22;
+                case WidgetsCommon.SIZE_FAN, WidgetsCommon.SIZE_TEMP, WidgetsCommon.SIZE_VENT_FAN -> 26;
+                default -> 24;
+            };
             float size = base * Prefs.glassWidgetIconSizePct(c) / 100f;
             firstControl.setTextSize(TypedValue.COMPLEX_UNIT_SP, size);
             secondControl.setTextSize(TypedValue.COMPLEX_UNIT_SP, size);

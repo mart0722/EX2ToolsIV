@@ -14,6 +14,7 @@ public final class WidgetIconSizes {
                 || layout == R.layout.widget_hvac_direction_vertical
                 || layout == R.layout.widget_hvac_direction_fan
                 || layout == R.layout.widget_heating_test
+                || layout == R.layout.widget_recirc
                 || layout == R.layout.widget_wheel_heat
                 || layout == R.layout.widget_windshield_heat
                 || layout == R.layout.widget_wipers

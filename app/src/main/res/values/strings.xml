@@ -462,6 +462,15 @@
     <string name="wg_regen_high">Сильная</string>
     <string name="wg_fan">Вентилятор</string>
     <string name="wg_temp">Температура печки</string>
+    <string name="widget_name_clock_large">Большие часы</string>
+    <string name="widget_name_outside_temp">Температура за бортом 1×1</string>
+    <string name="widget_name_outside_temp_wide">Температура за бортом 2×1</string>
+    <string name="widget_outside_temp_description">Температура за бортом</string>
+    <string name="widget_outside_temp_value">%1$d °C</string>
+    <string name="widget_outside_temp_missing">— °C</string>
+    <string name="widget_name_recirc">Рециркуляция</string>
+    <string name="widgets_vent_show_recirc">Кнопка рециркуляции в обдуве</string>
+    <string name="widgets_heating_hide_max_air">Скрыть максимальный обдув</string>
     <string name="wg_recirc">Рецирк.</string>
     <string name="wg_heat_rear">Заднее</string>
     <string name="widget_name_drive_regen">Режим езды + рекуперация</string>

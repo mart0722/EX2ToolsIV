@@ -178,6 +178,14 @@ final class ClimateWidgetIcons {
         recirculation(R.id.img_recirc);
     }
 
+    void outsideTemperature() {
+        if (usesOutline()) {
+            chromeGlyph(R.id.img_outside_temp, R.drawable.wg_ic_temp, ACTION_ICON_DP);
+        } else {
+            set(R.id.img_outside_temp, R.drawable.wg_ic_temp, false, null, 0);
+        }
+    }
+
     void recirculation(int id) {
         if (usesOutline()) {
             chromeGlyph(id, R.drawable.wg_ic_recirc, id == R.id.img_recirc_v ? 22 : ACTION_ICON_DP);

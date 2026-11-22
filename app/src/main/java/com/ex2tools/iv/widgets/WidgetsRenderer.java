@@ -180,6 +180,7 @@ public final class WidgetsRenderer {
         ventChip(v, icons, transparent, R.id.chip_vent_face, R.id.txt_vent_face, directions ? (mode & 1) != 0 : mode == 1);
         ventChip(v, icons, transparent, R.id.chip_vent_floor, R.id.txt_vent_floor, directions ? (mode & 2) != 0 : mode == 2);
         ventChip(v, icons, transparent, R.id.chip_vent_windshield, R.id.txt_vent_windshield, directions ? (mode & 4) != 0 : mode == 4);
+        v.setViewVisibility(R.id.chip_recirc, Prefs.showVentRecirc(c) ? View.VISIBLE : View.GONE);
         ventChip(v, icons, transparent, R.id.chip_recirc, R.id.txt_recirc, Boolean.TRUE.equals(recirc));
         click(v, c, R.id.chip_vent_face, WidgetsCommon.VENT_FACE);
         click(v, c, R.id.chip_vent_floor, WidgetsCommon.VENT_FLOOR);
@@ -209,6 +210,7 @@ public final class WidgetsRenderer {
         int controlBackground = WidgetAppearance.controlBackground(c, transparent, R.drawable.bg_wg_round);
         v.setInt(R.id.btn_vent_next, "setBackgroundResource", controlBackground);
         v.setInt(R.id.btn_vent_prev, "setBackgroundResource", controlBackground);
+        v.setViewVisibility(R.id.chip_recirc_v, Prefs.showVentRecirc(c) ? View.VISIBLE : View.GONE);
         ventChip(v, icons, transparent, R.id.chip_recirc_v,
                 R.id.txt_recirc_v, Boolean.TRUE.equals(recirc));
         click(v, c, R.id.btn_vent_next, WidgetsCommon.VENT_NEXT);
@@ -242,6 +244,7 @@ public final class WidgetsRenderer {
         ventChip(v, icons, transparent, R.id.chip_vent_face, R.id.txt_vent_face, directions ? (mode & 1) != 0 : mode == 1);
         ventChip(v, icons, transparent, R.id.chip_vent_floor, R.id.txt_vent_floor, directions ? (mode & 2) != 0 : mode == 2);
         ventChip(v, icons, transparent, R.id.chip_vent_windshield, R.id.txt_vent_windshield, directions ? (mode & 4) != 0 : mode == 4);
+        v.setViewVisibility(R.id.chip_recirc, Prefs.showVentRecirc(c) ? View.VISIBLE : View.GONE);
         ventChip(v, icons, transparent, R.id.chip_recirc, R.id.txt_recirc, Boolean.TRUE.equals(recirc));
         v.setTextViewText(R.id.tv_fan_value, fan == null ? "—" : String.valueOf(fan));
         for (int i = 0; i < FAN_DOTS.length; i++) {
@@ -278,7 +281,9 @@ public final class WidgetsRenderer {
             icons.chromeGlyph(R.id.img_heating_title, R.drawable.wg_ic_heat, singleRow ? 14 : 20);
         }
         icons.heating(wheel, rear, windshield, seatDriver, seatPassenger);
-        if (!singleRow) {
+        boolean showMaxAir = Prefs.showHeatingMaxAir(c);
+        v.setViewVisibility(R.id.chip_front_max_defrost, showMaxAir ? View.VISIBLE : View.GONE);
+        if (showMaxAir) {
             boolean front = Boolean.TRUE.equals(WidgetsCommon.readFrontMaxDefrost());
             icons.frontMaxDefrost(front);
             toggle(v, c, icons, R.id.chip_front_max_defrost, R.id.txt_front_max_defrost,
@@ -302,6 +307,26 @@ public final class WidgetsRenderer {
         click(v, c, R.id.chip_seat_heat_driver, WidgetsCommon.SEAT_DRIVER_CYCLE);
         click(v, c, R.id.chip_seat_heat_passenger, WidgetsCommon.SEAT_PASSENGER_CYCLE);
         return v;
+    }
+
+    static RemoteViews outsideTemperature(Context widgetContext, float value, int layout) {
+        Context c = OverlayWidgetViews.themeContext(widgetContext);
+        RemoteViews views = new RemoteViews(c.getPackageName(), layout);
+        bg(views, c);
+        ClimateWidgetIcons.forRemote(widgetContext, c, views).outsideTemperature();
+        views.setTextViewText(R.id.tv_outside_temp, WidgetsCommon.outsideTemperatureText(c, value));
+        return views;
+    }
+
+    static RemoteViews recirc(Context widgetContext, Boolean state) {
+        Context c = OverlayWidgetViews.themeContext(widgetContext);
+        RemoteViews views = new RemoteViews(c.getPackageName(), R.layout.widget_recirc);
+        ClimateWidgetIcons icons = ClimateWidgetIcons.forRemote(widgetContext, c, views);
+        icons.recirculation(R.id.img_recirc);
+        toggle(views, c, icons, R.id.chip_recirc, R.id.txt_recirc, Boolean.TRUE.equals(state),
+                false, c.getString(R.string.widget_name_recirc), false);
+        click(views, c, R.id.chip_recirc, WidgetsCommon.RECIRC_TOGGLE);
+        return views;
     }
 
     static RemoteViews wheelHeat(Context widgetContext, Boolean state) {

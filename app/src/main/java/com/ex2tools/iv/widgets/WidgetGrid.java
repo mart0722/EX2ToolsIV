@@ -62,7 +62,7 @@ final class WidgetGrid {
             FOOTPRINTS.put(vertical, cells(1, 3));
         }
         for (int button : new int[]{R.layout.widget_lock, R.layout.widget_wipers, R.layout.widget_power_off,
-                R.layout.widget_windshield_heat, R.layout.widget_wheel_heat}) {
+                R.layout.widget_windshield_heat, R.layout.widget_wheel_heat, R.layout.widget_recirc}) {
             FOOTPRINTS.put(button, cells(1, 1));
         }
         for (int readout : new int[]{R.layout.widget_clock_classic_date,
@@ -70,17 +70,23 @@ final class WidgetGrid {
             FOOTPRINTS.put(readout, cells(2, 1));
         }
         FOOTPRINTS.put(R.layout.widget_speed, cells(2, 2));
-        FOOTPRINTS.put(R.layout.widget_heating_single_row, cells(5, 1));
+        FOOTPRINTS.put(R.layout.widget_clock_large, cells(3, 2));
+        FOOTPRINTS.put(R.layout.widget_outside_temp, cells(1, 1));
+        FOOTPRINTS.put(R.layout.widget_outside_temp_wide, cells(2, 1));
     }
 
     static Size size(Context c, int layout) {
         if (layout == R.layout.widget_hvac_direction || layout == R.layout.widget_hvac_direction_fan
                 || (layout == R.layout.widget_temperature && Prefs.overlayWideTemperature(c))) {
-            int columns = Prefs.ventDirectionButtons(c) ? 4 : 6;
+            int columns = Prefs.ventDirectionButtons(c) ? 3 : 5;
+            if (Prefs.showVentRecirc(c)) columns++;
             return cells(columns, layout == R.layout.widget_hvac_direction_fan ? 2 : 1);
         }
         if (layout == R.layout.widget_clock_overlay && Prefs.clockDate(c)) return cells(2, 1);
-        if (layout == R.layout.widget_heating_test && Prefs.heatingSingleRow(c)) return cells(5, 1);
+        if (layout == R.layout.widget_heating_single_row
+                || (layout == R.layout.widget_heating_test && Prefs.heatingSingleRow(c))) {
+            return cells(Prefs.showHeatingMaxAir(c) ? 6 : 5, 1);
+        }
         return FOOTPRINTS.get(layout, DEFAULT_SIZE);
     }
 
@@ -101,7 +107,7 @@ final class WidgetGrid {
         float iconScale = Prefs.glassWidgetIconSizePct(context) / 100f;
         if (scale == 1f && iconScale == 1f) return;
         int layout = views.getLayoutId();
-        if (scale != 1f) {
+        if (scale != 1f && layout != R.layout.widget_recirc) {
             boolean compact = layout == R.layout.widget_glass_vent || layout == R.layout.widget_glass_fan_speed
                     || layout == R.layout.widget_glass_temperature || layout == R.layout.widget_glass_heating_single_row;
             float inset = context.getResources().getDimension(R.dimen.wg_glass_inset) * scale;
@@ -115,7 +121,7 @@ final class WidgetGrid {
                     R.id.txt_vent_face_floor, R.id.txt_vent_windshield, R.id.txt_vent_floor_windshield,
                     R.id.txt_recirc);
             textSize(views, scale, 30, R.id.tv_fan_value);
-            roundSize(views, scale, iconScale, 40, R.id.btn_fan_minus, R.id.btn_fan_plus);
+            roundSize(views, scale, iconScale, 44, 26, R.id.btn_fan_minus, R.id.btn_fan_plus);
         } else if (layout == R.layout.widget_glass_heating_test
                 || layout == R.layout.widget_glass_heating_single_row) {
             textSize(views, scale, 11, R.id.txt_heat_header, R.id.txt_wheel_heat,
@@ -134,7 +140,7 @@ final class WidgetGrid {
             textSize(views, scale, 14, R.id.tv_temp_unit);
             if (vertical) textSize(views, scale, 11, R.id.widget_title);
             else textSize(views, scale, 11, R.id.tv_fan_label, R.id.tv_temp_label);
-            roundSize(views, scale, iconScale, vertical ? 48 : 44, R.id.btn_fan_minus, R.id.btn_fan_plus,
+            roundSize(views, scale, iconScale, vertical ? 52 : 48, 26, R.id.btn_fan_minus, R.id.btn_fan_plus,
                     R.id.btn_temp_minus, R.id.btn_temp_plus);
         } else if (layout == R.layout.widget_glass_drive_mode_vertical
                 || layout == R.layout.widget_glass_regen_vertical
@@ -142,12 +148,18 @@ final class WidgetGrid {
             textSize(views, scale, 11, R.id.widget_title, R.id.txt_recirc_v);
             textSize(views, scale, 17, R.id.tv_drive_mode_label, R.id.tv_regen_level_label);
             textSize(views, scale, 15, R.id.tv_vent_mode_label);
-            roundSize(views, scale, iconScale, 44, R.id.btn_drive_next, R.id.btn_drive_prev, R.id.btn_regen_next,
+            roundSize(views, scale, iconScale, 44, 24, R.id.btn_drive_next, R.id.btn_drive_prev, R.id.btn_regen_next,
                     R.id.btn_regen_prev, R.id.btn_vent_next, R.id.btn_vent_prev);
         } else if (layout == R.layout.widget_glass_battery_range) {
             textSize(views, scale, 22, R.id.tv_battery_range_percent);
             textSize(views, scale, 20, R.id.tv_battery_range_km);
             textSize(views, scale, 12, R.id.tv_battery_range_energy);
+        } else if (layout == R.layout.widget_outside_temp
+                || layout == R.layout.widget_outside_temp_wide) {
+            textSize(views, scale, layout == R.layout.widget_outside_temp ? 22 : 36,
+                    R.id.tv_outside_temp);
+        } else if (layout == R.layout.widget_recirc) {
+            textSize(views, scale, 11, R.id.txt_recirc);
         } else if (layout == R.layout.widget_wipers || layout == R.layout.widget_power_off
                 || layout == R.layout.widget_wheel_heat || layout == R.layout.widget_glass_windshield_heat) {
             textSize(views, scale, 11, R.id.txt_wipers, R.id.txt_power_off,
@@ -160,8 +172,8 @@ final class WidgetGrid {
         for (int id : ids) views.setTextViewTextSize(id, TypedValue.COMPLEX_UNIT_SP, sp * scale);
     }
 
-    private static void roundSize(RemoteViews views, float scale, float iconScale, int dp, int... ids) {
-        textSize(views, scale * iconScale, 24, ids);
+    private static void roundSize(RemoteViews views, float scale, float iconScale, int dp, int sp, int... ids) {
+        textSize(views, scale * iconScale, sp, ids);
         if (scale == 1f || Build.VERSION.SDK_INT < 31) return;
         for (int id : ids) {
             views.setViewLayoutWidth(id, dp * scale, TypedValue.COMPLEX_UNIT_DIP);

@@ -154,6 +154,27 @@
                     android:layout_height="wrap_content"
                     android:text="Заднее" />
             </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/chip_front_max_defrost"
+                style="@style/WgGlassCompactChip"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="4dp"
+                android:layout_weight="1">
+
+                <ImageView
+                    android:id="@+id/img_front_max_defrost"
+                    style="@style/WgClimateIcon"
+                    android:src="@drawable/wg_ic_heat_windshield" />
+
+                <TextView
+                    android:id="@+id/txt_front_max_defrost"
+                    style="@style/WgGlassCompactChipLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Макс." />
+            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
 </FrameLayout>

@@ -293,6 +293,13 @@
             </intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_info_wheel_heat" />
         </receiver>
+        <receiver android:name=".widgets.RecircWidgetProvider" android:exported="true"
+            android:label="@string/widget_name_recirc">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_info_recirc" />
+        </receiver>
         <receiver android:name=".widgets.WindshieldHeatWidgetProvider" android:exported="true"
             android:label="@string/widget_name_windshield_heat">
             <intent-filter>
@@ -319,6 +326,27 @@
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_info_clock_date" />
         </receiver>
 
+        <receiver android:name=".widgets.LargeClockWidgetProvider" android:exported="true"
+            android:label="@string/widget_name_clock_large">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_info_clock_large" />
+        </receiver>
+        <receiver android:name=".widgets.OutsideTemperatureWidgetProvider" android:exported="true"
+            android:label="@string/widget_name_outside_temp">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_info_outside_temp" />
+        </receiver>
+        <receiver android:name=".widgets.OutsideTemperatureWideWidgetProvider" android:exported="true"
+            android:label="@string/widget_name_outside_temp_wide">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_info_outside_temp_wide" />
+        </receiver>
         <receiver android:name=".widgets.SpeedWidgetProvider" android:exported="true" android:label="@string/widget_name_speed">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />

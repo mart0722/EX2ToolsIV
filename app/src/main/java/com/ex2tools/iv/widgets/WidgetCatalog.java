@@ -39,6 +39,12 @@ public final class WidgetCatalog {
     private static final Map<String, Entry> ENTRIES = new LinkedHashMap<>();
 
     static {
+        add(WidgetsCommon.SIZE_CLOCK_LARGE, R.string.widget_name_clock_large,
+                R.layout.widget_clock_large, 288, 192, 40, 170);
+        add(WidgetsCommon.SIZE_OUTSIDE_TEMP, R.string.widget_name_outside_temp,
+                R.layout.widget_outside_temp, 96, 96, 360, 170);
+        add(WidgetsCommon.SIZE_OUTSIDE_TEMP_WIDE, R.string.widget_name_outside_temp_wide,
+                R.layout.widget_outside_temp_wide, 192, 96, 360, 275);
         add(WidgetsCommon.SIZE_CLOCK, R.string.widgets_size_clock,
                 R.layout.widget_clock_overlay, 240, 120, 40, 40);
         add(WidgetsCommon.SIZE_SPEED, R.string.widgets_size_speed,
@@ -59,6 +65,8 @@ public final class WidgetCatalog {
                 R.layout.widget_hvac_direction_fan, 420, 260, 40, 520);
         add(WidgetsCommon.SIZE_HEATING, R.string.widgets_size_heating,
                 R.layout.widget_heating_test, 420, 260, 480, 520);
+        add(WidgetsCommon.SIZE_RECIRC, R.string.widget_name_recirc,
+                R.layout.widget_recirc, 96, 96, 660, 310);
         add(WidgetsCommon.SIZE_WHEEL_HEAT, R.string.widget_name_wheel_heat,
                 R.layout.widget_wheel_heat, 96, 96, 560, 310);
         add(WidgetsCommon.SIZE_WINDSHIELD_HEAT, R.string.widget_name_windshield_heat,
