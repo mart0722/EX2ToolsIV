@@ -247,8 +247,7 @@ final class OverlayWidgetViews {
                 break;
             case WidgetsCommon.SIZE_POWER_OFF:
                 root.findViewById(R.id.chip_power_off).setOnClickListener(v ->
-                        c.startActivity(new Intent(c, VehiclePowerOffActivity.class)
-                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)));
+                        c.startActivity(VehiclePowerOffActivity.widgetIntent(c)));
                 break;
             case WidgetsCommon.SIZE_LOCK:
                 View lock = root.findViewById(R.id.lock_body);

@@ -466,7 +466,7 @@
     <string name="widget_name_outside_temp">Температура за бортом 1×1</string>
     <string name="widget_name_outside_temp_wide">Температура за бортом 2×1</string>
     <string name="widget_outside_temp_description">Температура за бортом</string>
-    <string name="widget_outside_temp_value">%1$d °C</string>
+    <string name="widget_outside_temp_value">%1$.1f °C</string>
     <string name="widget_outside_temp_missing">— °C</string>
     <string name="widget_name_recirc">Рециркуляция</string>
     <string name="widgets_vent_show_recirc">Кнопка рециркуляции в обдуве</string>
@@ -791,7 +791,7 @@
     <string name="widgets_overlay_placement_grid">По сетке</string>
     <string name="widgets_overlay_placement_neighbor">К виджетам</string>
     <string name="widgets_overlay_wide_temperature">Широкая плитка температуры</string>
-    <string name="widgets_overlay_neighbor_hint">Подведите виджет к соседнему, чтобы выровнять их по краю с небольшим отступом.</string>
+    <string name="widgets_overlay_neighbor_hint">Подведите виджет к соседнему, чтобы выровнять его по краю или ячейке с небольшим зазором.</string>
     <string name="steering_title">Кнопки руля</string>
     <string name="steering_climate">Управление климатом</string>
     <string name="steering_climate_hint">Двойное нажатие голосовой кнопки переключает режим климата.</string>

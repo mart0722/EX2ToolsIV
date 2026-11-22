@@ -376,8 +376,8 @@ public final class WidgetsRenderer {
                 c.getString(powerOff ? R.string.widget_name_power_off : R.string.widget_name_wipers),
                 false);
         if (powerOff) {
-            views.setOnClickPendingIntent(chip, PendingIntent.getActivity(c, 0,
-                    new Intent(c, VehiclePowerOffActivity.class), PendingIntent.FLAG_IMMUTABLE));
+            views.setOnClickPendingIntent(chip, PendingIntent.getActivity(c, chip,
+                    VehiclePowerOffActivity.widgetIntent(c), PendingIntent.FLAG_IMMUTABLE));
         } else {
             click(views, c, chip, WidgetsCommon.WIPERS_TOGGLE);
         }
