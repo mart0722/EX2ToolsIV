@@ -13,6 +13,8 @@ import com.ex2tools.iv.drive.DriveController;
 import com.ex2tools.iv.state.VehicleState;
 import com.ex2tools.iv.vehicle.VhalGateway;
 
+import java.util.Locale;
+
 public final class WidgetsCommon {
 
     public static final String DRIVE_ECO = "com.ex2tools.iv.widget.DRIVE_ECO";
@@ -192,7 +194,7 @@ public final class WidgetsCommon {
 
     static String outsideTemperatureText(Context c, float value) {
         return Float.isFinite(value)
-                ? c.getString(R.string.widget_outside_temp_value, Math.round(value))
+                ? String.format(Locale.US, c.getString(R.string.widget_outside_temp_value), value)
                 : c.getString(R.string.widget_outside_temp_missing);
     }
 
