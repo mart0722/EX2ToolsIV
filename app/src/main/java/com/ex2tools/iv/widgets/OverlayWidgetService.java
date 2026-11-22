@@ -55,6 +55,7 @@ public final class OverlayWidgetService extends Service {
     private static volatile OverlayWidgetService instance;
     private WindowManager windowManager;
     private volatile boolean destroyed;
+    private int tilePitch;
     private int lastThemeSignature = Integer.MIN_VALUE;
     private volatile boolean stateDirty = true;
     private long lastRangeSample;
@@ -267,6 +268,7 @@ public final class OverlayWidgetService extends Service {
         for (String key : OverlaySpec.keys()) {
             specs.add(new OverlaySpec(key));
         }
+        tilePitch = resolveTilePitch();
         WidgetsCommon.subscribeAll(this);
         VehicleState.get().addListener(stateListener);
         handler.post(poll);
@@ -275,7 +277,10 @@ public final class OverlayWidgetService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent != null && ACTION_RESTART.equals(intent.getAction())) {
+        int pitch = resolveTilePitch();
+        boolean restart = intent != null && ACTION_RESTART.equals(intent.getAction());
+        if (restart || tilePitch != pitch) {
+            tilePitch = pitch;
             for (OverlaySpec spec : specs) {
                 remove(spec);
             }
@@ -289,6 +294,7 @@ public final class OverlayWidgetService extends Service {
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         if (destroyed) return;
+        tilePitch = resolveTilePitch();
         for (OverlaySpec spec : specs) {
             remove(spec);
         }
@@ -326,21 +332,29 @@ public final class OverlayWidgetService extends Service {
             boolean speed = WidgetsCommon.SIZE_SPEED.equals(spec.key);
             boolean apps = WidgetsCommon.SIZE_APPS.equals(spec.key);
             boolean glass = WidgetAppearance.usesGlass(this);
-            Size base = glass ? WidgetGrid.size(this, WidgetCatalog.layout(spec.key))
-                    : legacySize(spec);
-            if (apps) base = AppsOverlay.sizeDp(this);
+            Size base = glass ? tileSize(spec) : apps ? AppsOverlay.sizeDp(this) : legacySize(spec);
             float scale = glass ? WidgetGrid.scale(this) : (speed
                     ? Prefs.widgetSizePct(this, spec.key) : Prefs.overlaySizePct(this, spec.key)) / 100f;
             DisplayMetrics metrics = getResources().getDisplayMetrics();
             Prefs.OverlayPlacement placement = Prefs.overlayPlacement(this);
             int maxWidth = Math.max(1, metrics.widthPixels - dp(16));
             int maxHeight = Math.max(1, metrics.heightPixels - dp(16));
-            if (glass) {
-                scale = Math.min(scale, Math.min(maxWidth / (base.getWidth() * density()),
-                        maxHeight / (base.getHeight() * density())));
+            int width;
+            int height;
+            if (tilePitch > 0) {
+                // Reserve one gutter per grid line, including between neighboring tiles.
+                int gap = tileGap();
+                width = base.getWidth() / WidgetGrid.UNIT_DP * tilePitch - gap;
+                height = base.getHeight() / WidgetGrid.UNIT_DP * tilePitch - gap;
+                scale = tilePitch / (WidgetGrid.UNIT_DP * density());
+            } else {
+                if (glass) {
+                    scale = Math.min(scale, Math.min(maxWidth / (base.getWidth() * density()),
+                            maxHeight / (base.getHeight() * density())));
+                }
+                width = Math.min(maxWidth, Math.max(1, Math.round(base.getWidth() * density() * scale)));
+                height = Math.min(maxHeight, Math.max(1, Math.round(base.getHeight() * density() * scale)));
             }
-            int width = Math.min(maxWidth, Math.max(1, Math.round(base.getWidth() * density() * scale)));
-            int height = Math.min(maxHeight, Math.max(1, Math.round(base.getHeight() * density() * scale)));
 
             View content;
             if (speed) {
@@ -429,9 +443,40 @@ public final class OverlayWidgetService extends Service {
         }
     }
 
+    private Size tileSize(OverlaySpec spec) {
+        return WidgetsCommon.SIZE_APPS.equals(spec.key)
+                ? AppsOverlay.sizeDp(this) : WidgetGrid.size(this, WidgetCatalog.layout(spec.key));
+    }
+
+    private int resolveTilePitch() {
+        if (!WidgetAppearance.usesGlass(this)) return 0;
+        Prefs.OverlayPlacement placement = Prefs.overlayPlacement(this);
+        if (placement != Prefs.OverlayPlacement.GRID && placement != Prefs.OverlayPlacement.NEIGHBORS) {
+            return 0;
+        }
+        DisplayMetrics metrics = getResources().getDisplayMetrics();
+        int gap = dp(WIDGET_GAP_DP);
+        int maxWidth = Math.max(1, metrics.widthPixels - dp(16));
+        int maxHeight = Math.max(1, metrics.heightPixels - dp(16));
+        int pitch = Math.round(WidgetGrid.UNIT_DP * density() * WidgetGrid.scale(this));
+        for (OverlaySpec spec : specs) {
+            if (!Prefs.overlayEnabled(this, spec.key)) continue;
+            if (WidgetsCommon.SIZE_CLIMATE.equals(spec.key) && !Prefs.climateEnabled(this)) continue;
+            Size size = tileSize(spec);
+            pitch = Math.min(pitch, (maxWidth + gap) / (size.getWidth() / WidgetGrid.UNIT_DP));
+            pitch = Math.min(pitch, (maxHeight + gap) / (size.getHeight() / WidgetGrid.UNIT_DP));
+        }
+        return Math.max(1, pitch);
+    }
+
+    private int tileGap() {
+        int gap = dp(WIDGET_GAP_DP);
+        return tilePitch > 0 ? Math.min(gap, tilePitch - 1) : gap;
+    }
+
     private void snapToGrid(WindowManager.LayoutParams lp) {
         DisplayMetrics metrics = getResources().getDisplayMetrics();
-        int step = Math.max(1, dp(GRID_STEP_DP));
+        int step = tilePitch > 0 ? tilePitch : Math.max(1, dp(GRID_STEP_DP));
         lp.x = gridCoordinate(lp.x, metrics.widthPixels - lp.width, step);
         lp.y = gridCoordinate(lp.y, metrics.heightPixels - lp.height, step);
     }
@@ -601,7 +646,7 @@ public final class OverlayWidgetService extends Service {
         Rect target = OverlayNeighborSnap.find(
                 new Rect(lp.x, lp.y, lp.x + lp.width, lp.y + lp.height),
                 neighbors, metrics.widthPixels, metrics.heightPixels,
-                dp(WIDGET_GAP_DP), dp(reach), glass);
+                tileGap(), dp(reach), glass, tilePitch);
         lp.x = target.left;
         lp.y = target.top;
     }

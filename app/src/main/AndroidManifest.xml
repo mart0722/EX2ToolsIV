@@ -270,8 +270,11 @@
             </intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_info_hvac_direction_fan" />
         </receiver>
-        <activity android:name=".widgets.VehiclePowerOffActivity" android:exported="false"
-            android:theme="@android:style/Theme.NoDisplay" />
+        <activity android:name=".widgets.VehiclePowerOffActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:taskAffinity="${applicationId}.widget_power_off"
+            android:theme="@style/Theme.EX2ToolsIV.WidgetAction" />
         <receiver android:name=".widgets.WipersWidgetProvider" android:exported="true"
             android:label="@string/widget_name_wipers">
             <intent-filter>

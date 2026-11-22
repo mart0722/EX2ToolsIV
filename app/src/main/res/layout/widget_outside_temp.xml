@@ -34,6 +34,6 @@
             android:maxLines="1"
             android:text="@string/widget_outside_temp_missing"
             android:textColor="@color/wg_text"
-            android:textSize="22sp" />
+            android:textSize="18sp" />
     </LinearLayout>
 </FrameLayout>
