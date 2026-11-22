@@ -2,6 +2,8 @@ package com.ex2tools.iv.widgets;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.LinearGradient;
+import android.graphics.Shader;
 import android.graphics.drawable.GradientDrawable;
 import android.util.SparseIntArray;
 
@@ -12,10 +14,20 @@ import com.ex2tools.iv.R;
 
 /** Surface styles shared by home-screen widgets and floating widgets. */
 final class WidgetAppearance {
+    private static final int[] STEEL = {0xFF24384C, 0xFF60788F, 0xFF324A60, 0xFF30495F};
+    private static final int[] TITANIUM = {0xFFA6BED5, 0xFFF7FAFF, 0xFF8AA4C0, 0xFFCAD8E9};
+    private static final float[] STEEL_STOPS = {0f, .27f, .47f, 1f};
+    private static final float[] TITANIUM_STOPS = {0f, .27f, .52f, 1f};
+
     private WidgetAppearance() {}
 
     static boolean usesGlass(Context c) {
         return Prefs.climateIconStyle(c) != Prefs.ClimateIconStyle.STANDARD;
+    }
+
+    static LinearGradient chromeGradient(boolean night, float top, float bottom) {
+        return new LinearGradient(0, top, 0, bottom, night ? TITANIUM : STEEL,
+                night ? TITANIUM_STOPS : STEEL_STOPS, Shader.TileMode.CLAMP);
     }
 
     static int cardBackground(Context c, int resource) {

@@ -151,6 +151,21 @@
                             android:text="@string/widgets_climate_icons_chrome" />
                     </com.ex2tools.iv.ui.FlymeSegmentedGroup>
 
+                    <LinearLayout
+                        android:id="@+id/widgetGlassScaleControls"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <include
+                            android:id="@+id/widgetGlassSize"
+                            layout="@layout/item_widget_icon_size" />
+
+                        <include
+                            android:id="@+id/widgetGlassIconSize"
+                            layout="@layout/item_widget_icon_size" />
+                    </LinearLayout>
+
                     <com.ex2tools.iv.ui.FlymeSwitchRow
                         android:id="@+id/widgetClimateIconLabels"
                         android:layout_width="match_parent"
@@ -201,6 +216,51 @@
                         android:textColor="@color/flyme_label_level1"
                         android:textSize="20sp"
                         app:rowDescription="@string/widget_power_off_park_only" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.EX2.Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/card_padding">
+
+                    <TextView
+                        style="@style/Text.EX2.Section"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/widgets_vent_settings" />
+
+                    <com.ex2tools.iv.ui.FlymeSegmentedGroup
+                        android:id="@+id/widgetVentMode"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/widgetVentFive"
+                            style="@style/Widget.EX2.Toggle"
+                            android:layout_width="0dp"
+                            android:layout_height="56dp"
+                            android:layout_weight="1"
+                            android:minWidth="0dp"
+                            android:text="@string/widgets_vent_presets" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/widgetVentThree"
+                            style="@style/Widget.EX2.Toggle"
+                            android:layout_width="0dp"
+                            android:layout_height="56dp"
+                            android:layout_weight="1"
+                            android:minWidth="0dp"
+                            android:text="@string/widgets_vent_directions" />
+                    </com.ex2tools.iv.ui.FlymeSegmentedGroup>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

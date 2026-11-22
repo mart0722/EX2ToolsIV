@@ -13,6 +13,7 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
+import android.util.Size;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
@@ -44,6 +45,7 @@ public final class OverlayWidgetService extends Service {
     private static final int GRID_STEP_DP = 16;
     private static final int WIDGET_GAP_DP = 8;
     private static final int NEIGHBOR_SNAP_DISTANCE_DP = 24;
+    private static final int GLASS_NEIGHBOR_SNAP_DISTANCE_DP = 36;
     private static final String ACTION_RESTART = "com.ex2tools.iv.overlay.RESTART";
 
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -72,7 +74,8 @@ public final class OverlayWidgetService extends Service {
                     || WidgetsCommon.SIZE_VENT_FAN.equals(key)
                     || WidgetsCommon.SIZE_HEATING.equals(key)
                     || WidgetsCommon.SIZE_WIPERS.equals(key)
-                    || WidgetsCommon.SIZE_WINDSHIELD_HEAT.equals(key)) {
+                    || WidgetsCommon.SIZE_WINDSHIELD_HEAT.equals(key)
+                    || WidgetsCommon.SIZE_WHEEL_HEAT.equals(key)) {
                 update(spec);
             }
         }
@@ -305,43 +308,37 @@ public final class OverlayWidgetService extends Service {
         if (spec.view != null || windowManager == null) return false;
         try {
             FrameLayout container = new FrameLayout(this);
+            boolean speed = WidgetsCommon.SIZE_SPEED.equals(spec.key);
+            boolean apps = WidgetsCommon.SIZE_APPS.equals(spec.key);
+            boolean glass = WidgetAppearance.usesGlass(this);
+            Size base = glass ? WidgetGrid.size(this, WidgetCatalog.layout(spec.key))
+                    : legacySize(spec);
+            if (apps) base = AppsOverlay.sizeDp(this);
+            float scale = glass ? WidgetGrid.scale(this) : (speed
+                    ? Prefs.widgetSizePct(this, spec.key) : Prefs.overlaySizePct(this, spec.key)) / 100f;
+            DisplayMetrics metrics = getResources().getDisplayMetrics();
+            Prefs.OverlayPlacement placement = Prefs.overlayPlacement(this);
+            int maxWidth = Math.max(1, metrics.widthPixels - dp(16));
+            int maxHeight = Math.max(1, metrics.heightPixels - dp(16));
+            if (glass) {
+                scale = Math.min(scale, Math.min(maxWidth / (base.getWidth() * density()),
+                        maxHeight / (base.getHeight() * density())));
+            }
+            int width = Math.min(maxWidth, Math.max(1, Math.round(base.getWidth() * density() * scale)));
+            int height = Math.min(maxHeight, Math.max(1, Math.round(base.getHeight() * density() * scale)));
+
             View content;
-            if (WidgetsCommon.SIZE_SPEED.equals(spec.key)) {
+            if (speed) {
                 spec.speedView = new SpeedOverlayView(this);
                 content = spec.speedView.view();
                 spec.speedView.update(this, WidgetsCommon.readSpeed(this), WidgetsCommon.readTripKm(this));
             } else {
-                float scale = WidgetsCommon.SIZE_APPS.equals(spec.key)
-                        ? 1f : Prefs.overlaySizePct(this, spec.key) / 100f;
                 content = OverlayWidgetViews.create(this, spec.key, scale);
                 OverlayWidgetViews.update(content, spec.key);
             }
-            if (WidgetsCommon.SIZE_SPEED.equals(spec.key)) {
-                container.addView(content, new FrameLayout.LayoutParams(
-                        FrameLayout.LayoutParams.MATCH_PARENT,
-                        FrameLayout.LayoutParams.MATCH_PARENT));
-            } else {
-                container.addView(content);
-            }
+            container.addView(content, new FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
 
-            int size = WidgetsCommon.SIZE_SPEED.equals(spec.key)
-                    ? Prefs.widgetSizePct(this, spec.key)
-                    : Prefs.overlaySizePct(this, spec.key);
-            int baseWidthDp = WidgetsCommon.SIZE_TEMP.equals(spec.key) && Prefs.overlayWideTemperature(this)
-                    ? WidgetCatalog.get(WidgetsCommon.SIZE_VENT).widthDp : spec.widthDp;
-            int baseHeightDp = WidgetsCommon.SIZE_HEATING.equals(spec.key) && Prefs.heatingSingleRow(this)
-                    ? 180 : spec.heightDp;
-            if (WidgetsCommon.SIZE_APPS.equals(spec.key)) {
-                int[] dims = AppsOverlay.sizeDp(this);
-                baseWidthDp = dims[0];
-                baseHeightDp = dims[1];
-            }
-            int width = Math.max(1, Math.round(baseWidthDp * density() * size / 100f));
-            int height = Math.max(1, Math.round(baseHeightDp * density() * size / 100f));
-            DisplayMetrics metrics = getResources().getDisplayMetrics();
-            Prefs.OverlayPlacement placement = Prefs.overlayPlacement(this);
-            width = Math.min(width, Math.max(1, metrics.widthPixels - dp(16)));
-            height = Math.min(height, Math.max(1, metrics.heightPixels - dp(16)));
             WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
                     width, height,
                     WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
@@ -351,6 +348,10 @@ public final class OverlayWidgetService extends Service {
             lp.gravity = Gravity.TOP | Gravity.START;
             lp.x = Prefs.overlayX(this, spec.key, spec.defaultX);
             lp.y = Prefs.overlayY(this, spec.key, spec.defaultY);
+            if (glass) {
+                lp.x = Math.max(0, Math.min(metrics.widthPixels - width, lp.x));
+                lp.y = Math.max(0, Math.min(metrics.heightPixels - height, lp.y));
+            }
             if (placement == Prefs.OverlayPlacement.GRID) {
                 snapToGrid(lp);
             }
@@ -451,6 +452,14 @@ public final class OverlayWidgetService extends Service {
         spec.params = null;
         spec.speedView = null;
         spec.dragging = false;
+    }
+
+    private Size legacySize(OverlaySpec spec) {
+        int width = WidgetsCommon.SIZE_TEMP.equals(spec.key) && Prefs.overlayWideTemperature(this)
+                ? WidgetCatalog.get(WidgetsCommon.SIZE_VENT).widthDp : spec.widthDp;
+        int height = WidgetsCommon.SIZE_HEATING.equals(spec.key) && Prefs.heatingSingleRow(this)
+                ? 180 : spec.heightDp;
+        return new Size(width, height);
     }
 
     private void bindDrag(OverlaySpec spec, FrameLayout container, View content,
@@ -568,10 +577,12 @@ public final class OverlayWidgetService extends Service {
             WindowManager.LayoutParams other = spec.params;
             neighbors.add(new Rect(other.x, other.y, other.x + other.width, other.y + other.height));
         }
+        boolean glass = WidgetAppearance.usesGlass(this);
+        int reach = glass ? GLASS_NEIGHBOR_SNAP_DISTANCE_DP : NEIGHBOR_SNAP_DISTANCE_DP;
         Rect target = OverlayNeighborSnap.find(
                 new Rect(lp.x, lp.y, lp.x + lp.width, lp.y + lp.height),
                 neighbors, metrics.widthPixels, metrics.heightPixels,
-                dp(WIDGET_GAP_DP), dp(NEIGHBOR_SNAP_DISTANCE_DP));
+                dp(WIDGET_GAP_DP), dp(reach), glass);
         lp.x = target.left;
         lp.y = target.top;
     }
@@ -688,6 +699,7 @@ public final class OverlayWidgetService extends Service {
                     WidgetsCommon.SIZE_VENT_FAN,
                     WidgetsCommon.SIZE_HEATING,
                     WidgetsCommon.SIZE_WINDSHIELD_HEAT,
+                    WidgetsCommon.SIZE_WHEEL_HEAT,
                     WidgetsCommon.SIZE_BATTERY_RANGE,
                     WidgetsCommon.SIZE_WIPERS,
                     WidgetsCommon.SIZE_POWER_OFF,

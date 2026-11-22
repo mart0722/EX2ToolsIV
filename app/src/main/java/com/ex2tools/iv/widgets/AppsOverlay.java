@@ -6,6 +6,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.util.LruCache;
+import android.util.Size;
 
 import com.ex2tools.iv.LogStore;
 import com.ex2tools.iv.Prefs;
@@ -84,13 +85,14 @@ final class AppsOverlay {
     }
 
     /** Base size in dp; the overlay size slider is applied on top of it. */
-    static int[] sizeDp(Context c) {
+    static Size sizeDp(Context c) {
         int count = validSelected(c).size();
         int cols = columns(c, count);
         int rows = count <= 0 ? 1 : (count + cols - 1) / cols;
+        if (WidgetAppearance.usesGlass(c)) return WidgetGrid.cells(cols, rows);
         int width = PADDING_DP * 2 + cols * CELL_DP + Math.max(0, cols - 1) * GAP_DP;
         int height = PADDING_DP * 2 + rows * CELL_DP + Math.max(0, rows - 1) * GAP_DP;
-        return new int[]{width, height};
+        return new Size(width, height);
     }
 
     static Drawable icon(Context c, String pkg) {

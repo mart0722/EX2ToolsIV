@@ -318,6 +318,7 @@
     <string name="widgets_overlay_lock">Закрепить виджеты</string>
     <string name="widgets_speed_color">Цвет</string>
     <string name="widgets_speed_color_white">Белый</string>
+    <string name="widgets_speed_color_chrome">Хром</string>
     <string name="widgets_speed_color_blue">Синий</string>
     <string name="widgets_speed_color_black">Чёрный</string>
     <string name="widgets_speed_size">Размер спидометра</string>
@@ -789,7 +790,8 @@
     <string name="settings_fast_widget_response">Быстрый отклик виджетов</string>
     <string name="settings_fast_widget_response_note">Ускоряет кнопки температуры и вентилятора. Показания обновляются по данным автомобиля.</string>
     <string name="widgets_heating_single_row">Обогревы в один ряд</string>
-    <string name="widgets_individual_icon_sizes">Настройки иконок виджетов</string>
+    <string name="widgets_individual_icon_sizes">Настройки отдельных виджетов</string>
+    <string name="widgets_individual_settings_empty_glass">Добавьте на рабочий стол виджет обогревов, подогрева руля, дворников или выключения машины</string>
     <string name="widgets_individual_icon_sizes_empty">Добавьте на рабочий стол виджет обдува, обогрева, дворников или выключения машины</string>
     <string name="widgets_icon_size_instance">%1$s · №%2$d</string>
     <string name="widgets_climate_icon_size">Размер иконок</string>
@@ -802,6 +804,10 @@
     <string name="widgets_climate_icons_extra_thin">Хром 0,25</string>
     <string name="widgets_climate_icons_chrome_thin">Хром 0,75</string>
     <string name="widgets_climate_icons_chrome">Толстые</string>
+    <string name="widgets_vent_settings">Настройки обдува</string>
+    <string name="widgets_glass_scale">Общий размер виджетов</string>
+    <string name="widgets_glass_icon_scale">Общий размер иконок</string>
+    <string name="widget_name_wheel_heat">Подогрев руля</string>
     <string name="widgets_vent_presets">5 режимов</string>
     <string name="widgets_vent_directions">3 направления</string>
     <string name="widgets_pin_over_apps">Поверх приложений</string>

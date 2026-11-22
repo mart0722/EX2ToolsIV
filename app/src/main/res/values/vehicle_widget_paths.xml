@@ -5,4 +5,10 @@
     <string-array name="wg_icon_power_off">
         <item>M44 12 H52 V46 H44 Z M29 22 L33 29 C21 36 17 49 21 61 C25 73 36 81 48 81 C60 81 71 73 75 61 C79 49 75 36 63 29 L67 22 C82 31 87 47 82 63 C77 78 64 88 48 88 C32 88 19 78 14 63 C9 47 14 31 29 22 Z</item>
     </string-array>
+    <string-array name="wg_icon_regen">
+        <item>M15 60H29V75H15Z M41 43H55V75H41Z M67 24H81V75H67Z</item>
+        <item>M19 64H25V71H19Z</item>
+        <item>M45 47H51V71H45Z</item>
+        <item>M71 28H77V71H71Z</item>
+    </string-array>
 </resources>

@@ -286,6 +286,13 @@
             </intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_info_power_off" />
         </receiver>
+        <receiver android:name=".widgets.WheelHeatWidgetProvider" android:exported="true"
+            android:label="@string/widget_name_wheel_heat">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_info_wheel_heat" />
+        </receiver>
         <receiver android:name=".widgets.WindshieldHeatWidgetProvider" android:exported="true"
             android:label="@string/widget_name_windshield_heat">
             <intent-filter>

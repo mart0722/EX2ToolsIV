@@ -6,6 +6,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.util.TypedValue;
 import android.widget.RemoteViews;
 
 import androidx.core.content.ContextCompat;
@@ -18,6 +19,8 @@ import java.util.Date;
 import java.util.Locale;
 
 public class ClockWidgetProvider extends AppWidgetProvider {
+
+    static final float GLASS_DATE_TEXT_SP = 13f;
 
     @Override
     public void onUpdate(Context context, AppWidgetManager manager, int[] ids) {
@@ -60,7 +63,15 @@ public class ClockWidgetProvider extends AppWidgetProvider {
                 views.setTextColor(R.id.clockDate, color);
                 views.setTextViewText(R.id.clockDate, dateText);
             }
-            manager.updateAppWidget(id, views);
+            WidgetGrid.Slot slot = WidgetGrid.appWidgetSlot(context, manager, id, layout);
+            if (WidgetAppearance.usesGlass(context)) {
+                views.setTextViewTextSize(R.id.clockTime, TypedValue.COMPLEX_UNIT_SP, 42f * slot.scale());
+                if (date) {
+                    views.setTextViewTextSize(R.id.clockDate, TypedValue.COMPLEX_UNIT_SP,
+                            GLASS_DATE_TEXT_SP * slot.scale());
+                }
+            }
+            manager.updateAppWidget(id, slot.wrap(context, views));
         }
     }
 
