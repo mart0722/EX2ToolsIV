@@ -156,7 +156,7 @@ final class WidgetGrid {
             textSize(views, scale, 12, R.id.tv_battery_range_energy);
         } else if (layout == R.layout.widget_outside_temp
                 || layout == R.layout.widget_outside_temp_wide) {
-            textSize(views, scale, layout == R.layout.widget_outside_temp ? 22 : 36,
+            textSize(views, scale, layout == R.layout.widget_outside_temp ? 18 : 36,
                     R.id.tv_outside_temp);
         } else if (layout == R.layout.widget_recirc) {
             textSize(views, scale, 11, R.id.txt_recirc);
