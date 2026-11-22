@@ -17,6 +17,7 @@ public final class RangeModel {
 
     private static final String PREFS = "range_model";
     private static final long MIN_INTERVAL_MS = 10_000L;
+    private static final long MOVEMENT_GRACE_MS = 60_000L;
     private static final float MIN_LEARN_KM = 20f;
     private static final float WINDOW_KM = 200f;
 
@@ -45,24 +46,36 @@ public final class RangeModel {
 
             float kmSum = p.getFloat("km", 0f);
             float kwhSum = p.getFloat("kwh", 0f);
+            long lastMoveMs = 0L;
 
             if (hasBaseline) {
-                float dSoc = lastSoc - soc;          // > 0 — расход
+                float dSoc = lastSoc - soc;
                 float dKm = odo - lastOdo;
-                if (dSoc > 0.005f && dKm > 0.02f && dKm < 50f) {
+                boolean recentSample = now - lastMs <= MOVEMENT_GRACE_MS;
+                if (dKm > 0f && dKm < 50f && (dSoc >= 0f || recentSample)) {
+                    // Одометр и заряд обновляются независимо. Рост SOC на ходу учитываем как рекуперацию.
                     kmSum += dKm;
                     kwhSum += dSoc * CarProps.CAPACITY_KWH / 100f;
-                    if (kmSum > WINDOW_KM) {
-                        kmSum /= 2f;
-                        kwhSum /= 2f;
+                    lastMoveMs = now;
+                } else if (dKm == 0f && dSoc >= 0f) {
+                    long previousMoveMs = p.getLong("last_move_ms", 0L);
+                    // Даём показанию SOC время обновиться после последнего прироста одометра.
+                    if (previousMoveMs > 0L && now - previousMoveMs <= MOVEMENT_GRACE_MS) {
+                        kwhSum += dSoc * CarProps.CAPACITY_KWH / 100f;
+                        lastMoveMs = previousMoveMs;
                     }
                 }
+            }
+            if (kmSum > WINDOW_KM) {
+                kmSum /= 2f;
+                kwhSum /= 2f;
             }
 
             p.edit()
                     .putFloat("last_soc", soc)
                     .putFloat("last_odo", odo)
                     .putLong("last_ms", now)
+                    .putLong("last_move_ms", lastMoveMs)
                     .putFloat("km", kmSum)
                     .putFloat("kwh", kwhSum)
                     .apply();
@@ -80,8 +93,13 @@ public final class RangeModel {
      */
     public static float estimateKm(Context c) {
         try {
-            float km = prefs(c).getFloat("km", 0f);
-            float kwh = prefs(c).getFloat("kwh", 0f);
+            float km;
+            float kwh;
+            synchronized (RangeModel.class) {
+                SharedPreferences p = prefs(c);
+                km = p.getFloat("km", 0f);
+                kwh = p.getFloat("kwh", 0f);
+            }
             if (km < MIN_LEARN_KM || kwh < 0.05f) return Float.NaN;
             float soc = Telemetry.socRaw(c);
             if (Float.isNaN(soc)) return Float.NaN;
