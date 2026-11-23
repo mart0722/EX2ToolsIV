@@ -23,7 +23,7 @@ abstract class BaseWidgetProvider extends AppWidgetProvider {
     @Override
     public void onAppWidgetOptionsChanged(Context context, AppWidgetManager manager,
                                           int id, Bundle options) {
-        if (WidgetAppearance.usesGlass(context)) updateWidget(context, manager, id);
+        updateWidget(context, manager, id);
     }
 
     private void updateWidget(Context context, AppWidgetManager manager, int id) {

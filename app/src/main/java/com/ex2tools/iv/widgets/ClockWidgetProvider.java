@@ -78,13 +78,13 @@ public class ClockWidgetProvider extends AppWidgetProvider {
             }
             WidgetGrid.Slot slot = WidgetGrid.appWidgetSlot(context, manager, id,
                     large ? R.layout.widget_clock_large : layout);
-            if (WidgetAppearance.usesGlass(context) || large) {
-                views.setTextViewTextSize(R.id.clockTime, TypedValue.COMPLEX_UNIT_SP,
-                        (large ? LARGE_TIME_TEXT_SP : 42f) * slot.scale());
-                if (date) {
-                    views.setTextViewTextSize(R.id.clockDate, TypedValue.COMPLEX_UNIT_SP,
-                            (large ? LARGE_DATE_TEXT_SP : GLASS_DATE_TEXT_SP) * slot.scale());
-                }
+            views.setTextViewTextSize(R.id.clockTime, TypedValue.COMPLEX_UNIT_SP,
+                    (large ? LARGE_TIME_TEXT_SP : 42f) * slot.scale());
+            if (date) {
+                float dateSp = large ? LARGE_DATE_TEXT_SP
+                        : (WidgetAppearance.usesGlass(context) ? GLASS_DATE_TEXT_SP : 18f);
+                views.setTextViewTextSize(R.id.clockDate, TypedValue.COMPLEX_UNIT_SP,
+                        dateSp * slot.scale());
             }
             manager.updateAppWidget(id, slot.wrap(context, views));
         }
