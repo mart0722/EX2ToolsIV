@@ -517,11 +517,35 @@ public final class Prefs {
 
     public static void setOverlayVariant(Context c, String primary, String alternate,
                                          boolean useAlternate, boolean enabled) {
-        get(c).edit()
+        SharedPreferences prefs = get(c);
+        String from = useAlternate ? primary : alternate;
+        String to = useAlternate ? alternate : primary;
+        SharedPreferences.Editor editor = prefs.edit()
                 .putBoolean("overlay_" + primary + "_alternate", useAlternate)
                 .putBoolean("overlay_" + primary + "_enabled", enabled && !useAlternate)
-                .putBoolean("overlay_" + alternate + "_enabled", enabled && useAlternate)
-                .apply();
+                .putBoolean("overlay_" + alternate + "_enabled", enabled && useAlternate);
+        // Keep position and pin state when the user switches the widget format,
+        // so the alternate variant appears in the same place and stays pinned.
+        if (prefs.contains("overlay_" + from + "_x")) {
+            editor.putInt("overlay_" + to + "_x", prefs.getInt("overlay_" + from + "_x", 0));
+            editor.putInt("overlay_" + to + "_y", prefs.getInt("overlay_" + from + "_y", 0));
+        }
+        editor.putBoolean("overlay_" + to + "_pinned",
+                prefs.getBoolean("overlay_" + from + "_pinned", false));
+        copyIfAbsent(prefs, editor, "overlay_" + from + "_alpha_pct", "overlay_" + to + "_alpha_pct");
+        copyIfAbsent(prefs, editor, "overlay_" + from + "_size_pct", "overlay_" + to + "_size_pct");
+        editor.apply();
+    }
+
+    private static void copyIfAbsent(SharedPreferences prefs, SharedPreferences.Editor editor,
+                                     String from, String to) {
+        if (!prefs.contains(from) || prefs.contains(to)) return;
+        Object value = prefs.getAll().get(from);
+        if (value instanceof Integer) editor.putInt(to, (Integer) value);
+        else if (value instanceof Boolean) editor.putBoolean(to, (Boolean) value);
+        else if (value instanceof Float) editor.putFloat(to, (Float) value);
+        else if (value instanceof Long) editor.putLong(to, (Long) value);
+        else if (value instanceof String) editor.putString(to, (String) value);
     }
 
     public static boolean overlayPinned(Context c, String key) {
