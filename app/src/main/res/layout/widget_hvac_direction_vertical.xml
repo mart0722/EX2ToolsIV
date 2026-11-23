@@ -23,6 +23,7 @@
             android:text="+" />
 
         <LinearLayout
+            android:id="@+id/chip_vent_current"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
@@ -31,11 +32,8 @@
 
             <ImageView
                 android:id="@+id/img_vent_mode"
-                android:layout_width="64dp"
-                android:layout_height="64dp"
-                android:importantForAccessibility="no"
-                android:src="@drawable/wg_ic_vent_face"
-                android:tint="@color/wg_text" />
+                style="@style/WgClimateIcon"
+                android:src="@drawable/wg_ic_vent_face" />
 
             <TextView
                 android:id="@+id/tv_vent_mode_label"
@@ -49,7 +47,7 @@
                 android:fontFamily="sans-serif-medium" />
 
             <TextView
-                android:id="@+id/tv_vent_mode_footer"
+                android:id="@+id/widget_title"
                 style="@style/WgSection"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -71,14 +69,13 @@
             android:orientation="horizontal">
 
             <ImageView
-                android:layout_width="22dp"
-                android:layout_height="22dp"
-                android:importantForAccessibility="no"
+                android:id="@+id/img_recirc_v"
+                style="@style/WgClimateIcon"
                 android:src="@drawable/wg_ic_recirc" />
 
             <TextView
                 android:id="@+id/txt_recirc_v"
-                style="@style/WgChipLabel"
+                style="@style/WgClimateChipLabel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"

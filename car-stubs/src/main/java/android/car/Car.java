@@ -1,6 +1,7 @@
 package android.car;
 
 import android.content.Context;
+import android.os.Handler;
 
 /**
  * Compile-only stub for the Automotive Car API.
@@ -11,6 +12,10 @@ public final class Car {
     }
 
     public static Car createCar(Context context) {
+        throw new UnsupportedOperationException("stub");
+    }
+
+    public static Car createCar(Context context, Handler handler) {
         throw new UnsupportedOperationException("stub");
     }
 

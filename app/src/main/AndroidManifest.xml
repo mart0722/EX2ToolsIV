@@ -6,6 +6,7 @@
         android:minSdkVersion="28"
         android:targetSdkVersion="29" />
 
+    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
@@ -138,6 +139,8 @@
             android:exported="false"
             android:foregroundServiceType="dataSync" />
 
+        <service android:name=".voice.SteeringKeysService" android:exported="false" />
+
         <service
             android:name=".service.CabinClimateService"
             android:exported="false"
@@ -165,6 +168,11 @@
 
         <service
             android:name=".lock.AutoLockService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
+        <service
+            android:name=".body.WipersOnLockService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
 
@@ -262,6 +270,46 @@
             </intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_info_hvac_direction_fan" />
         </receiver>
+        <activity android:name=".widgets.VehiclePowerOffActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:taskAffinity="${applicationId}.widget_power_off"
+            android:theme="@style/Theme.EX2ToolsIV.WidgetAction" />
+        <receiver android:name=".widgets.WipersWidgetProvider" android:exported="true"
+            android:label="@string/widget_name_wipers">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_info_wipers" />
+        </receiver>
+        <receiver android:name=".widgets.PowerOffWidgetProvider" android:exported="true"
+            android:label="@string/widget_name_power_off">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_info_power_off" />
+        </receiver>
+        <receiver android:name=".widgets.WheelHeatWidgetProvider" android:exported="true"
+            android:label="@string/widget_name_wheel_heat">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_info_wheel_heat" />
+        </receiver>
+        <receiver android:name=".widgets.RecircWidgetProvider" android:exported="true"
+            android:label="@string/widget_name_recirc">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_info_recirc" />
+        </receiver>
+        <receiver android:name=".widgets.WindshieldHeatWidgetProvider" android:exported="true"
+            android:label="@string/widget_name_windshield_heat">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_info_windshield_heat" />
+        </receiver>
         <receiver android:name=".widgets.HeatingTestWidgetProvider" android:exported="true" android:label="@string/widget_name_heating_test">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -281,6 +329,27 @@
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_info_clock_date" />
         </receiver>
 
+        <receiver android:name=".widgets.LargeClockWidgetProvider" android:exported="true"
+            android:label="@string/widget_name_clock_large">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_info_clock_large" />
+        </receiver>
+        <receiver android:name=".widgets.OutsideTemperatureWidgetProvider" android:exported="true"
+            android:label="@string/widget_name_outside_temp">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_info_outside_temp" />
+        </receiver>
+        <receiver android:name=".widgets.OutsideTemperatureWideWidgetProvider" android:exported="true"
+            android:label="@string/widget_name_outside_temp_wide">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_info_outside_temp_wide" />
+        </receiver>
         <receiver android:name=".widgets.SpeedWidgetProvider" android:exported="true" android:label="@string/widget_name_speed">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -292,6 +361,12 @@
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_info_battery_range" />
+        </receiver>
+        <receiver android:name=".widgets.RealRangeWidgetProvider" android:exported="true" android:label="@string/widget_name_real_range">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_info_real_range" />
         </receiver>
         <receiver android:name=".widgets.LockWidgetProvider" android:exported="true" android:label="@string/widget_name_lock">
             <intent-filter>

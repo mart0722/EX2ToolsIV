@@ -46,6 +46,10 @@ public final class CommandDispatcher {
             this.message = message;
         }
 
+        public static Result unavailable(String message) {
+            return new Result(Status.REJECTED, message);
+        }
+
         public boolean ok() {
             return status == Status.APPLIED || status == Status.SENT
                     || status == Status.DRY_RUN;
@@ -65,10 +69,7 @@ public final class CommandDispatcher {
         return submit(command, true);
     }
 
-    /**
-     * @param awaitConfirmation false — не ждать read-back (интерактивные кнопки):
-     *                          состояние подтвердится событием VHAL.
-     */
+    /** Send without polling read-back for interactive controls; state events confirm later. */
     public Result submit(Command command, boolean awaitConfirmation) {
         if (command == null) {
             return new Result(Status.REJECTED, "empty command");

@@ -26,8 +26,6 @@ public final class StatusBarFragment extends Fragment {
     private FlymeSwitchRow switchTotal;
     private FlymeSwitchRow switchTrip;
     private FlymeSwitchRow switchBrightness;
-    private SeekBar interval;
-    private TextView intervalLabel;
     private SeekBar brightnessSeek;
     private TextView brightnessLabel;
     private boolean binding;
@@ -54,8 +52,6 @@ public final class StatusBarFragment extends Fragment {
         switchTotal = view.findViewById(R.id.switchTotalKm);
         switchTrip = view.findViewById(R.id.switchTripKm);
         switchBrightness = view.findViewById(R.id.switchBrightness);
-        interval = view.findViewById(R.id.intervalSeek);
-        intervalLabel = view.findViewById(R.id.intervalLabel);
         brightnessSeek = view.findViewById(R.id.brightnessSeek);
         brightnessLabel = view.findViewById(R.id.brightnessLabel);
 
@@ -65,31 +61,6 @@ public final class StatusBarFragment extends Fragment {
         bind(switchTotal, "status_total_km_enabled", "total");
         bind(switchTrip, "status_trip_km_enabled", "trip");
         bind(switchBrightness, "status_brightness_enabled", "brightness");
-
-        interval.setMax(27);
-        interval.setProgress(Prefs.intervalSec(c) - 3);
-        updateIntervalLabel(Prefs.intervalSec(c));
-        interval.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                int sec = progress + 3;
-                updateIntervalLabel(sec);
-                if (fromUser) {
-                    Prefs.setIntervalSec(requireContext(), sec);
-                    if (Prefs.statusAny(requireContext())) {
-                        StatusIconService.refresh(requireContext());
-                    }
-                }
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-            }
-        });
 
         brightnessSeek.setMax(95);
         brightnessSeek.setProgress(Prefs.statusBrightnessPct(c) - 5);
@@ -140,16 +111,8 @@ public final class StatusBarFragment extends Fragment {
         switchTrip.setChecked(Prefs.statusTripKm(c));
         switchBrightness.setChecked(Prefs.statusBrightness(c));
         binding = false;
-        interval.setProgress(Prefs.intervalSec(c) - 3);
-        updateIntervalLabel(Prefs.intervalSec(c));
         brightnessSeek.setProgress(Prefs.statusBrightnessPct(c) - 5);
         updateBrightnessLabel(Prefs.statusBrightnessPct(c));
-    }
-
-    private void updateIntervalLabel(int sec) {
-        if (intervalLabel != null) {
-            intervalLabel.setText(getString(R.string.settings_interval_fmt, sec));
-        }
     }
 
     private void updateBrightnessLabel(int pct) {

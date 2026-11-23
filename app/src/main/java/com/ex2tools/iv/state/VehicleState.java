@@ -351,6 +351,11 @@ public final class VehicleState {
         if (changed) scheduleNotify();
     }
 
+    /** Redraw controls that display a locally accepted command before hardware feedback. */
+    public void requestDisplayRefresh() {
+        scheduleNotify();
+    }
+
     private void scheduleNotify() {
         synchronized (lock) {
             if (notifyScheduled) return;

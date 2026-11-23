@@ -90,35 +90,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="48dp"
-                android:text="@string/status_section_interval" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:orientation="vertical">
-
-                <TextView
-                    android:id="@+id/intervalLabel"
-                    style="@style/Text.EX2.Body"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/settings_interval" />
-
-                <SeekBar
-                    android:id="@+id/intervalSeek"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:max="27"
-                    android:progress="2" />
-            </LinearLayout>
-
-            <TextView
-                style="@style/Text.EX2.GroupLabel"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="48dp"
                 android:text="@string/status_section_brightness" />
 
             <LinearLayout

@@ -39,6 +39,12 @@ public final class WidgetCatalog {
     private static final Map<String, Entry> ENTRIES = new LinkedHashMap<>();
 
     static {
+        add(WidgetsCommon.SIZE_CLOCK_LARGE, R.string.widget_name_clock_large,
+                R.layout.widget_clock_large, 288, 192, 40, 170);
+        add(WidgetsCommon.SIZE_OUTSIDE_TEMP, R.string.widget_name_outside_temp,
+                R.layout.widget_outside_temp, 96, 96, 360, 170);
+        add(WidgetsCommon.SIZE_OUTSIDE_TEMP_WIDE, R.string.widget_name_outside_temp_wide,
+                R.layout.widget_outside_temp_wide, 192, 96, 360, 275);
         add(WidgetsCommon.SIZE_CLOCK, R.string.widgets_size_clock,
                 R.layout.widget_clock_overlay, 240, 120, 40, 40);
         add(WidgetsCommon.SIZE_SPEED, R.string.widgets_size_speed,
@@ -59,8 +65,20 @@ public final class WidgetCatalog {
                 R.layout.widget_hvac_direction_fan, 420, 260, 40, 520);
         add(WidgetsCommon.SIZE_HEATING, R.string.widgets_size_heating,
                 R.layout.widget_heating_test, 420, 260, 480, 520);
+        add(WidgetsCommon.SIZE_RECIRC, R.string.widget_name_recirc,
+                R.layout.widget_recirc, 96, 96, 660, 310);
+        add(WidgetsCommon.SIZE_WHEEL_HEAT, R.string.widget_name_wheel_heat,
+                R.layout.widget_wheel_heat, 96, 96, 560, 310);
+        add(WidgetsCommon.SIZE_WINDSHIELD_HEAT, R.string.widget_name_windshield_heat,
+                R.layout.widget_windshield_heat, 160, 100, 480, 420);
         add(WidgetsCommon.SIZE_BATTERY_RANGE, R.string.widgets_size_battery_range,
                 R.layout.widget_battery_range, 300, 96, 40, 700);
+        add(WidgetsCommon.SIZE_REAL_RANGE, R.string.widget_name_real_range,
+                R.layout.widget_real_range, 192, 96, 470, 170);
+        add(WidgetsCommon.SIZE_WIPERS, R.string.widget_name_wipers,
+                R.layout.widget_wipers, 127, 91, 650, 420);
+        add(WidgetsCommon.SIZE_POWER_OFF, R.string.widget_name_power_off,
+                R.layout.widget_power_off, 127, 91, 820, 420);
         add(WidgetsCommon.SIZE_LOCK, R.string.widgets_size_lock,
                 R.layout.widget_lock, 160, 160, 360, 700);
         add(WidgetsCommon.SIZE_APPS, R.string.widgets_size_apps,

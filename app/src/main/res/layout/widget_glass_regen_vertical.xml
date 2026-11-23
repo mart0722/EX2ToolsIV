@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/widget_bg_layer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_wg_card_100" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <TextView
+            android:id="@+id/btn_regen_next"
+            style="@style/WgRoundButton"
+            android:text="+" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <ImageView
+                android:id="@+id/img_regen_level"
+                style="@style/WgClimateIcon"
+                android:importantForAccessibility="auto"
+                android:src="@drawable/wg_ic_regen_mid" />
+
+            <TextView
+                android:id="@+id/tv_regen_level_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:includeFontPadding="false"
+                android:text="Средняя"
+                android:textColor="@color/wg_text"
+                android:textSize="17sp"
+                android:fontFamily="sans-serif-medium" />
+
+            <TextView
+                android:id="@+id/widget_title"
+                style="@style/WgSection"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="РЕКУПЕРАЦИЯ" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/btn_regen_prev"
+            style="@style/WgRoundButton"
+            android:text="−" />
+    </LinearLayout>
+</FrameLayout>

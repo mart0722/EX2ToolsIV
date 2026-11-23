@@ -43,6 +43,16 @@
         <item name="android:paddingBottom">6dp</item>
     </style>
 
+    <style name="WgGlassChip" parent="WgChip">
+        <item name="android:paddingTop">2dp</item>
+        <item name="android:paddingBottom">2dp</item>
+    </style>
+
+    <style name="WgGlassCompactChip" parent="WgGlassChip">
+        <item name="android:paddingTop">0dp</item>
+        <item name="android:paddingBottom">0dp</item>
+    </style>
+
     <style name="WgChipLabel">
         <item name="android:textSize">11sp</item>
         <item name="android:textStyle">bold</item>
@@ -54,10 +64,32 @@
         <item name="android:layout_marginTop">4dp</item>
     </style>
 
+    <style name="WgClimateChipLabel" parent="WgChipLabel">
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <style name="WgGlassCompactChipLabel" parent="WgClimateChipLabel">
+        <item name="android:layout_marginTop">1dp</item>
+        <item name="android:maxLines">2</item>
+    </style>
+
     <style name="WgIcon">
         <item name="android:layout_width">38dp</item>
         <item name="android:layout_height">38dp</item>
         <item name="android:importantForAccessibility">no</item>
+    </style>
+
+    <style name="WgClimateIcon">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:adjustViewBounds">true</item>
+        <item name="android:importantForAccessibility">no</item>
+    </style>
+
+    <style name="WgClimateRoundButton" parent="WgRoundButton">
+        <item name="android:layout_width">48dp</item>
+        <item name="android:layout_height">48dp</item>
+        <item name="android:textSize">26sp</item>
     </style>
 
     <style name="WgRoundButton">

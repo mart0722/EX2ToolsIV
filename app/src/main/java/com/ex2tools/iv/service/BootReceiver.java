@@ -28,6 +28,7 @@ public final class BootReceiver extends BroadcastReceiver {
             return;
         }
 
+        com.ex2tools.iv.voice.SteeringKeysService.sync(context);
         DriveRegenWatchService.sync(context);
         com.ex2tools.iv.service.CabinClimateService.sync(context);
         ComfortRestoreService.startIfEnabled(context);
@@ -37,6 +38,7 @@ public final class BootReceiver extends BroadcastReceiver {
         ScreenshotButtonService.sync(context);
         com.ex2tools.iv.tasks.TaskManagerButtonService.sync(context);
         if (isUserUnlocked(context)) {
+            com.ex2tools.iv.body.WipersOnLockService.sync(context);
             com.ex2tools.iv.widgets.WidgetUpdateService.sync(context);
             com.ex2tools.iv.widgets.OverlayWidgetService.sync(context);
             if (Prefs.rvcBlackBackground(context)) {

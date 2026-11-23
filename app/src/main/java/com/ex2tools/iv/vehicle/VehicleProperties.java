@@ -34,14 +34,10 @@ public final class VehicleProperties {
         add(CarProps.REGEN_MODE, "drive.regen", PropertySpec.Type.INT,
                 CarProps.REGEN_AREAS, 0f, 10f);
 
-        add(CarProps.HVAC_TEMP_SET, "climate.target_temp", PropertySpec.Type.FLOAT,
-                CarProps.HVAC_AREAS, 5f, 40f);
-        add(CarProps.HVAC_TEMP_SET_AOSP, "climate.target_temp_aosp", PropertySpec.Type.FLOAT,
-                CarProps.HVAC_AREAS, 5f, 40f);
         add(CarProps.HVAC_TEMP_CURRENT, "climate.cabin_temp", PropertySpec.Type.FLOAT,
                 CarProps.CABIN_AREAS, -45f, 65f);
-        add(CarProps.HVAC_TEMP_AOSP, "climate.cabin_temp_aosp", PropertySpec.Type.FLOAT,
-                CarProps.HVAC_AREAS, -45f, 65f);
+        add(CarProps.HVAC_TEMP_AOSP, "climate.target_temp_aosp", PropertySpec.Type.FLOAT,
+                CarProps.HVAC_AREAS, 16f, 32f);
         add(CarProps.HVAC_TEMP_ADJUST, "climate.temp_adjust", PropertySpec.Type.FLOAT,
                 CarProps.HVAC_AREAS, 5f, 40f);
         add(CarProps.HVAC_FAN_SPEED, "climate.fan", PropertySpec.Type.INT,
@@ -68,6 +64,14 @@ public final class VehicleProperties {
         add(CarProps.ENV_OUTSIDE_TEMPERATURE, "vehicle.outside_temp", PropertySpec.Type.FLOAT,
                 new int[]{0}, -60f, 90f);
 
+        add(CarProps.WIPER_SERVICE_POSITION, "vehicle.wiper_service_position", PropertySpec.Type.INT,
+                new int[]{0}, 0f, 2f);
+        add(CarProps.WIPER_SERVICE_FUNCTION, "vehicle.wiper_service", PropertySpec.Type.BOOLEAN,
+                new int[]{0}, 0f, 1f);
+        add(CarProps.VEHICLE_POWER_OFF_REQUEST, "vehicle.power_off_request", PropertySpec.Type.INT,
+                new int[]{0}, 0f, 2f);
+        add(CarProps.VEHICLE_POWER_OFF_FUNCTION, "vehicle.power_off", PropertySpec.Type.BOOLEAN,
+                new int[]{0}, 0f, 1f);
         add(CarProps.SPEED_AUTO_LOCK, "vehicle.speed_auto_lock", PropertySpec.Type.INT,
                 new int[]{0}, 0f, 1f);
         add(CarProps.WINDOW_POSITION, "vehicle.window_position", PropertySpec.Type.INT,

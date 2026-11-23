@@ -13,6 +13,8 @@ import com.ex2tools.iv.drive.DriveController;
 import com.ex2tools.iv.state.VehicleState;
 import com.ex2tools.iv.vehicle.VhalGateway;
 
+import java.util.Locale;
+
 public final class WidgetsCommon {
 
     public static final String DRIVE_ECO = "com.ex2tools.iv.widget.DRIVE_ECO";
@@ -50,6 +52,9 @@ public final class WidgetsCommon {
     public static final String WHEEL_MODE_EXITED = "com.ex2tools.iv.widget.WHEEL_MODE_EXITED";
 
     public static final String SIZE_CLOCK = "clock";
+    public static final String SIZE_CLOCK_LARGE = "clock_large";
+    public static final String SIZE_OUTSIDE_TEMP = "outside_temp";
+    public static final String SIZE_OUTSIDE_TEMP_WIDE = "outside_temp_wide";
     public static final String SIZE_DRIVE_REGEN = "drive_regen";
     public static final String SIZE_DRIVE_MODE = "drive_mode";
     public static final String SIZE_REGEN = "regen";
@@ -57,12 +62,25 @@ public final class WidgetsCommon {
     public static final String SIZE_TEMP = "temp";
     public static final String SIZE_VENT = "vent";
     public static final String SIZE_VENT_FAN = "vent_fan";
+    public static final String SIZE_RECIRC = "recirc";
+    public static final String SIZE_WHEEL_HEAT = "wheel_heat";
+    public static final String SIZE_WINDSHIELD_HEAT = "windshield_heat";
     public static final String SIZE_HEATING = "heating";
     public static final String SIZE_SPEED = "speed";
     public static final String SIZE_BATTERY_RANGE = "battery_range";
+    public static final String SIZE_REAL_RANGE = "real_range";
+    static final String WIPERS_TOGGLE = "com.ex2tools.iv.widgets.WIPERS_TOGGLE";
+
+    public static final String SIZE_WIPERS = "wipers";
+    public static final String SIZE_POWER_OFF = "power_off";
     public static final String SIZE_LOCK = "lock";
     public static final String SIZE_APPS = "apps";
     public static final String SIZE_CLIMATE = "climate";
+
+    public static boolean isStandaloneVehicleButton(String key) {
+        return SIZE_WIPERS.equals(key) || SIZE_POWER_OFF.equals(key)
+                || SIZE_WHEEL_HEAT.equals(key) || SIZE_RECIRC.equals(key);
+    }
 
     public static final String CLIMATE_TARGET_MINUS = "com.ex2tools.iv.widget.CLIMATE_TARGET_MINUS";
     public static final String CLIMATE_TARGET_PLUS = "com.ex2tools.iv.widget.CLIMATE_TARGET_PLUS";
@@ -96,6 +114,7 @@ public final class WidgetsCommon {
     private static final int[] REGEN_ORDER = {CarProps.REGEN_WEAK, CarProps.REGEN_MEDIUM, CarProps.REGEN_STRONG};
     private static final int[] VENT_ORDER = {1, 2, 3, 4, 6};
     private static final int SEAT_HEAT_MAX_LEVEL = 3;
+    private static final float WARM_AIRFLOW_THRESHOLD_C = 24f;
 
     public static final int WINDOW_FRONT_LEFT = 16;
     public static final int WINDOW_FRONT_RIGHT = 64;
@@ -115,7 +134,14 @@ public final class WidgetsCommon {
         if (Prefs.climateEnabled(c)) return Prefs.climateTarget(c);
         Float pending = ClimateController.pendingTemp();
         if (pending != null) return pending;
+        // Единый источник уставки: AOSP-канал.
         return adjustTempDisplay(c, ClimateController.readTargetTemp(state(c)));
+    }
+
+    static float airflowSetpointDelta(Context c) {
+        Float setpoint = readTemp(c);
+        return setpoint != null && Float.isFinite(setpoint)
+                ? setpoint - WARM_AIRFLOW_THRESHOLD_C : 0f;
     }
 
     /**
@@ -167,6 +193,12 @@ public final class WidgetsCommon {
         return power == null ? null : power != 0;
     }
 
+    static String outsideTemperatureText(Context c, float value) {
+        return Float.isFinite(value)
+                ? String.format(Locale.US, c.getString(R.string.widget_outside_temp_value), value)
+                : c.getString(R.string.widget_outside_temp_missing);
+    }
+
     public static Boolean readRecirc() {
         Boolean pending = pendingRecirc;
         if (pending != null && fresh(pendingRecircAt)) return pending;
@@ -181,6 +213,11 @@ public final class WidgetsCommon {
 
     public static Boolean readFrontMaxDefrost() {
         return readBoolAny(CarProps.HVAC_FRONT_MAX_DEFROST_ON, new int[]{1});
+    }
+
+    static boolean wiperServicePositionActive() {
+        Object value = VehicleState.get().value(CarProps.WIPER_SERVICE_POSITION, 0);
+        return Boolean.TRUE.equals(com.ex2tools.iv.body.BodyController.decodeWiperServicePosition(value));
     }
 
     public static Boolean readWindshieldHeat() {
@@ -209,7 +246,7 @@ public final class WidgetsCommon {
     }
 
     public static Integer readDrive() {
-        return readIntAny(CarProps.DRIVE_MODE, CarProps.DRIVE_AREAS);
+        return DriveController.get().currentDrive();
     }
 
     public static Integer readRegen() {
@@ -272,9 +309,11 @@ public final class WidgetsCommon {
         subscribe(state, CarProps.HVAC_FAN_DIRECTION, CarProps.FAN_DIRECTION_AREAS);
         subscribe(state, CarProps.HVAC_AC_ON, CarProps.AC_AREAS);
         subscribe(state, CarProps.HVAC_RECIRC_ON, CarProps.AC_AREAS);
+        subscribe(state, CarProps.HVAC_RECIRC_ON_AOSP, new int[]{117});
         subscribe(state, CarProps.HVAC_REAR_DEFROSTER_ON, new int[]{2});
         subscribe(state, CarProps.HVAC_FRONT_MAX_DEFROST_ON, new int[]{1});
         subscribe(state, CarProps.HVAC_WINDSHIELD_HEAT, new int[]{117});
+        subscribe(state, CarProps.WIPER_SERVICE_POSITION, new int[]{0});
         subscribe(state, CarProps.STEERING_WHEEL_HEAT, CarProps.WHEEL_HEAT_AREAS);
         subscribe(state, CarProps.SEAT_HEAT, CarProps.SEAT_AREAS);
         subscribe(state, CarProps.HVAC_TEMP_AOSP, CarProps.HVAC_AREAS);
@@ -439,6 +478,11 @@ public final class WidgetsCommon {
         setVent(next);
     }
 
+    public static void toggleVent(int direction) {
+        pendingVent = null;
+        ClimateController.get().toggleVent(direction);
+    }
+
     public static void setVent(int value) {
         pendingVent = value;
         pendingVentAt = android.os.SystemClock.elapsedRealtime();
@@ -555,20 +599,16 @@ public final class WidgetsCommon {
 
     public static int bgDrawableResForPct(Context c) {
         int pct = Math.round(Prefs.widgetBgOpacity(c) / 20f) * 20;
-        switch (pct) {
-            case 0:
-                return R.drawable.bg_wg_card_000;
-            case 20:
-                return R.drawable.bg_wg_card_020;
-            case 40:
-                return R.drawable.bg_wg_card_040;
-            case 60:
-                return R.drawable.bg_wg_card_060;
-            case 80:
-                return R.drawable.bg_wg_card_080;
-            default:
-                return R.drawable.bg_wg_card_100;
-        }
+        int resource = WidgetAppearance.usesGlass(c) ? WidgetAppearance.glassCardResource(pct)
+                : switch (pct) {
+                    case 0 -> R.drawable.bg_wg_card_000;
+                    case 20 -> R.drawable.bg_wg_card_020;
+                    case 40 -> R.drawable.bg_wg_card_040;
+                    case 60 -> R.drawable.bg_wg_card_060;
+                    case 80 -> R.drawable.bg_wg_card_080;
+                    default -> R.drawable.bg_wg_card_100;
+                };
+        return WidgetAppearance.cardBackground(c, resource);
     }
 
     public static int ventIcon(int mode) {
@@ -618,10 +658,5 @@ public final class WidgetsCommon {
         return state;
     }
 
-    private static Float validTemp(Float raw) {
-        if (raw == null) return null;
-        float value = raw;
-        if (value > 60f && value <= 400f) value = value / 10f;
-        return (value >= 5f && value <= 40f) ? value : null;
-    }
+
 }

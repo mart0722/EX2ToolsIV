@@ -17,6 +17,7 @@
         android:padding="14dp">
 
         <LinearLayout
+            android:id="@+id/widget_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
@@ -49,7 +50,7 @@
 
             <TextView
                 android:id="@+id/btn_temp_minus"
-                style="@style/WgRoundButton"
+                style="@style/WgClimateRoundButton"
                 android:text="−" />
 
             <LinearLayout
@@ -86,7 +87,7 @@
 
             <TextView
                 android:id="@+id/btn_temp_plus"
-                style="@style/WgRoundButton"
+                style="@style/WgClimateRoundButton"
                 android:text="+" />
         </LinearLayout>
 

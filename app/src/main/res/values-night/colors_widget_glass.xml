@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="wg_glass_top_020">#244C6080</color>
+    <color name="wg_glass_bottom_020">#28182338</color>
+    <color name="wg_glass_edge_020">#11DDEBFF</color>
+    <color name="wg_glass_top_040">#484C6080</color>
+    <color name="wg_glass_bottom_040">#4F182338</color>
+    <color name="wg_glass_edge_040">#23DDEBFF</color>
+    <color name="wg_glass_top_060">#6D4C6080</color>
+    <color name="wg_glass_bottom_060">#77182338</color>
+    <color name="wg_glass_edge_060">#34DDEBFF</color>
+    <color name="wg_glass_top_080">#914C6080</color>
+    <color name="wg_glass_bottom_080">#9E182338</color>
+    <color name="wg_glass_edge_080">#46DDEBFF</color>
+    <color name="wg_glass_top_100">#B54C6080</color>
+    <color name="wg_glass_bottom_100">#C6182338</color>
+    <color name="wg_glass_edge_100">#57DDEBFF</color>
+    <color name="wg_glass_green_fill">#3C30A175</color>
+    <color name="wg_glass_red_fill">#44D95964</color>
+    <color name="wg_glass_green_ink">#92E9B3</color>
+    <color name="wg_glass_red_ink">#FFABB0</color>
+    <color name="wg_glass_accent_air">#632E98DC</color>
+    <color name="wg_glass_accent_warm_air">#69E56A57</color>
+    <color name="wg_glass_accent_heat">#69D87742</color>
+    <color name="wg_glass_accent_green">#6532AF7F</color>
+    <color name="wg_glass_accent_red">#66D95768</color>
+</resources>

@@ -3,6 +3,9 @@ plugins {
 }
 
 def platformStore = rootProject.file('signing/platform.jks')
+def platformStorePassword = project.findProperty('EX2_STORE_PASSWORD') ?: System.getenv('EX2_STORE_PASSWORD') ?: ''
+def platformKeyAlias = project.findProperty('EX2_KEY_ALIAS') ?: System.getenv('EX2_KEY_ALIAS') ?: 'platform'
+def platformKeyPassword = project.findProperty('EX2_KEY_PASSWORD') ?: System.getenv('EX2_KEY_PASSWORD') ?: ''
 
 android {
     namespace 'com.ex2tools.iv'
@@ -13,8 +16,8 @@ android {
         applicationId 'com.ex2tools.iv'
         minSdk 28
         targetSdk 29
-    versionCode 112
-    versionName '2.0.13'
+        versionCode 115
+        versionName '2.1.0'
         resConfigs 'ru'
         ndk {
             abiFilters 'arm64-v8a'
@@ -25,9 +28,9 @@ android {
         platform {
             if (platformStore.exists()) {
                 storeFile platformStore
-                storePassword 'android'
-                keyAlias 'platform'
-                keyPassword 'android'
+                storePassword platformStorePassword
+                keyAlias platformKeyAlias
+                keyPassword platformKeyPassword
             }
         }
     }
@@ -70,10 +73,3 @@ dependencies {
     implementation 'com.google.zxing:core:3.5.3'
     implementation 'com.alphacephei:vosk-android:0.3.75'
 }
-
-
-
-
-
-
-

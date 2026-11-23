@@ -44,6 +44,7 @@ public final class DriveRegenWatchService extends Service {
     private volatile boolean forceApply;
     private volatile boolean stopRequested;
     private volatile long wakeGraceUntil;
+    private boolean driveRestored;
     private int stableDrive = Integer.MIN_VALUE;
     private int stableRegen = Integer.MIN_VALUE;
     private int stableCount;
@@ -138,6 +139,7 @@ public final class DriveRegenWatchService extends Service {
                 if (!Prefs.autoApply(this)) return;
                 if (delay > 0) Thread.sleep(delay);
                 DriveController.Outcome r = controller.applySaved(this);
+                driveRestored = r.readDrive != null && r.readDrive == r.drive;
                 applies++;
                 lastWriteAt = System.currentTimeMillis();
                 LogStore.add(this, "watch apply: " + r.describe());
@@ -168,12 +170,16 @@ public final class DriveRegenWatchService extends Service {
                 if (forceApply && applies < MAX_APPLIES) {
                     forceApply = false;
                     DriveController.Outcome r = controller.applySaved(this);
+                    driveRestored = r.readDrive != null && r.readDrive == r.drive;
+                    stableCount = 0;
                     applies++;
                     lastWriteAt = System.currentTimeMillis();
                     LogStore.add(this, "watch " + (gearChanged ? "gear" : "wake")
                             + " apply: " + r.describe());
                 } else if (forceApply) {
                     forceApply = false;
+                    driveRestored = false;
+                    stableCount = 0;
                     LogStore.add(this, "watch: лимит попыток исчерпан, ждём пробуждения");
                 }
 
@@ -208,7 +214,11 @@ public final class DriveRegenWatchService extends Service {
         }
         if (stableCount < 5) return;
         boolean changed = false;
-        if (drive != null && drive != Prefs.drive(this)) {
+        int savedDrive = Prefs.drive(this);
+        if (drive == savedDrive) driveRestored = true;
+        // Пока восстановление не подтверждено, ECU может продолжать отдавать
+        // режим по умолчанию. Не заменяем им сохранённый выбор.
+        if (driveRestored && drive != savedDrive) {
             Prefs.setDrive(this, drive);
             changed = true;
         }

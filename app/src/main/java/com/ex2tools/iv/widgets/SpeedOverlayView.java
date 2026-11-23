@@ -18,12 +18,12 @@ final class SpeedOverlayView extends View {
     private long lastFrame;
     private boolean initialized;
     private boolean digital;
-    private boolean showBackground;
+    private int backgroundAlpha;
     private boolean showTrip;
     private float trip = Float.NaN;
 
     SpeedOverlayView(Context context) {
-        super(context);
+        super(Prefs.climateIconStyle(context).isChrome() ? OverlayWidgetViews.themeContext(context) : context);
         setWillNotDraw(false);
         setLayerType(View.LAYER_TYPE_SOFTWARE, null);
     }
@@ -36,7 +36,8 @@ final class SpeedOverlayView extends View {
         float value = Float.isNaN(kmh) ? 0f : kmh;
         targetSpeed = Math.max(0f, Math.min(SpeedGaugePainter.MAX_SPEED, value));
         digital = Prefs.speedMode(c) == 0;
-        showBackground = Prefs.speedBackground(c);
+        backgroundAlpha = Prefs.speedBackground(c)
+                ? Math.round(255f * Prefs.overlayAlphaPct(c, WidgetsCommon.SIZE_SPEED) / 100f) : 0;
         showTrip = Prefs.speedShowTrip(c);
         trip = tripKm;
         if (!initialized) {
@@ -63,6 +64,6 @@ final class SpeedOverlayView extends View {
         }
 
         SpeedGaugePainter.draw(getContext(), canvas, getWidth(), getHeight(),
-                shownSpeed, digital, showBackground, trip, showTrip && !digital);
+                shownSpeed, digital, backgroundAlpha, trip, showTrip && !digital);
     }
 }

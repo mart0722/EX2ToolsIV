@@ -141,15 +141,6 @@
                 android:textSize="22sp"
                 app:rowDescription="@string/auto_apply_note" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/applyNow"
-                android:layout_width="match_parent"
-                android:layout_height="72dp"
-                android:layout_marginTop="32dp"
-                android:text="@string/apply_now"
-                android:textSize="22sp"
-                app:cornerRadius="6dp" />
-
             <TextView
                 android:id="@+id/applyResult"
                 style="@style/Text.EX2.Caption"
@@ -205,6 +196,16 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="48dp"
                 android:text="@string/settings_section_floating" />
+
+            <com.ex2tools.iv.ui.FlymeSwitchRow
+                android:id="@+id/switchFastWidgetResponse"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/settings_fast_widget_response"
+                android:textColor="@color/flyme_label_level1"
+                android:textSize="22sp"
+                app:rowDescription="@string/settings_fast_widget_response_note" />
 
             <com.ex2tools.iv.ui.FlymeSwitchRow
                 android:id="@+id/switchScreenshotButton"
@@ -308,6 +309,16 @@
             </com.ex2tools.iv.ui.FlymeSegmentedGroup>
 
             <com.ex2tools.iv.ui.FlymeSwitchRow
+                android:id="@+id/switchWipersOnLock"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/widget_wipers_on_lock"
+                android:textColor="@color/flyme_label_level1"
+                android:textSize="22sp"
+                app:rowDescription="@string/widget_wipers_on_lock_note" />
+
+            <com.ex2tools.iv.ui.FlymeSwitchRow
                 android:id="@+id/switchClimate"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -348,22 +359,6 @@
                 android:text="@string/climate_open"
                 android:textSize="22sp"
                 android:visibility="gone" />
-
-            <TextView
-                style="@style/Text.EX2.GroupLabel"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="48dp"
-                android:text="@string/voice_title" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/settingsCustomCommands"
-                style="@style/Widget.EX2.SecondaryButton"
-                android:layout_width="match_parent"
-                android:layout_height="72dp"
-                android:layout_marginTop="24dp"
-                android:text="@string/voice_custom_commands"
-                android:textSize="22sp" />
 
             <TextView
                 style="@style/Text.EX2.GroupLabel"

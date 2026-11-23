@@ -21,6 +21,14 @@ public final class Prefs {
     private Prefs() {
     }
 
+    public static boolean fastWidgetResponse(Context c) {
+        return get(c).getBoolean("fast_widget_response", false);
+    }
+
+    public static void setFastWidgetResponse(Context c, boolean enabled) {
+        get(c).edit().putBoolean("fast_widget_response", enabled).apply();
+    }
+
     public static int themeMode(Context c) {
         return get(c).getInt("theme_mode", 0);
     }
@@ -397,17 +405,7 @@ public final class Prefs {
     }
 
     public static int intervalSec(Context c) {
-        SharedPreferences p = get(c);
-        int v = p.getInt("status_interval_sec", 3);
-        if (!p.getBoolean("status_interval_user", false) && v == 5) v = 3;
-        return Math.max(3, Math.min(30, v));
-    }
-
-    public static void setIntervalSec(Context c, int value) {
-        get(c).edit()
-                .putInt("status_interval_sec", Math.max(3, Math.min(30, value)))
-                .putBoolean("status_interval_user", true)
-                .apply();
+        return 3;
     }
 
     public static boolean fallbackPill(Context c) {
@@ -508,12 +506,254 @@ public final class Prefs {
         get(c).edit().putBoolean("overlay_" + key + "_enabled", value).apply();
     }
 
+    public static boolean overlayAlternateSelected(Context c, String primary, String alternate) {
+        SharedPreferences prefs = get(c);
+        boolean primaryEnabled = prefs.getBoolean("overlay_" + primary + "_enabled", false);
+        boolean alternateEnabled = prefs.getBoolean("overlay_" + alternate + "_enabled", false);
+        // App versions before the format selector only stored enabled widget keys.
+        if (primaryEnabled != alternateEnabled) return alternateEnabled;
+        return prefs.getBoolean("overlay_" + primary + "_alternate", false);
+    }
+
+    public static void setOverlayVariant(Context c, String primary, String alternate,
+                                         boolean useAlternate, boolean enabled) {
+        SharedPreferences prefs = get(c);
+        String from = useAlternate ? primary : alternate;
+        String to = useAlternate ? alternate : primary;
+        SharedPreferences.Editor editor = prefs.edit()
+                .putBoolean("overlay_" + primary + "_alternate", useAlternate)
+                .putBoolean("overlay_" + primary + "_enabled", enabled && !useAlternate)
+                .putBoolean("overlay_" + alternate + "_enabled", enabled && useAlternate);
+        // Keep position and pin state when the user switches the widget format,
+        // so the alternate variant appears in the same place and stays pinned.
+        if (prefs.contains("overlay_" + from + "_x")) {
+            editor.putInt("overlay_" + to + "_x", prefs.getInt("overlay_" + from + "_x", 0));
+            editor.putInt("overlay_" + to + "_y", prefs.getInt("overlay_" + from + "_y", 0));
+        }
+        editor.putBoolean("overlay_" + to + "_pinned",
+                prefs.getBoolean("overlay_" + from + "_pinned", false));
+        copyIfAbsent(prefs, editor, "overlay_" + from + "_alpha_pct", "overlay_" + to + "_alpha_pct");
+        copyIfAbsent(prefs, editor, "overlay_" + from + "_size_pct", "overlay_" + to + "_size_pct");
+        editor.apply();
+    }
+
+    private static void copyIfAbsent(SharedPreferences prefs, SharedPreferences.Editor editor,
+                                     String from, String to) {
+        if (!prefs.contains(from) || prefs.contains(to)) return;
+        Object value = prefs.getAll().get(from);
+        if (value instanceof Integer) editor.putInt(to, (Integer) value);
+        else if (value instanceof Boolean) editor.putBoolean(to, (Boolean) value);
+        else if (value instanceof Float) editor.putFloat(to, (Float) value);
+        else if (value instanceof Long) editor.putLong(to, (Long) value);
+        else if (value instanceof String) editor.putString(to, (String) value);
+    }
+
     public static boolean overlayPinned(Context c, String key) {
         return get(c).getBoolean("overlay_" + key + "_pinned", false);
     }
 
     public static void setOverlayPinned(Context c, String key, boolean value) {
         get(c).edit().putBoolean("overlay_" + key + "_pinned", value).apply();
+    }
+
+    public static boolean ventDirectionButtons(Context c) {
+        return get(c).getBoolean("vent_direction_buttons", false);
+    }
+
+    public static void setVentDirectionButtons(Context c, boolean enabled) {
+        get(c).edit().putBoolean("vent_direction_buttons", enabled).apply();
+    }
+
+    public static int glassWidgetSizePct(Context c) {
+        return Math.max(WIDGET_SIZE_MIN_PCT,
+                Math.min(WIDGET_SIZE_MAX_PCT, get(c).getInt("glass_widget_size_pct", 100)));
+    }
+
+    public static void setGlassWidgetSizePct(Context c, int pct) {
+        get(c).edit().putInt("glass_widget_size_pct",
+                Math.max(WIDGET_SIZE_MIN_PCT, Math.min(WIDGET_SIZE_MAX_PCT, pct))).apply();
+    }
+
+    public static int glassWidgetIconSizePct(Context c) {
+        return clampClimateIconSize(get(c).getInt("glass_widget_icon_size_pct", 100));
+    }
+
+    public static void setGlassWidgetIconSizePct(Context c, int pct) {
+        get(c).edit().putInt("glass_widget_icon_size_pct", clampClimateIconSize(pct)).apply();
+    }
+
+    public enum ClimateIconStyle {
+        STANDARD, THIN, EXTRA_THIN, CHROME_THIN, CHROME;
+
+        public boolean isChrome() {
+            return this == CHROME || this == CHROME_THIN;
+        }
+    }
+
+    public static ClimateIconStyle climateIconStyle(Context c) {
+        SharedPreferences prefs = get(c);
+        return switch (prefs.getString("climate_icon_style", "")) {
+            case "STANDARD" -> ClimateIconStyle.STANDARD;
+            case "THIN" -> ClimateIconStyle.THIN;
+            // The 0.25 px outline was removed from the UI; keep the preference
+            // forward-compatible by using the nearest remaining style.
+            case "EXTRA_THIN" -> ClimateIconStyle.THIN;
+            case "CHROME_THIN" -> ClimateIconStyle.CHROME_THIN;
+            // The thick chrome style was removed; fall back to the standard look.
+            case "CHROME" -> ClimateIconStyle.STANDARD;
+            default -> ClimateIconStyle.STANDARD;
+        };
+    }
+
+    public static void setClimateIconStyle(Context c, ClimateIconStyle style) {
+        get(c).edit().putString("climate_icon_style", style.name()).apply();
+    }
+
+    public static final int CLIMATE_ICON_MIN_PCT = 80;
+    public static final int CLIMATE_ICON_MAX_PCT = 150;
+
+    public static int climateIconSizePct(Context c, String widgetKey) {
+        SharedPreferences prefs = get(c);
+        return clampClimateIconSize(prefs.getInt("climate_icon_size_" + widgetKey,
+                prefs.getInt("climate_icon_size_pct", 100)));
+    }
+
+    public static void setClimateIconSizePct(Context c, String widgetKey, int pct) {
+        get(c).edit().putInt("climate_icon_size_" + widgetKey, clampClimateIconSize(pct)).apply();
+    }
+
+    public static void clearWidgetIconSettings(Context c, String widgetKey) {
+        get(c).edit()
+                .remove("climate_icon_size_" + widgetKey)
+                .remove("climate_icon_labels_" + widgetKey)
+                .apply();
+    }
+
+    private static int clampClimateIconSize(int pct) {
+        return Math.max(CLIMATE_ICON_MIN_PCT, Math.min(CLIMATE_ICON_MAX_PCT, pct));
+    }
+
+    public static boolean heatingSingleRow(Context c) {
+        return get(c).getBoolean("widget_heating_single_row", false);
+    }
+
+    public static boolean heatingHideMaxAir(Context c) {
+        return get(c).getBoolean("widget_heating_hide_max_air", false);
+    }
+
+    public static void setHeatingLayout(Context c, boolean singleRow, boolean hideMaxAir) {
+        get(c).edit()
+                .putBoolean("widget_heating_single_row", singleRow)
+                .putBoolean("widget_heating_hide_max_air", hideMaxAir)
+                .apply();
+    }
+
+    public static boolean showHeatingMaxAir(Context c) {
+        return !heatingSingleRow(c) || !heatingHideMaxAir(c);
+    }
+
+    public static boolean showVentRecirc(Context c) {
+        return get(c).getBoolean("widget_vent_show_recirc", true);
+    }
+
+    public static void setShowVentRecirc(Context c, boolean show) {
+        get(c).edit().putBoolean("widget_vent_show_recirc", show).apply();
+    }
+
+    public static boolean widgetTitles(Context c) {
+        return get(c).getBoolean("widget_titles", true);
+    }
+
+    public static void setWidgetTitles(Context c, boolean enabled) {
+        get(c).edit().putBoolean("widget_titles", enabled).apply();
+    }
+
+    public static boolean climateIconLabels(Context c) {
+        return get(c).getBoolean("climate_icon_labels", true);
+    }
+
+    public static void setClimateIconLabels(Context c, boolean enabled) {
+        get(c).edit().putBoolean("climate_icon_labels", enabled).apply();
+    }
+
+    public static boolean climateIconLabels(Context c, String widgetKey) {
+        return get(c).getBoolean("climate_icon_labels_" + widgetKey, climateIconLabels(c));
+    }
+
+    public static void setClimateIconLabels(Context c, String widgetKey, boolean enabled) {
+        SharedPreferences.Editor editor = get(c).edit();
+        String key = "climate_icon_labels_" + widgetKey;
+        if (enabled == climateIconLabels(c)) editor.remove(key);
+        else editor.putBoolean(key, enabled);
+        editor.apply();
+    }
+
+    public static boolean widgetPowerOffWithoutConfirmation(Context c) {
+        return get(c).getBoolean("widget_power_off_without_confirmation", false);
+    }
+
+    public static boolean wipersOnLock(Context c) {
+        return get(c).getBoolean("wipers_on_lock", false);
+    }
+
+    public static void setWipersOnLock(Context c, boolean enabled) {
+        get(c).edit().putBoolean("wipers_on_lock", enabled).apply();
+    }
+
+    public static void setWidgetPowerOffWithoutConfirmation(Context c, boolean enabled) {
+        get(c).edit().putBoolean("widget_power_off_without_confirmation", enabled).apply();
+    }
+
+    public static boolean widgetCardBorder(Context c) {
+        return get(c).getBoolean("widget_card_border", true);
+    }
+
+    public static void setWidgetCardBorder(Context c, boolean visible) {
+        get(c).edit().putBoolean("widget_card_border", visible).apply();
+    }
+
+    public static boolean widgetButtonBorder(Context c) {
+        return get(c).getBoolean("widget_button_border", true);
+    }
+
+    public static void setWidgetButtonBorder(Context c, boolean visible) {
+        get(c).edit().putBoolean("widget_button_border", visible).apply();
+    }
+
+    public static boolean widgetAccentBoost(Context c) {
+        return get(c).getBoolean("widget_accent_boost", false);
+    }
+
+    public static void setWidgetAccentBoost(Context c, boolean enabled) {
+        get(c).edit().putBoolean("widget_accent_boost", enabled).apply();
+    }
+
+    public enum OverlayPlacement {
+        FREE, CORNERS, GRID, NEIGHBORS
+    }
+
+    public static OverlayPlacement overlayPlacement(Context c) {
+        SharedPreferences prefs = get(c);
+        return switch (prefs.getString("overlay_placement", "")) {
+            case "FREE" -> OverlayPlacement.FREE;
+            case "CORNERS" -> OverlayPlacement.CORNERS;
+            case "GRID" -> OverlayPlacement.GRID;
+            case "AUTO_GRID", "NEIGHBORS" -> OverlayPlacement.NEIGHBORS;
+            default -> prefs.getBoolean("overlay_docked", false)
+                    ? OverlayPlacement.CORNERS : OverlayPlacement.FREE;
+        };
+    }
+
+    public static void setOverlayPlacement(Context c, OverlayPlacement placement) {
+        get(c).edit().putString("overlay_placement", placement.name()).apply();
+    }
+
+    public static int overlayCorner(Context c, String key) {
+        return Math.max(0, Math.min(3, get(c).getInt("overlay_" + key + "_corner", 0)));
+    }
+
+    public static void setOverlayCorner(Context c, String key, int corner) {
+        get(c).edit().putInt("overlay_" + key + "_corner", corner).apply();
     }
 
     public static int overlayX(Context c, String key, int fallback) {
@@ -548,13 +788,40 @@ public final class Prefs {
     }
 
     public static int overlaySizePct(Context c, String key) {
-        return Math.max(50, Math.min(200,
+        return Math.max(50, Math.min(250,
                 get(c).getInt("overlay_" + key + "_size_pct", 100)));
+    }
+
+    public static boolean overlayWideTemperature(Context c) {
+        return get(c).getBoolean("overlay_adapt_climate_size", false);
+    }
+
+    public static void setOverlayWideTemperature(Context c, boolean enabled) {
+        get(c).edit().putBoolean("overlay_adapt_climate_size", enabled).apply();
     }
 
     public static void setOverlaySizePct(Context c, String key, int value) {
         get(c).edit().putInt("overlay_" + key + "_size_pct",
-                Math.max(50, Math.min(200, value))).apply();
+                Math.max(50, Math.min(250, value))).apply();
+    }
+
+    /** One size slider for all overlay widgets instead of per-widget sliders. */
+    public static boolean widgetsGlobalSize(Context c) {
+        return get(c).getBoolean("widgets_global_size", false);
+    }
+
+    public static void setWidgetsGlobalSize(Context c, boolean enabled) {
+        get(c).edit().putBoolean("widgets_global_size", enabled).apply();
+    }
+
+    public static int overlayGlobalSizePct(Context c) {
+        return Math.max(WIDGET_SIZE_MIN_PCT, Math.min(WIDGET_SIZE_MAX_PCT,
+                get(c).getInt("overlay_global_size_pct", 100)));
+    }
+
+    public static void setOverlayGlobalSizePct(Context c, int value) {
+        get(c).edit().putInt("overlay_global_size_pct",
+                Math.max(WIDGET_SIZE_MIN_PCT, Math.min(WIDGET_SIZE_MAX_PCT, value))).apply();
     }
 
     public static int overlayAlphaPct(Context c, String key) {
@@ -575,15 +842,18 @@ public final class Prefs {
         get(c).edit().putInt("widget_size_pct", Math.max(50, Math.min(250, value))).apply();
     }
 
+    public static final int WIDGET_SIZE_MIN_PCT = 50;
+    public static final int WIDGET_SIZE_MAX_PCT = 300;
+
     public static int widgetSizePct(Context c, String key) {
         int fallback = widgetSizePct(c);
-        return Math.max(50, Math.min(250,
+        return Math.max(WIDGET_SIZE_MIN_PCT, Math.min(WIDGET_SIZE_MAX_PCT,
                 get(c).getInt("widget_size_" + key + "_pct", fallback)));
     }
 
     public static void setWidgetSizePct(Context c, String key, int value) {
         get(c).edit().putInt("widget_size_" + key + "_pct",
-                Math.max(50, Math.min(250, value))).apply();
+                Math.max(WIDGET_SIZE_MIN_PCT, Math.min(WIDGET_SIZE_MAX_PCT, value))).apply();
     }
 
     public static int widgetFanCache(Context c) {
@@ -633,7 +903,7 @@ public final class Prefs {
     }
 
     public static boolean clockDate(Context c) {
-        return get(c).getBoolean("clock_date", false);
+        return get(c).getBoolean("clock_date", true);
     }
 
     public static void setClockDate(Context c, boolean value) {
@@ -656,6 +926,14 @@ public final class Prefs {
         get(c).edit().putBoolean("voice_wake_enabled", value).apply();
     }
 
+    public static boolean steeringClimate(Context c) {
+        return get(c).getBoolean("steering_climate", false);
+    }
+
+    public static void setSteeringClimate(Context c, boolean value) {
+        get(c).edit().putBoolean("steering_climate", value).apply();
+    }
+
     public static boolean voiceMicKey(Context c) {
         return get(c).getBoolean("voice_mic_key", true);
     }
@@ -670,6 +948,15 @@ public final class Prefs {
 
     public static void setVoiceOverlay(Context c, boolean value) {
         get(c).edit().putBoolean("voice_overlay", value).apply();
+    }
+
+    public static boolean voiceHeatingDefaultsAdded(Context c) {
+        return get(c).getBoolean("voice_heating_defaults_v1", false);
+    }
+
+    public static void setVoiceCommandsWithDefaults(Context c, String value) {
+        get(c).edit().putString("voice_custom_commands", value)
+                .putBoolean("voice_heating_defaults_v1", true).apply();
     }
 
     public static String voiceCustomCommands(Context c) {

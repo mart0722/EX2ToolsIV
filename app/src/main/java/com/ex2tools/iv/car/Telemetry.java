@@ -175,10 +175,8 @@ public final class Telemetry {
         float cabin = readValidFloat(cc, CarProps.HVAC_TEMP_CURRENT, CarProps.CABIN_AREAS, -45f, 65f);
         float adjust = readValidFloat(cc, CarProps.HVAC_TEMP_ADJUST, CarProps.HVAC_AREAS, 5f, 40f);
         float aosp = readValidFloat(cc, CarProps.HVAC_TEMP_AOSP, CarProps.HVAC_AREAS, 5f, 40f);
-        float vendor = readValidFloat(cc, CarProps.HVAC_TEMP_SET, CarProps.HVAC_AREAS, 5f, 40f);
-        float vendorAosp = readValidFloat(cc, CarProps.HVAC_TEMP_SET_AOSP, CarProps.HVAC_AREAS, 5f, 40f);
         com.ex2tools.iv.LogStore.add(c, "hvac: cabin=" + cabin + " target=" + adjust
-                + " aosp=" + aosp + " vendor=" + vendor + " vendorAosp=" + vendorAosp);
+                + " aosp=" + aosp);
     }
 
     public static float batteryKwh(Context c) {

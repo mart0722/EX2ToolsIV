@@ -33,7 +33,6 @@
     <string name="auto_apply">Удерживать режим</string>
     <string name="auto_apply_note">Возвращать выбранный режим после загрузки, пробуждения и смены передачи. Ручное переключение в штатном меню не перебивается.</string>
     <string name="auto_apply_on">Режим будет удерживаться</string>
-    <string name="apply_now">Применить сейчас</string>
     <string name="applying">Применяю…</string>
     <string name="drive_apply_hint">Значения записываются в Car API и повторяются после перезапуска автомобиля.</string>
     <string name="regen_apply_hint">После старта машины значения могут сбрасываться — EX2ToolsIV применит их автоматически.</string>
@@ -58,8 +57,6 @@
     <string name="status_wifi_desc">Wi-Fi</string>
     <string name="status_battery_desc">Батарея</string>
     <string name="status_temp_desc">Температура</string>
-    <string name="settings_interval">Обновление, сек</string>
-    <string name="settings_interval_fmt">Обновление: %1$d с</string>
     <string name="reload">Обновить</string>
     <string name="status_test_posted">Тестовая иконка отправлена</string>
     <string name="service_title">Сервисный режим</string>
@@ -156,7 +153,7 @@
     <string name="rvc_black_title">Затемнить экран заднего хода</string>
     <string name="rvc_black_note">Для владельцев EX2 PRO-версии</string>
     <string name="ttl65_title">TTL 65</string>
-    <string name="ttl65_note">Фиксирует исходящий TTL на 65 для IPv4 и IPv6: после пересылки телефоном пакет приходит к оператору с 64, как будто он создан на самом телефоне.</string>
+    <string name="ttl65_note">Фиксирует исходящий TTL на 65 для IPv4 и IPv6</string>
     <string name="ttl65_applying">Применяем TTL 65…</string>
     <string name="ttl65_removing">Отключаем TTL 65…</string>
     <string name="ttl65_progress_message">Настраиваем iptables для IPv4 и IPv6. Это может занять несколько секунд.</string>
@@ -274,13 +271,19 @@
     <string name="widgets_title">Виджеты</string>
     <string name="widgets_mode_stock">Штатный лаунчер</string>
     <string name="widgets_mode_third">Сторонний лаунчер</string>
+    <string name="widgets_stock_cards_title">Карточки Flyme Auto</string>
+    <string name="widgets_stock_cards_hide">Скрыть все</string>
+    <string name="widgets_stock_cards_show">Вернуть все</string>
+    <string name="widgets_stock_cards_sent">Команда отправлена в Flyme Auto</string>
+    <string name="widgets_stock_cards_launcher_missing">Лаунчер Flyme Auto не найден</string>
+    <string name="widgets_stock_cards_failed">Не удалось отправить команду в Flyme Auto</string>
     <string name="widgets_mode_stock_note">Overlay-виджеты поверх рабочего стола</string>
     <string name="widgets_mode_third_note">Виджеты для сторонних лаунчеров</string>
     <string name="widgets_mode_switch_title">Сменить режим?</string>
     <string name="widgets_mode_switch_message">Режим меняет только способ добавления виджетов. Overlay-виджеты останутся доступны.</string>
     <string name="widgets_current_launcher">Текущий лаунчер: %1$s</string>
     <string name="widgets_info_title">Как работают виджеты</string>
-    <string name="widgets_info_message">Штатный лаунчер: overlay-виджеты включаются во вкладке «Штатный лаунчер». Для каждого виджета отдельно настраиваются размер и прозрачность. Виджет можно перетаскивать за фон; положение сохраняется. Если включить «Поверх приложений», виджет останется на экране и при открытии других приложений.\n\nЛюбой сторонний лаунчер: виджеты добавляются через меню самого лаунчера — долгое нажатие на рабочем столе → Виджеты → EX2ToolsIV. Размер AppWidget задаёт лаунчер; настройки внешнего вида применяются к уже добавленным виджетам.\n\nОба варианта могут работать одновременно.</string>
+    <string name="widgets_info_message">Во вкладке «Штатный лаунчер» настраиваются плавающие виджеты для домашнего экрана Flyme или стороннего лаунчера, выбранного в Android по умолчанию. Свободные позиции и привязка к углам общие для этих лаунчеров. Для каждого виджета отдельно настраиваются размер и прозрачность. Виджет можно перетаскивать за фон; положение сохраняется. Если включить «Поверх приложений», виджет останется на экране и при открытии других приложений.\n\nAppWidget: в лаунчере с поддержкой Android-виджетов добавляйте их через его меню — долгое нажатие на рабочем столе → Виджеты → EX2ToolsIV. Размер AppWidget задаёт лаунчер; настройки внешнего вида применяются к уже добавленным виджетам.\n\nОба варианта могут работать одновременно.</string>
     <string name="widgets_overlay_permission">Разрешение на наложение</string>
     <string name="widgets_overlay_permission_ok">Разрешено</string>
     <string name="widgets_overlay_permission_denied">Не разрешено</string>
@@ -292,10 +295,20 @@
     <string name="widgets_mode_hint">Режим меняет только отображаемые настройки. Overlay-виджеты и обычные AppWidget работают одновременно.</string>
     <string name="widgets_overlay_group">Overlay-виджеты (поверх любого лаунчера)</string>
     <string name="widgets_overlay_size">Размер overlay</string>
+    <string name="widgets_scale_minus">Уменьшить масштаб на 5 процентов</string>
+    <string name="widgets_scale_plus">Увеличить масштаб на 5 процентов</string>
+    <string name="widgets_standard_empty">Добавьте виджет на рабочий стол лаунчера, чтобы открыть его настройки.</string>
+    <string name="widgets_variant_clock_regular">Обычные</string>
+    <string name="widgets_variant_clock_large">Большие</string>
+    <string name="widgets_variant_outside_temp">Температура за бортом</string>
+    <string name="widgets_variant_square">1×1</string>
+    <string name="widgets_variant_wide">2×1</string>
+    <string name="widgets_variant_airflow">Направление</string>
+    <string name="widgets_variant_airflow_fan">С вентилятором</string>
     <string name="widgets_overlay_alpha">Прозрачность overlay</string>
     <string name="widgets_overlay_settings_note">Размер и прозрачность overlay</string>
     <string name="widgets_overlay_note">Overlay-виджеты рисуются поверх текущего рабочего стола и скрываются при открытии приложений.</string>
-    <string name="widgets_overlay_hint">Перетаскивайте виджет за фон. Положение сохраняется отдельно для каждого виджета. Overlay-виджеты следуют теме приложения; у спидометра свои темы.</string>
+    <string name="widgets_overlay_hint">Перетаскивайте виджет за фон. При включённой «Привязке к углам» виджеты собираются в колонки у ближайшего угла; иначе положение сохраняется свободно. Overlay-виджеты следуют теме приложения; у спидометра свои темы.</string>
     <string name="widgets_overlay_pinned">Поверх приложений</string>
     <string name="widgets_overlay_pinned_note">Не скрывать при открытии других приложений</string>
     <string name="widgets_overlay_enabled">Включить</string>
@@ -318,6 +331,7 @@
     <string name="widgets_overlay_lock">Закрепить виджеты</string>
     <string name="widgets_speed_color">Цвет</string>
     <string name="widgets_speed_color_white">Белый</string>
+    <string name="widgets_speed_color_chrome">Хром</string>
     <string name="widgets_speed_color_blue">Синий</string>
     <string name="widgets_speed_color_black">Чёрный</string>
     <string name="widgets_speed_size">Размер спидометра</string>
@@ -333,7 +347,7 @@
     <string name="overlay_notification_text">Виджеты на рабочем столе</string>
     <string name="widgets_group_design">Оформление виджетов</string>
     <string name="widgets_size">Размер AppWidget</string>
-    <string name="widgets_size_note">50–200%. Для каждого AppWidget отдельно</string>
+    <string name="widgets_size_note">50–250%. Для каждого AppWidget отдельно</string>
     <string name="widgets_size_clock">Часы</string>
     <string name="widgets_size_drive_regen">Режим езды + рекуперация</string>
     <string name="widgets_size_drive_mode">Режим езды</string>
@@ -347,6 +361,10 @@
     <string name="widgets_size_lock">Блокировка экрана</string>
     <string name="widget_name_battery_range">АКБ и запас хода</string>
     <string name="widget_battery_range_desc">Заряд батареи и запас хода</string>
+    <string name="widget_name_real_range">Реальный запас хода</string>
+    <string name="widget_real_range_desc">Оценка остатка километров по фактическому расходу</string>
+    <string name="widget_real_range_title">По расходу</string>
+    <string name="widget_real_range_missing">— км</string>
     <string name="widget_name_lock">Блокировка экрана</string>
     <string name="widget_lock_desc">Чёрный экран с часами, зарядом и температурой</string>
     <string name="wg_lock_label">Блокировка экрана</string>
@@ -380,7 +398,7 @@
     <string name="lock_date_format">EEEE, d MMMM</string>
     <string name="lock_hint">Двойной тап — выход</string>
     <string name="lock_temp">%1$s °C</string>
-    <string name="widgets_opacity">Прозрачность фона AppWidget</string>
+    <string name="widgets_opacity">Непрозрачность фона AppWidget</string>
     <string name="widgets_opacity_note">Для всех AppWidget EX2ToolsIV</string>
     <string name="widgets_clock">Часы</string>
     <string name="widgets_clock_note">Время и дата под часами. Формат зависит от региона</string>
@@ -461,6 +479,15 @@
     <string name="wg_regen_high">Сильная</string>
     <string name="wg_fan">Вентилятор</string>
     <string name="wg_temp">Температура печки</string>
+    <string name="widget_name_clock_large">Большие часы</string>
+    <string name="widget_name_outside_temp">Температура за бортом 1×1</string>
+    <string name="widget_name_outside_temp_wide">Температура за бортом 2×1</string>
+    <string name="widget_outside_temp_description">Температура за бортом</string>
+    <string name="widget_outside_temp_value">%1$.1f °C</string>
+    <string name="widget_outside_temp_missing">— °C</string>
+    <string name="widget_name_recirc">Рециркуляция</string>
+    <string name="widgets_vent_show_recirc">Кнопка рециркуляции в обдуве</string>
+    <string name="widgets_heating_hide_max_air">Скрыть максимальный обдув</string>
     <string name="wg_recirc">Рецирк.</string>
     <string name="wg_heat_rear">Заднее</string>
     <string name="widget_name_drive_regen">Режим езды + рекуперация</string>
@@ -491,7 +518,6 @@
     <string name="status_bar_title">Статус-бар</string>
     <string name="status_bar_subtitle">Иконки и порядок</string>
     <string name="status_section_icons">Иконки статус-бара</string>
-    <string name="status_section_interval">Обновление</string>
     <string name="status_order_hint">Порядок иконок = порядок включения. Выключите и включите заново, чтобы переместить в конец.</string>
     <string name="status_temp_icon">Снаружи</string>
     <string name="status_total_icon">Общий пробег</string>
@@ -532,9 +558,12 @@
     <string name="wg_heat_header">Обогревы</string>
     <string name="wg_heat_wheel">Руль</string>
     <string name="wg_heat_front_max">Макс.</string>
+    <string name="widget_name_windshield_heat">Электрообогрев лобового</string>
     <string name="wg_heat_windshield">Лобовое</string>
-    <string name="wg_heat_seat_driver">Лев.</string>
-    <string name="wg_heat_seat_passenger">Прав.</string>
+    <string name="wg_heat_front_max_outline">Обдув MAX</string>
+    <string name="wg_heat_windshield_outline">Подогрев лобового</string>
+    <string name="wg_heat_seat_driver">Водитель</string>
+    <string name="wg_heat_seat_passenger">Пассажир</string>
     <string name="wg_footer_drive">РЕЖИМ</string>
     <string name="wg_footer_regen">РЕКУПЕРАЦИЯ</string>
 
@@ -547,7 +576,9 @@
     <string name="apps_filter_system">Системные</string>
     <string name="apps_install_usb">Установить с USB</string>
     <string name="apps_install_qr">Установить по QR</string>
-    <string name="apps_usb_hint">Выбрать APK с флешки</string>\n    <string name="apps_qr_hint">Показать QR для телефона</string>\n    <string name="apps_count_fmt">Приложений: %1$d</string>
+    <string name="apps_usb_hint">Выбрать APK с флешки</string>
+    <string name="apps_qr_hint">Показать QR для телефона</string>
+    <string name="apps_count_fmt">Приложений: %1$d</string>
     <string name="apps_system_badge">Системное</string>
     <string name="apps_uninstall">Удалить</string>
     <string name="apps_loading_short">Загрузка…</string>
@@ -634,7 +665,7 @@
     <string name="confirm_yes">Подтвердить</string>
 
     <string name="voice_custom_commands">Мои команды</string>
-    <string name="voice_custom_commands_note">Свои фразы для запуска приложений</string>
+    <string name="voice_custom_commands_note">Свои фразы для приложений и подогревов</string>
     <string name="voice_custom_empty">Пока нет своих команд</string>
     <string name="voice_custom_add">Добавить</string>
     <string name="voice_available_commands">Доступные команды</string>
@@ -655,7 +686,7 @@
     <string name="voice_custom_phrase_short">Фраза слишком короткая</string>
     <string name="voice_custom_duplicate">Такая фраза уже есть</string>
     <string name="voice_custom_delete_title">Удалить команду?</string>
-    <string name="voice_custom_delete_message">«%1$s» больше не будет запускать %2$s.</string>
+    <string name="voice_custom_delete_message">Удалить фразу «%1$s» и её действия: %2$s?</string>
     <string name="voice_custom_app_missing">Приложение не найдено</string>
     <string name="voice_custom_saved">Сохранено</string>
     <string name="voice_custom_list_hint">Нажмите для изменения, удерживайте для удаления.</string>
@@ -772,6 +803,39 @@
 
     <!-- Виджеты: наши подписи -->
     <string name="wg_temp_short">Температура печки</string>
+    <string name="widgets_overlay_placement">Расстановка виджетов</string>
+    <string name="widgets_overlay_placement_free">Свободно</string>
+    <string name="widgets_overlay_placement_corners">К углам</string>
+    <string name="widgets_overlay_placement_grid">По сетке</string>
+    <string name="widgets_overlay_placement_neighbor">К виджетам</string>
+    <string name="widgets_overlay_wide_temperature">Широкая плитка температуры</string>
+    <string name="widgets_overlay_neighbor_hint">Подведите виджет к соседнему, чтобы выровнять его по краю или ячейке с небольшим зазором.</string>
+    <string name="steering_title">Кнопки руля</string>
+    <string name="steering_climate">Управление климатом</string>
+    <string name="steering_climate_hint">Двойное нажатие голосовой кнопки переключает режим климата.</string>
+    <string name="steering_help">Громкость +/− — температура на 1 °C.\nСледующий / предыдущий трек — скорость вентилятора.\n\nПовторное двойное нажатие или 15 секунд без нажатий возвращают обычное управление.\n\nДля работы нужен патч штатного сервиса кнопок. Голосовое управление и доступ к микрофону для режима климата не требуются.</string>
+    <string name="settings_fast_widget_response">Быстрый отклик виджетов</string>
+    <string name="settings_fast_widget_response_note">Ускоряет кнопки температуры и вентилятора. Показания обновляются по данным автомобиля.</string>
+    <string name="widgets_heating_single_row">Обогревы в один ряд</string>
+    <string name="widgets_individual_icon_sizes">Настройки отдельных виджетов</string>
+    <string name="widgets_individual_settings_empty_glass">Добавьте на рабочий стол виджет обогревов, подогрева руля, дворников или выключения машины</string>
+    <string name="widgets_individual_icon_sizes_empty">Добавьте на рабочий стол виджет обдува, обогрева, дворников или выключения машины</string>
+    <string name="widgets_icon_size_instance">%1$s · №%2$d</string>
+    <string name="widgets_climate_icon_size">Размер иконок</string>
+    <string name="widgets_show_titles">Заголовки виджетов</string>
+    <string name="widgets_climate_icon_labels">Подписи к иконкам</string>
+    <string name="widgets_accent_boost">Усиленный акцент</string>
+    <string name="widgets_climate_icons_title">Стиль виджетов</string>
+    <string name="widgets_climate_icons_standard">Стандарт</string>
+    <string name="widgets_climate_icons_thin">Тонкие</string>
+    <string name="widgets_climate_icons_chrome_thin">Хром</string>
+    <string name="widgets_vent_settings">Настройки обдува</string>
+    <string name="widgets_global_size">Общий размер виджетов</string>
+    <string name="widgets_glass_scale">Размер виджетов</string>
+    <string name="widgets_glass_icon_scale">Общий размер иконок</string>
+    <string name="widget_name_wheel_heat">Подогрев руля</string>
+    <string name="widgets_vent_presets">5 режимов</string>
+    <string name="widgets_vent_directions">3 направления</string>
     <string name="widgets_pin_over_apps">Поверх приложений</string>
     <string name="comfort_notification_title">EX2ToolsIV: обогревы</string>
     <string name="comfort_notification_text">Восстановление настроек обогрева</string>
@@ -830,4 +894,15 @@
     <string name="climate_log_failed">Не удалось сохранить. Файл приложения: %1$s</string>
     <string name="climate_log_cleared">Журнал очищен</string>
     <string name="climate_log_size">Пакетов записано: %1$d, размер %2$d КБ</string>
+    <string name="widget_name_wipers">Сервисный режим дворников</string>
+    <string name="widget_wipers_on_lock">Поднимать дворники при запирании</string>
+    <string name="widget_wipers_on_lock_note">Только на стоящей машине в положении P. Щётки должны свободно двигаться по стеклу. Виджет для быстрого возврата дворников включается в «Виджеты».</string>
+    <string name="widget_name_power_off">Выключить машину</string>
+    <string name="widget_wipers_unavailable">Сервисный режим дворников сейчас недоступен</string>
+    <string name="widget_power_off_unavailable">Штатный диалог выключения недоступен</string>
+    <string name="widget_power_off_without_confirmation">Выключать машину без подтверждения</string>
+    <string name="widget_power_off_park_only">Выключение без подтверждения доступно только после полной остановки в положении P</string>
+    <string name="widget_power_off_direct_unavailable">Выключение без подтверждения сейчас недоступно</string>
+    <string name="widgets_card_border">Показывать рамку виджета</string>
+    <string name="widgets_button_border">Показывать рамки кнопок</string>
 </resources>

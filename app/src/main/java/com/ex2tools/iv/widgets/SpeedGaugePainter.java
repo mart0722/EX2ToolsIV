@@ -1,14 +1,21 @@
 package com.ex2tools.iv.widgets;
 
 import android.content.Context;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.RectF;
+import android.graphics.Shader;
 import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
+
+import androidx.core.graphics.ColorUtils;
 
 import com.ex2tools.iv.Prefs;
+import com.ex2tools.iv.R;
 
 /**
  * Native port of the HTML speedometer. The same painter is used by the
@@ -26,44 +33,78 @@ final class SpeedGaugePainter {
     }
 
     static Bitmap render(Context c, int width, int height, float kmh,
-                         boolean digital, boolean showBackground,
+                         boolean digital, int backgroundAlpha,
                          float tripKm, boolean showTrip) {
         int w = Math.max(1, width);
         int h = Math.max(1, height);
         Bitmap bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
-        draw(c, new Canvas(bitmap), w, h, kmh, digital, showBackground, tripKm, showTrip);
+        draw(c, new Canvas(bitmap), w, h, kmh, digital, backgroundAlpha, tripKm, showTrip);
         return bitmap;
     }
 
     static void draw(Context c, Canvas canvas, int width, int height, float kmh,
-                     boolean digital, boolean showBackground,
+                     boolean digital, int backgroundAlpha,
                      float tripKm, boolean showTrip) {
-        Palette p = palette(c);
+        boolean chrome = Prefs.climateIconStyle(c).isChrome() && Prefs.speedColor(c) == 0;
+        Palette p = chrome ? chromePalette(c) : palette(c);
         float size = Math.min(width, height);
         float cx = width * 0.5f;
         float cy = height * 0.5f;
         float speed = Float.isNaN(kmh) ? 0f : Math.max(0f, Math.min(MAX_SPEED, kmh));
 
-        if (showBackground) {
+        if (backgroundAlpha > 0 && chrome) {
+            float cellScale = size / (2f * WidgetGrid.UNIT_DP);
+            GradientDrawable card = WidgetAppearance.glassCard(c, backgroundAlpha,
+                    22f * cellScale, Math.max(1, Math.round(cellScale)));
+            card.setBounds(0, 0, width, height);
+            card.draw(canvas);
+        } else if (backgroundAlpha > 0) {
             Paint bg = new Paint(Paint.ANTI_ALIAS_FLAG);
             bg.setColor(p.surface);
-            bg.setAlpha(backgroundAlpha(c));
+            int alpha = backgroundAlpha;
             float radius = size * 0.075f;
-            canvas.drawRoundRect(new RectF(0, 0, width, height), radius, radius, bg);
+            RectF panel = new RectF(0, 0, width, height);
+            if (WidgetAppearance.usesGlass(c)) {
+                // The gauge has its own foreground color setting, so use its
+                // matching surface color for the tint and preserve contrast.
+                int highlight = ColorUtils.blendARGB(p.surface, Color.WHITE, 0.22f);
+                int top = ColorUtils.setAlphaComponent(highlight, alpha);
+                int bottom = ColorUtils.setAlphaComponent(p.surface, Math.round(alpha * .82f));
+                bg.setShader(new LinearGradient(0, 0, 0, height, top, bottom, Shader.TileMode.CLAMP));
+                canvas.drawRoundRect(panel, radius, radius, bg);
+                if (Prefs.widgetCardBorder(c)) {
+                    bg.setShader(null);
+                    bg.setColor(ColorUtils.setAlphaComponent(Color.WHITE, Math.round(alpha * .42f)));
+                    bg.setStyle(Paint.Style.STROKE);
+                    float strokeWidth = Math.max(1f, size / 160f);
+                    bg.setStrokeWidth(strokeWidth);
+                    panel.inset(strokeWidth / 2f, strokeWidth / 2f);
+                    canvas.drawRoundRect(panel, radius, radius, bg);
+                }
+            } else {
+                bg.setAlpha(alpha);
+                canvas.drawRoundRect(panel, radius, radius, bg);
+            }
         }
 
         canvas.save();
         canvas.translate(cx, cy);
         if (digital) {
-            drawDigital(canvas, size, speed, p, showBackground, false);
+            drawDigital(canvas, size, speed, p, false);
         } else {
-            drawAnalog(canvas, size, speed, p, showBackground, tripKm, showTrip);
+            float dialSize = size;
+            if (chrome) {
+                float inset = c.getResources().getDimension(R.dimen.wg_glass_inset)
+                        / c.getResources().getDisplayMetrics().density;
+                dialSize = size * (1f - inset / WidgetGrid.UNIT_DP);
+            }
+            drawAnalog(canvas, dialSize, speed, p, tripKm, showTrip);
         }
         canvas.restore();
     }
 
     private static void drawAnalog(Canvas canvas, float size, float speed,
-                                   Palette p, boolean maskText,
+                                   Palette p,
                                    float tripKm, boolean showTrip) {
         // The dial used to occupy only 72% of the overlay. At large sizes this
         // left a lot of empty space around the clock, so use more of the view.
@@ -86,7 +127,8 @@ final class SpeedGaugePainter {
 
         if (active > 0) {
             cell.setColor(p.accent);
-            cell.setShadowLayer(size * 0.035f, 0f, 0f, p.accent);
+            if (p.chrome) cell.setShader(p.metal(-radius, radius));
+            else cell.setShadowLayer(size * 0.035f, 0f, 0f, p.accent);
             for (int i = 0; i < active; i++) {
                 float start = START_ANGLE + i * cellAngle + gap * 0.5f;
                 canvas.drawArc(arc, start, cellAngle - gap, false, cell);
@@ -99,6 +141,7 @@ final class SpeedGaugePainter {
         tick.setStyle(Paint.Style.STROKE);
         tick.setStrokeWidth(Math.max(2f, size * 0.006f));
         tick.setStrokeCap(Paint.Cap.ROUND);
+        tick.setShader(p.metal(-radius, radius));
 
         Paint label = new Paint(Paint.ANTI_ALIAS_FLAG);
         label.setColor(p.label);
@@ -127,7 +170,12 @@ final class SpeedGaugePainter {
         needle.setStyle(Paint.Style.STROKE);
         needle.setStrokeCap(Paint.Cap.ROUND);
         needle.setStrokeWidth(Math.max(4f, size * 0.011f));
-        needle.setShadowLayer(size * 0.025f, 0f, 0f, p.accent);
+        if (p.chrome) {
+            float halfWidth = needle.getStrokeWidth() / 2f;
+            needle.setShader(p.metal(-halfWidth, halfWidth));
+        } else {
+            needle.setShadowLayer(size * 0.025f, 0f, 0f, p.accent);
+        }
         canvas.save();
         canvas.rotate(needleAngle);
         canvas.drawLine(-size * 0.035f, 0f, radius * 0.84f, 0f, needle);
@@ -136,19 +184,22 @@ final class SpeedGaugePainter {
 
         Paint hub = new Paint(Paint.ANTI_ALIAS_FLAG);
         hub.setColor(p.accent);
-        canvas.drawCircle(0f, 0f, size * 0.028f, hub);
+        float hubRadius = size * 0.028f;
+        hub.setShader(p.metal(-hubRadius, hubRadius));
+        canvas.drawCircle(0f, 0f, hubRadius, hub);
+        hub.setShader(null);
         hub.setColor(p.surface);
         canvas.drawCircle(0f, 0f, size * 0.011f, hub);
 
         if (showTrip) {
-            drawTrip(canvas, size, tripKm, p, maskText);
+            drawTrip(canvas, size, tripKm, p);
         } else {
-            drawDigital(canvas, size, speed, p, maskText, true);
+            drawDigital(canvas, size, speed, p, true);
         }
     }
 
     private static void drawTrip(Canvas canvas, float size, float tripKm,
-                                 Palette p, boolean maskText) {
+                                 Palette p) {
         String text = Float.isNaN(tripKm) ? "—"
                 : (tripKm < 100f ? String.format(java.util.Locale.US, "%.1f", tripKm)
                 : String.valueOf(Math.round(tripKm)));
@@ -160,7 +211,7 @@ final class SpeedGaugePainter {
         number.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         number.setTextSize(size * 0.132f);
 
-        drawCentered(canvas, text, 0f, y, number);
+        drawNumber(canvas, text, y, number, p);
 
         Paint unit = new Paint(Paint.ANTI_ALIAS_FLAG);
         unit.setColor(p.muted);
@@ -171,7 +222,7 @@ final class SpeedGaugePainter {
     }
 
     private static void drawDigital(Canvas canvas, float size, float speed,
-                                    Palette p, boolean maskText, boolean analog) {
+                                    Palette p, boolean analog) {
         float numberY = analog ? size * 0.225f : size * 0.03f;
         float unitY = analog ? size * 0.345f : size * 0.25f;
 
@@ -181,17 +232,8 @@ final class SpeedGaugePainter {
         number.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         number.setTextSize(size * (analog ? 0.158f : 0.26f));
 
-        Paint stroke = null;
-        if (maskText) {
-            stroke = new Paint(number);
-            stroke.setStyle(Paint.Style.STROKE);
-            stroke.setStrokeWidth(size * (analog ? 0.020f : 0.026f));
-            stroke.setColor(p.surface);
-            stroke.setAlpha(238);
-        }
-
         String text = speed <= 0f ? "0" : String.valueOf(Math.round(speed));
-        drawCentered(canvas, text, 0f, numberY, number);
+        drawNumber(canvas, text, numberY, number, p);
 
         Paint unit = new Paint(Paint.ANTI_ALIAS_FLAG);
         unit.setColor(p.muted);
@@ -201,18 +243,26 @@ final class SpeedGaugePainter {
         drawCentered(canvas, "км/ч", 0f, unitY, unit);
     }
 
+    private static void drawNumber(Canvas canvas, String value, float y, Paint paint, Palette palette) {
+        float halfHeight = paint.getTextSize() * 0.4f;
+        paint.setShader(palette.metal(y - halfHeight, y + halfHeight));
+        drawCentered(canvas, value, 0f, y, paint);
+    }
+
     private static void drawCentered(Canvas canvas, String text, float x, float y, Paint paint) {
         Paint.FontMetrics fm = paint.getFontMetrics();
         canvas.drawText(text, x, y - (fm.ascent + fm.descent) * 0.5f, paint);
     }
 
-    private static int backgroundAlpha(Context c) {
-        float per = Prefs.overlayAlphaPct(c, WidgetsCommon.SIZE_SPEED) / 100f;
-        float global = Prefs.widgetBgOpacity(c) / 100f;
-        return Math.round(255f * Math.min(0.85f, per * global));
+    private static Palette chromePalette(Context c) {
+        boolean night = (c.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK)
+                == Configuration.UI_MODE_NIGHT_YES;
+        int ink = c.getColor(R.color.wg_text);
+        return new Palette(ink, ink, ink, c.getColor(R.color.wg_text2),
+                ColorUtils.setAlphaComponent(ink, 54), c.getColor(R.color.wg_card), true, night);
     }
 
-    static Palette palette(Context c) {
+    private static Palette palette(Context c) {
         switch (Prefs.speedColor(c)) {
             case 1:
                 return new Palette(
@@ -241,21 +291,34 @@ final class SpeedGaugePainter {
         }
     }
 
-    static final class Palette {
+    private static final class Palette {
         final int accent;
         final int label;
         final int text;
         final int muted;
         final int track;
         final int surface;
+        final boolean chrome;
+        final boolean night;
 
         Palette(int accent, int label, int text, int muted, int track, int surface) {
+            this(accent, label, text, muted, track, surface, false, false);
+        }
+
+        Palette(int accent, int label, int text, int muted, int track, int surface,
+                boolean chrome, boolean night) {
             this.accent = accent;
             this.label = label;
             this.text = text;
             this.muted = muted;
             this.track = track;
             this.surface = surface;
+            this.chrome = chrome;
+            this.night = night;
+        }
+
+        Shader metal(float top, float bottom) {
+            return chrome ? WidgetAppearance.chromeGradient(night, top, bottom) : null;
         }
     }
 }

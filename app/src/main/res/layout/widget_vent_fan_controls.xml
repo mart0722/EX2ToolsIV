@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    android:layout_marginTop="10dp"
+    android:layout_weight="1"
+    android:gravity="center_vertical"
+    android:orientation="horizontal">
+
+    <TextView
+        android:id="@+id/btn_fan_minus"
+        style="@style/WgClimateRoundButton"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:text="−" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tv_fan_value"
+            style="@style/WgValue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="—"
+            android:textSize="30sp" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="bottom"
+            android:orientation="horizontal">
+            <TextView
+                android:id="@+id/dot_fan_1"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:layout_marginEnd="4dp"
+                android:background="@drawable/bg_wg_dot_off" />
+            <TextView
+                android:id="@+id/dot_fan_2"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:layout_marginEnd="4dp"
+                android:background="@drawable/bg_wg_dot_off" />
+            <TextView
+                android:id="@+id/dot_fan_3"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:layout_marginEnd="4dp"
+                android:background="@drawable/bg_wg_dot_off" />
+            <TextView
+                android:id="@+id/dot_fan_4"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:layout_marginEnd="4dp"
+                android:background="@drawable/bg_wg_dot_off" />
+            <TextView
+                android:id="@+id/dot_fan_5"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:layout_marginEnd="4dp"
+                android:background="@drawable/bg_wg_dot_off" />
+            <TextView
+                android:id="@+id/dot_fan_6"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:layout_marginEnd="4dp"
+                android:background="@drawable/bg_wg_dot_off" />
+            <TextView
+                android:id="@+id/dot_fan_7"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:background="@drawable/bg_wg_dot_off" />
+        </LinearLayout>
+    </LinearLayout>
+
+
+
+    <TextView
+        android:id="@+id/btn_fan_plus"
+        style="@style/WgClimateRoundButton"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:text="+" />
+</LinearLayout>

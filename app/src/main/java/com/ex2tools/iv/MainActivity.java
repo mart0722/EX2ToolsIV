@@ -1,7 +1,6 @@
 package com.ex2tools.iv;
 
 import android.content.Intent;
-import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
@@ -14,7 +13,6 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.DecelerateInterpolator;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -43,11 +41,9 @@ import com.ex2tools.iv.ui.StatusBarFragment;
 import com.ex2tools.iv.ui.VoiceFragment;
 import com.ex2tools.iv.ui.WidgetsFragment;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -56,44 +52,41 @@ public final class MainActivity extends AppCompatActivity {
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
-    private TextView carStatus;
-    private TextView lastUpdated;
-    private View statusDot;
-    private View statusPill;
     private LinearLayout navContainer;
     private int current = -1;
     private Runnable carTick;
     private final List<View> navViews = new ArrayList<>();
     private View climateNav;
 
-    private final Fragment[] fragments = new Fragment[10];
-    private final Drawable[] heroDrawables = new Drawable[10];
+    private final Fragment[] fragments = new Fragment[11];
+    private final Drawable[] heroDrawables = new Drawable[11];
     private static final String[] TAGS = {"overview", "settings", "status", "voice", "widgets",
-            "sounds", "apps", "service", "climate", "info"};
+            "sounds", "apps", "service", "steering", "info", "climate"};
 
     private static final int[] HERO_BG = {
             R.drawable.hero_overview, R.drawable.hero_settings, R.drawable.hero_status,
             R.drawable.hero_voice, R.drawable.hero_status, R.drawable.hero_sounds,
-            0, 0, 0, 0
+            0, 0, 0, 0, 0
     };
 
     private static final int[] ICONS = {
             R.drawable.ic_dashboard, R.drawable.ic_settings, R.drawable.ic_status,
             R.drawable.ic_voice, R.drawable.ic_widgets, R.drawable.ic_widget_volume,
-            R.drawable.ic_apps, R.drawable.ic_service, R.drawable.ic_tile_temp,
-            R.drawable.ic_info
+            R.drawable.ic_apps, R.drawable.ic_service, R.drawable.ic_climate_wheel_heat, R.drawable.ic_info,
+            R.drawable.ic_tile_temp
     };
 
     private static final int[] TITLES = {
             R.string.overview_title, R.string.settings_title, R.string.status_bar_title,
             R.string.voice_title, R.string.widgets_title, R.string.sounds_title,
-            R.string.apps_page_title, R.string.service_title, R.string.climate_title,
-            R.string.info_title
+            R.string.apps_page_title, R.string.service_title, R.string.steering_title, R.string.info_title,
+            R.string.climate_title
     };
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        com.ex2tools.iv.voice.SteeringKeysService.sync(this);
         try {
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         setContentView(R.layout.activity_main);
@@ -106,16 +99,9 @@ public final class MainActivity extends AppCompatActivity {
         });
         applySystemBarAppearance();
 
-        carStatus = findViewById(R.id.carStatus);
-        lastUpdated = findViewById(R.id.lastUpdated);
-        statusDot = findViewById(R.id.statusDot);
-        statusPill = findViewById(R.id.statusPill);
         navContainer = findViewById(R.id.navContainer);
 
         buildNavigation();
-
-        ImageButton refresh = findViewById(R.id.btnRefresh);
-        refresh.setOnClickListener(v -> refreshNow());
 
         int restored = -1;
         if (savedInstanceState != null) {
@@ -203,12 +189,12 @@ public final class MainActivity extends AppCompatActivity {
         if (climateNav == null) return;
         boolean enabled = Prefs.climateEnabled(this) && Prefs.climateUiVisible(this);
         climateNav.setVisibility(enabled ? View.VISIBLE : View.GONE);
-        if (!enabled && current == 8) show(0);
+        if (!enabled && current == 10) show(0);
     }
 
     public void openClimate() {
         if (!Prefs.climateEnabled(this)) return;
-        show(8);
+        show(10);
     }
 
     @Override
@@ -247,6 +233,7 @@ public final class MainActivity extends AppCompatActivity {
             com.ex2tools.iv.screenshot.ScreenshotButtonService.sync(this);
             com.ex2tools.iv.tasks.TaskManagerButtonService.sync(this);
             com.ex2tools.iv.widgets.WidgetUpdateService.sync(this);
+            com.ex2tools.iv.body.WipersOnLockService.sync(this);
             com.ex2tools.iv.service.DriveRegenWatchService.sync(this);
         } catch (Throwable t) {
             LogStore.add(this, "service sync failed: " + t);
@@ -316,9 +303,6 @@ public final class MainActivity extends AppCompatActivity {
         ft.commitNowAllowingStateLoss();
         current = index;
         applyWindowBackground(index);
-        if (statusPill != null) {
-            statusPill.setVisibility(index <= 2 ? View.VISIBLE : View.GONE);
-        }
         updateNav(index);
     }
 
@@ -352,9 +336,11 @@ public final class MainActivity extends AppCompatActivity {
             case 7:
                 return new ServiceModeFragment();
             case 8:
-                return new ClimateFragment();
+                return new com.ex2tools.iv.ui.SteeringFragment();
             case 9:
                 return new InfoFragment();
+            case 10:
+                return new ClimateFragment();
             case 0:
             default:
                 return new OverviewFragment();
@@ -387,17 +373,9 @@ public final class MainActivity extends AppCompatActivity {
             public void run() {
                 if (!executor.isShutdown()) {
                     executor.execute(() -> {
-                        boolean ok = Telemetry.carReady(MainActivity.this);
-                        String time = new SimpleDateFormat("HH:mm:ss", Locale.US).format(new Date());
+                        Telemetry.carReady(MainActivity.this);
                         runOnUiThread(() -> {
                             if (isFinishing() || isDestroyed()) return;
-                            carStatus.setText(ok ? R.string.car_connected : R.string.car_disconnected);
-                            carStatus.setTextColor(ContextCompat.getColor(MainActivity.this,
-                                    ok ? R.color.flyme_green : R.color.flyme_label_level2));
-                            statusDot.setBackgroundTintList(ColorStateList.valueOf(
-                                    ContextCompat.getColor(MainActivity.this,
-                                            ok ? R.color.flyme_green : R.color.flyme_label_level3)));
-                            lastUpdated.setText(time);
                             refreshClimateNav();
                         });
                     });
@@ -406,14 +384,6 @@ public final class MainActivity extends AppCompatActivity {
             }
         };
         handler.post(carTick);
-    }
-
-    public void refreshNow() {
-        handler.removeCallbacks(carTick);
-        handler.post(carTick);
-        Intent i = new Intent(Actions.REFRESH);
-        i.setPackage(getPackageName());
-        sendBroadcast(i);
     }
 
     public void openOverlaySettings() {
