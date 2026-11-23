@@ -3,6 +3,8 @@ package com.ex2tools.iv.ui;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -25,6 +27,7 @@ import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
+import com.ex2tools.iv.LogStore;
 import com.ex2tools.iv.MainActivity;
 import com.ex2tools.iv.Prefs;
 import com.ex2tools.iv.R;
@@ -204,6 +207,10 @@ public final class WidgetsFragment extends Fragment {
         });
 
         setupModeControls();
+        view.findViewById(R.id.widgetStockCardsHide)
+                .setOnClickListener(v -> setStockCardsHidden(c, true));
+        view.findViewById(R.id.widgetStockCardsShow)
+                .setOnClickListener(v -> setStockCardsHidden(c, false));
         setupSpeedControls();
         setupPlacementControls();
         setupStandardControls(c);
@@ -581,6 +588,23 @@ public final class WidgetsFragment extends Fragment {
             WidgetModes.set(requireContext(), mode);
             updateModeUi(false);
         });
+    }
+
+    private void setStockCardsHidden(Context context, boolean hidden) {
+        Intent intent = new Intent("com.flyme.auto.launcher.action.TOGGLE_AICY_WIDGET")
+                .setPackage(WidgetModes.STOCK_LAUNCHER)
+                .putExtra("is_hide", hidden);
+        try {
+            context.getPackageManager().getPackageInfo(WidgetModes.STOCK_LAUNCHER, 0);
+            context.sendOrderedBroadcast(intent, null);
+            Toast.makeText(context, R.string.widgets_stock_cards_sent, Toast.LENGTH_SHORT).show();
+        } catch (PackageManager.NameNotFoundException e) {
+            Toast.makeText(context, R.string.widgets_stock_cards_launcher_missing,
+                    Toast.LENGTH_SHORT).show();
+        } catch (SecurityException e) {
+            LogStore.add(context, "stock launcher cards command failed: " + e);
+            Toast.makeText(context, R.string.widgets_stock_cards_failed, Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void updateNeighborHint(Prefs.OverlayPlacement placement) {

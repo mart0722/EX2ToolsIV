@@ -82,6 +82,50 @@
                         style="@style/Text.EX2.Section"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:text="@string/widgets_stock_cards_title" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/widgetStockCardsHide"
+                            style="@style/Widget.EX2.SecondaryButton"
+                            android:layout_width="0dp"
+                            android:layout_height="56dp"
+                            android:layout_marginEnd="8dp"
+                            android:layout_weight="1"
+                            android:text="@string/widgets_stock_cards_hide" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/widgetStockCardsShow"
+                            style="@style/Widget.EX2.SecondaryButton"
+                            android:layout_width="0dp"
+                            android:layout_height="56dp"
+                            android:layout_weight="1"
+                            android:text="@string/widgets_stock_cards_show" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.EX2.Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="@dimen/card_padding"
+                    android:orientation="vertical">
+
+                    <TextView
+                        style="@style/Text.EX2.Section"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
                         android:text="@string/widgets_climate_icons_title" />
 
                     <com.ex2tools.iv.ui.FlymeSegmentedGroup
