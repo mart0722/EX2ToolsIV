@@ -416,19 +416,11 @@ public final class ClimateController {
         return readBoolAny(CarProps.HVAC_WINDSHIELD_HEAT, new int[]{117});
     }
 
-    public static Float readTargetTemp(VehicleState vs) {
-        int[] properties = {
-                CarProps.HVAC_TEMP_AOSP,
-                CarProps.HVAC_TEMP_ADJUST,
-                CarProps.HVAC_TEMP_SET,
-                CarProps.HVAC_TEMP_SET_AOSP
-        };
-        for (int id : properties) {
-            Float raw = vs.floatAny(id, vs.areas(id, CarProps.HVAC_AREAS));
-            if (raw == null) continue;
-            float value = raw;
-            if (value > 60f && value <= 400f) value = value / 10f;
-            if (value >= 5f && value <= 40f) return value;
+    public static Float readTargetTemp(VehicleState state) {
+        int id = CarProps.HVAC_TEMP_AOSP;
+        for (int area : state.areas(id, CarProps.HVAC_AREAS)) {
+            Float value = state.floatValue(id, area);
+            if (value != null && value >= 16f && value <= 32f) return value;
         }
         return null;
     }
