@@ -905,10 +905,23 @@ public final class WidgetsFragment extends Fragment {
             options.removeAllViews();
             sizeRow = null;
             alphaRow = null;
-            addSharedSettings(key, options, false);
 
             boolean apps = WidgetsCommon.SIZE_APPS.equals(key);
             boolean speed = WidgetsCommon.SIZE_SPEED.equals(key);
+
+            Runnable restart = () -> OverlayWidgetService.restart(context);
+            sizeRow = addPercentRow(options,
+                    speed ? R.string.widgets_speed_size : R.string.widgets_overlay_size,
+                    Prefs.WIDGET_SIZE_MIN_PCT, speed ? Prefs.WIDGET_SIZE_MAX_PCT : 200,
+                    speed ? Prefs.widgetSizePct(context, selectedKey)
+                            : Prefs.overlaySizePct(context, selectedKey),
+                    true, pct -> {
+                        if (speed) Prefs.setWidgetSizePct(context, selectedKey, pct);
+                        else Prefs.setOverlaySizePct(context, selectedKey, pct);
+                    }, restart);
+
+            addSharedSettings(key, options, false);
+
             FlymeSwitchRow pin = new FlymeSwitchRow(context);
             pin.setText(getString(R.string.widgets_pin_over_apps));
             pin.setChecked(Prefs.overlayPinned(context, selectedKey));
@@ -921,16 +934,6 @@ public final class WidgetsFragment extends Fragment {
             options.addView(pin);
             if (apps) addAppsSettings(context, options);
 
-            Runnable restart = () -> OverlayWidgetService.restart(context);
-            sizeRow = addPercentRow(options,
-                    speed ? R.string.widgets_speed_size : R.string.widgets_overlay_size,
-                    Prefs.WIDGET_SIZE_MIN_PCT, speed ? Prefs.WIDGET_SIZE_MAX_PCT : 200,
-                    speed ? Prefs.widgetSizePct(context, selectedKey)
-                            : Prefs.overlaySizePct(context, selectedKey),
-                    true, pct -> {
-                        if (speed) Prefs.setWidgetSizePct(context, selectedKey, pct);
-                        else Prefs.setOverlaySizePct(context, selectedKey, pct);
-                    }, restart);
             if (!WidgetsCommon.isStandaloneVehicleButton(selectedKey)) {
                 alphaRow = addPercentRow(options, R.string.widgets_overlay_alpha, 0, 100,
                         Prefs.overlayAlphaPct(context, selectedKey), false,
