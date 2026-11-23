@@ -57,8 +57,6 @@
     <string name="status_wifi_desc">Wi-Fi</string>
     <string name="status_battery_desc">Батарея</string>
     <string name="status_temp_desc">Температура</string>
-    <string name="settings_interval">Обновление, сек</string>
-    <string name="settings_interval_fmt">Обновление: %1$d с</string>
     <string name="reload">Обновить</string>
     <string name="status_test_posted">Тестовая иконка отправлена</string>
     <string name="service_title">Сервисный режим</string>
@@ -520,7 +518,6 @@
     <string name="status_bar_title">Статус-бар</string>
     <string name="status_bar_subtitle">Иконки и порядок</string>
     <string name="status_section_icons">Иконки статус-бара</string>
-    <string name="status_section_interval">Обновление</string>
     <string name="status_order_hint">Порядок иконок = порядок включения. Выключите и включите заново, чтобы переместить в конец.</string>
     <string name="status_temp_icon">Снаружи</string>
     <string name="status_total_icon">Общий пробег</string>
