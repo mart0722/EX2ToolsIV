@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.text.TextUtils;
@@ -14,6 +15,7 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.TextClock;
 import android.widget.TextView;
 
 import androidx.core.content.ContextCompat;
@@ -27,6 +29,7 @@ import com.ex2tools.iv.car.Telemetry;
 import com.ex2tools.iv.climate.Thermostat;
 import com.ex2tools.iv.lock.LockActivity;
 
+import java.text.DecimalFormatSymbols;
 import java.util.List;
 import java.util.Locale;
 
@@ -63,7 +66,7 @@ final class OverlayWidgetViews {
         return root;
     }
 
-    static void update(View root, String key) {
+    static void update(View root, String key, int width) {
         Context c = root.getContext();
         View bg = root.findViewById(R.id.widget_bg_layer);
         if (bg != null) bg.setBackground(OverlayBackground.create(c, key));
@@ -134,7 +137,7 @@ final class OverlayWidgetViews {
                 break;
             case WidgetsCommon.SIZE_CLOCK:
             case WidgetsCommon.SIZE_CLOCK_LARGE:
-                updateClock(c, root, WidgetsCommon.SIZE_CLOCK_LARGE.equals(key));
+                updateClock(c, root, WidgetsCommon.SIZE_CLOCK_LARGE.equals(key), width);
                 break;
             case WidgetsCommon.SIZE_OUTSIDE_TEMP:
             case WidgetsCommon.SIZE_OUTSIDE_TEMP_WIDE:
@@ -638,7 +641,7 @@ final class OverlayWidgetViews {
                 transparent);
     }
 
-    private static void updateClock(Context c, View root, boolean large) {
+    private static void updateClock(Context c, View root, boolean large, int width) {
         int color = Prefs.clockColor(c) == 1 ? android.graphics.Color.WHITE
                 : Prefs.clockColor(c) == 2 ? android.graphics.Color.BLACK
                 : c.getColor(R.color.clock_text);
@@ -646,10 +649,15 @@ final class OverlayWidgetViews {
         android.graphics.Typeface typeface = android.graphics.Typeface.create(
                 Prefs.clockFont(c) == 1 ? "sans-serif-condensed" : "sans-serif-medium",
                 android.graphics.Typeface.NORMAL);
-        View time = root.findViewById(R.id.clockTime);
-        if (time instanceof TextView) {
-            ((TextView) time).setTextColor(color);
-            ((TextView) time).setTypeface(typeface);
+        TextClock time = root.findViewById(R.id.clockTime);
+        ClockWidgetProvider.applyTimeFormat(time);
+        time.setTextColor(color);
+        time.setTypeface(typeface);
+        float timeSize = large ? ClockWidgetProvider.LARGE_TIME_TEXT_SP : ClockWidgetProvider.TIME_TEXT_SP;
+        if (Prefs.clockSeconds(c)) {
+            fitClockSeconds(time, width, timeSize * (5f / 6f));
+        } else {
+            time.setTextSize(TypedValue.COMPLEX_UNIT_SP, timeSize);
         }
         if (root.findViewById(R.id.clockDate) instanceof TextView date) {
             date.setVisibility(Prefs.clockDate(c) ? View.VISIBLE : View.GONE);
@@ -665,6 +673,26 @@ final class OverlayWidgetViews {
                 date.setEllipsize(TextUtils.TruncateAt.END);
             }
         }
+    }
+
+    private static void fitClockSeconds(TextClock time, int width, float maxTextSp) {
+        View content = (View) time.getParent();
+        int available = width - content.getPaddingLeft() - content.getPaddingRight()
+                - time.getCompoundPaddingLeft() - time.getCompoundPaddingRight();
+        float maxTextPx = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, maxTextSp,
+                time.getResources().getDisplayMetrics());
+        Paint paint = new Paint(time.getPaint());
+        paint.setTextSize(maxTextPx);
+
+        // Reserve room for the widest digits so the text stays the same size as it ticks.
+        char zero = DecimalFormatSymbols.getInstance().getZeroDigit();
+        float digitWidth = 0f;
+        for (int digit = 0; digit <= 9; digit++) {
+            digitWidth = Math.max(digitWidth, paint.measureText(String.valueOf((char) (zero + digit))));
+        }
+        float timeWidth = digitWidth * 6 + paint.measureText(":") * 2;
+        float scale = Math.min(1f, Math.max(1, available - 2) / timeWidth);
+        time.setTextSize(TypedValue.COMPLEX_UNIT_PX, maxTextPx * scale);
     }
 
     private static void updateClimate(Context c, View root) {

@@ -918,6 +918,14 @@ public final class Prefs {
         get(c).edit().putBoolean("clock_date", value).apply();
     }
 
+    public static boolean clockSeconds(Context c) {
+        return get(c).getBoolean("clock_seconds", false);
+    }
+
+    public static void setClockSeconds(Context c, boolean value) {
+        get(c).edit().putBoolean("clock_seconds", value).apply();
+    }
+
     public static boolean voiceEnabled(Context c) {
         return get(c).getBoolean("voice_enabled", false);
     }

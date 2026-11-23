@@ -30,6 +30,7 @@
             android:format24Hour="HH:mm"
             android:gravity="center"
             android:includeFontPadding="false"
+            android:maxLines="1"
             android:textColor="@color/wg_text"
             android:textSize="42sp"
             android:fontFamily="sans-serif-medium" />
