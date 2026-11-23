@@ -405,17 +405,7 @@ public final class Prefs {
     }
 
     public static int intervalSec(Context c) {
-        SharedPreferences p = get(c);
-        int v = p.getInt("status_interval_sec", 3);
-        if (!p.getBoolean("status_interval_user", false) && v == 5) v = 3;
-        return Math.max(3, Math.min(30, v));
-    }
-
-    public static void setIntervalSec(Context c, int value) {
-        get(c).edit()
-                .putInt("status_interval_sec", Math.max(3, Math.min(30, value)))
-                .putBoolean("status_interval_user", true)
-                .apply();
+        return 3;
     }
 
     public static boolean fallbackPill(Context c) {
