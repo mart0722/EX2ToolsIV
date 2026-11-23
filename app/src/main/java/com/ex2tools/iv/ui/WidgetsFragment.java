@@ -57,6 +57,7 @@ public final class WidgetsFragment extends Fragment {
 
     private static final String[] OVERLAY_KEYS = {
             WidgetsCommon.SIZE_SPEED,
+            WidgetsCommon.SIZE_APPS,
             WidgetsCommon.SIZE_CLOCK,
             WidgetsCommon.SIZE_OUTSIDE_TEMP,
             WidgetsCommon.SIZE_DRIVE_REGEN,
@@ -111,6 +112,9 @@ public final class WidgetsFragment extends Fragment {
     private FlymeSegmentedGroup ventMode;
     private FlymeSwitchRow ventShowRecirc;
     private View glassScaleControls;
+    private View globalWidgetSizeRow;
+    private View globalWidgetIconRow;
+    private FlymeSwitchRow widgetGlobalSize;
     private final Handler scaleHandler = new Handler(Looper.getMainLooper());
     private final Runnable applyGlassScale = this::refreshGlassScale;
     private FlymeSwitchRow widgetCardBorder;
@@ -122,7 +126,6 @@ public final class WidgetsFragment extends Fragment {
     private final List<OverlayCard> overlayCards = new ArrayList<>();
     private final Map<String, FlymeSwitchRow> individualIconLabels = new LinkedHashMap<>();
     private final Map<String, Integer> selectedAppWidgets = new LinkedHashMap<>();
-    private OverlayCard appsOverlayCard;
     private TextView appsCount;
     private TextView appsSelect;
     private boolean binding;
@@ -253,8 +256,6 @@ public final class WidgetsFragment extends Fragment {
             OverlayWidgetService.requestUpdate(context);
             WidgetUpdateService.sync(context);
         });
-        appsOverlayCard = new OverlayCard(c, WidgetsCommon.SIZE_APPS,
-                view.findViewById(R.id.widgetAppsOverlay));
     }
 
     private void refreshWidgetBorders() {
@@ -525,22 +526,36 @@ public final class WidgetsFragment extends Fragment {
     }
 
     private void updateAppearanceControls(Context c) {
-        boolean glass = usesGlass(c);
         TextView speedColorDefault = speedColorGroup.findViewById(R.id.widgetSpeedColorWhite);
         speedColorDefault.setText(Prefs.climateIconStyle(c).isChrome()
                 ? R.string.widgets_speed_color_chrome : R.string.widgets_speed_color_white);
         widgetAccentBoost.setVisibility(View.VISIBLE);
-        glassScaleControls.setVisibility(glass ? View.VISIBLE : View.GONE);
-        if (appsOverlayCard != null) appsOverlayCard.updateAppearance();
+        boolean global = Prefs.widgetsGlobalSize(c);
+        boolean wasBinding = binding;
+        binding = true;
+        widgetGlobalSize.setChecked(global);
+        binding = wasBinding;
+        glassScaleControls.setVisibility(View.VISIBLE);
+        globalWidgetSizeRow.setVisibility(global ? View.VISIBLE : View.GONE);
+        globalWidgetIconRow.setVisibility(View.VISIBLE);
         for (OverlayCard card : overlayCards) card.updateAppearance();
     }
 
     private void setupGlassScale(View view, Context c) {
         glassScaleControls = view.findViewById(R.id.widgetGlassScaleControls);
-        bindGlassScale(view.findViewById(R.id.widgetGlassSize), R.string.widgets_glass_scale,
+        globalWidgetSizeRow = view.findViewById(R.id.widgetGlassSize);
+        globalWidgetIconRow = view.findViewById(R.id.widgetGlassIconSize);
+        widgetGlobalSize = view.findViewById(R.id.widgetGlobalSize);
+        widgetGlobalSize.setOnCheckedChangeListener((button, checked) -> {
+            if (binding) return;
+            Prefs.setWidgetsGlobalSize(c, checked);
+            updateAppearanceControls(c);
+            OverlayWidgetService.restart(c);
+        });
+        bindGlassScale(globalWidgetSizeRow, R.string.widgets_glass_scale,
                 Prefs.WIDGET_SIZE_MIN_PCT, Prefs.WIDGET_SIZE_MAX_PCT,
-                Prefs.glassWidgetSizePct(c), pct -> Prefs.setGlassWidgetSizePct(c, pct));
-        bindGlassScale(view.findViewById(R.id.widgetGlassIconSize), R.string.widgets_glass_icon_scale,
+                Prefs.overlayGlobalSizePct(c), pct -> Prefs.setOverlayGlobalSizePct(c, pct));
+        bindGlassScale(globalWidgetIconRow, R.string.widgets_glass_icon_scale,
                 Prefs.CLIMATE_ICON_MIN_PCT, Prefs.CLIMATE_ICON_MAX_PCT,
                 Prefs.glassWidgetIconSizePct(c), pct -> Prefs.setGlassWidgetIconSizePct(c, pct));
     }
@@ -563,6 +578,7 @@ public final class WidgetsFragment extends Fragment {
         Context c = requireContext();
         refreshSpeed();
         ClockWidgetProvider.refreshAll(c);
+        OverlayWidgetService.restart(c);
         WidgetUpdateService.sync(c);
     }
 
@@ -807,7 +823,6 @@ public final class WidgetsFragment extends Fragment {
         private String configuredKey;
         private View sizeRow;
         private View alphaRow;
-        private View iconRow;
 
         OverlayCard(Context context, String key, LinearLayout list) {
             this.context = context;
@@ -890,7 +905,6 @@ public final class WidgetsFragment extends Fragment {
             options.removeAllViews();
             sizeRow = null;
             alphaRow = null;
-            iconRow = null;
             addSharedSettings(key, options, false);
 
             boolean apps = WidgetsCommon.SIZE_APPS.equals(key);
@@ -934,16 +948,9 @@ public final class WidgetsFragment extends Fragment {
                 });
                 options.addView(wide);
             }
-            if (WidgetIconSizes.supportsOverlay(selectedKey)) {
-                iconRow = addPercentRow(options, R.string.widgets_climate_icon_size,
-                        Prefs.CLIMATE_ICON_MIN_PCT, Prefs.CLIMATE_ICON_MAX_PCT,
-                        Prefs.climateIconSizePct(context, selectedKey), true,
-                        pct -> Prefs.setClimateIconSizePct(context, selectedKey, pct),
+            if (WidgetsCommon.isStandaloneVehicleButton(selectedKey)) {
+                addIconLabels(context, options, selectedKey,
                         () -> OverlayWidgetService.requestUpdate(context));
-                if (WidgetsCommon.isStandaloneVehicleButton(selectedKey)) {
-                    addIconLabels(context, options, selectedKey,
-                            () -> OverlayWidgetService.requestUpdate(context));
-                }
             }
             if (WidgetsCommon.SIZE_HEATING.equals(key)) addHeatingSettings(context, options);
             updateAppearance();
@@ -951,8 +958,9 @@ public final class WidgetsFragment extends Fragment {
 
         void updateAppearance() {
             boolean glass = usesGlass(context);
-            if (sizeRow != null) sizeRow.setVisibility(glass ? View.GONE : View.VISIBLE);
-            if (iconRow != null) iconRow.setVisibility(glass ? View.GONE : View.VISIBLE);
+            if (sizeRow != null) {
+                sizeRow.setVisibility(Prefs.widgetsGlobalSize(context) ? View.GONE : View.VISIBLE);
+            }
             if (alphaRow != null && WidgetsCommon.SIZE_WINDSHIELD_HEAT.equals(key)) {
                 alphaRow.setVisibility(glass ? View.GONE : View.VISIBLE);
             }
@@ -1025,6 +1033,7 @@ public final class WidgetsFragment extends Fragment {
         widgetButtonBorder.setChecked(Prefs.widgetButtonBorder(c));
         widgetPowerOffWithoutConfirmation.setChecked(Prefs.widgetPowerOffWithoutConfirmation(c));
         widgetAccentBoost.setChecked(Prefs.widgetAccentBoost(c));
+        widgetGlobalSize.setChecked(Prefs.widgetsGlobalSize(c));
         climateIconLabels.setChecked(Prefs.climateIconLabels(c));
         widgetShowTitles.setChecked(Prefs.widgetTitles(c));
         binding = false;
@@ -1085,7 +1094,6 @@ public final class WidgetsFragment extends Fragment {
             resetOverlayRows();
             standardList.removeAllViews();
         }
-        appsOverlayCard.refresh();
         updateAppsUi();
         if (stock) {
             ensureOverlayRows(c);
@@ -1204,7 +1212,6 @@ public final class WidgetsFragment extends Fragment {
         resetOverlayRows();
         standardList.removeAllViews();
         individualIconLabels.clear();
-        appsOverlayCard = null;
         appsCount = null;
         appsSelect = null;
         showingOverlay = null;

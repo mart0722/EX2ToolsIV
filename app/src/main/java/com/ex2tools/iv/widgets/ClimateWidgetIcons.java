@@ -154,8 +154,7 @@ final class ClimateWidgetIcons {
     }
 
     static ClimateWidgetIcons forOverlay(Context c, View root, String key) {
-        int pct = WidgetAppearance.usesGlass(c) ? Prefs.glassWidgetIconSizePct(c)
-                : Prefs.climateIconSizePct(c, key);
+        int pct = Prefs.glassWidgetIconSizePct(c);
         return new ClimateWidgetIcons(c, pct / 100f,
                 Prefs.climateIconLabels(c, key), (id, bitmap) -> {
             ImageView image = root.findViewById(id);
@@ -342,6 +341,7 @@ final class ClimateWidgetIcons {
         int baseSize = ACTION_ICON_DP;
         if (id == R.id.img_vent_mode && !usesOutline()) baseSize = 64;
         else if (id == R.id.img_recirc_v) baseSize = 22;
+        else if (style == Prefs.ClimateIconStyle.STANDARD && !showLabels) baseSize = 46;
         int size = pixels(baseSize);
         boolean mirrored = id == R.id.img_seat_heat_passenger;
         SeatMark mark = null;

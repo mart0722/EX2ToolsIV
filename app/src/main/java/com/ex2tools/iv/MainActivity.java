@@ -1,7 +1,6 @@
 package com.ex2tools.iv;
 
 import android.content.Intent;
-import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
@@ -14,7 +13,6 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.DecelerateInterpolator;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -43,11 +41,9 @@ import com.ex2tools.iv.ui.StatusBarFragment;
 import com.ex2tools.iv.ui.VoiceFragment;
 import com.ex2tools.iv.ui.WidgetsFragment;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -56,10 +52,6 @@ public final class MainActivity extends AppCompatActivity {
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
-    private TextView carStatus;
-    private TextView lastUpdated;
-    private View statusDot;
-    private View statusPill;
     private LinearLayout navContainer;
     private int current = -1;
     private Runnable carTick;
@@ -107,16 +99,9 @@ public final class MainActivity extends AppCompatActivity {
         });
         applySystemBarAppearance();
 
-        carStatus = findViewById(R.id.carStatus);
-        lastUpdated = findViewById(R.id.lastUpdated);
-        statusDot = findViewById(R.id.statusDot);
-        statusPill = findViewById(R.id.statusPill);
         navContainer = findViewById(R.id.navContainer);
 
         buildNavigation();
-
-        ImageButton refresh = findViewById(R.id.btnRefresh);
-        refresh.setOnClickListener(v -> refreshNow());
 
         int restored = -1;
         if (savedInstanceState != null) {
@@ -318,9 +303,6 @@ public final class MainActivity extends AppCompatActivity {
         ft.commitNowAllowingStateLoss();
         current = index;
         applyWindowBackground(index);
-        if (statusPill != null) {
-            statusPill.setVisibility(index <= 2 ? View.VISIBLE : View.GONE);
-        }
         updateNav(index);
     }
 
@@ -391,17 +373,9 @@ public final class MainActivity extends AppCompatActivity {
             public void run() {
                 if (!executor.isShutdown()) {
                     executor.execute(() -> {
-                        boolean ok = Telemetry.carReady(MainActivity.this);
-                        String time = new SimpleDateFormat("HH:mm:ss", Locale.US).format(new Date());
+                        Telemetry.carReady(MainActivity.this);
                         runOnUiThread(() -> {
                             if (isFinishing() || isDestroyed()) return;
-                            carStatus.setText(ok ? R.string.car_connected : R.string.car_disconnected);
-                            carStatus.setTextColor(ContextCompat.getColor(MainActivity.this,
-                                    ok ? R.color.flyme_green : R.color.flyme_label_level2));
-                            statusDot.setBackgroundTintList(ColorStateList.valueOf(
-                                    ContextCompat.getColor(MainActivity.this,
-                                            ok ? R.color.flyme_green : R.color.flyme_label_level3)));
-                            lastUpdated.setText(time);
                             refreshClimateNav();
                         });
                     });
@@ -410,14 +384,6 @@ public final class MainActivity extends AppCompatActivity {
             }
         };
         handler.post(carTick);
-    }
-
-    public void refreshNow() {
-        handler.removeCallbacks(carTick);
-        handler.post(carTick);
-        Intent i = new Intent(Actions.REFRESH);
-        i.setPackage(getPackageName());
-        sendBroadcast(i);
     }
 
     public void openOverlaySettings() {

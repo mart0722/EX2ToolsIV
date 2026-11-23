@@ -781,6 +781,25 @@ public final class Prefs {
                 Math.max(50, Math.min(250, value))).apply();
     }
 
+    /** One size slider for all overlay widgets instead of per-widget sliders. */
+    public static boolean widgetsGlobalSize(Context c) {
+        return get(c).getBoolean("widgets_global_size", false);
+    }
+
+    public static void setWidgetsGlobalSize(Context c, boolean enabled) {
+        get(c).edit().putBoolean("widgets_global_size", enabled).apply();
+    }
+
+    public static int overlayGlobalSizePct(Context c) {
+        return Math.max(WIDGET_SIZE_MIN_PCT, Math.min(WIDGET_SIZE_MAX_PCT,
+                get(c).getInt("overlay_global_size_pct", 100)));
+    }
+
+    public static void setOverlayGlobalSizePct(Context c, int value) {
+        get(c).edit().putInt("overlay_global_size_pct",
+                Math.max(WIDGET_SIZE_MIN_PCT, Math.min(WIDGET_SIZE_MAX_PCT, value))).apply();
+    }
+
     public static int overlayAlphaPct(Context c, String key) {
         return Math.max(0, Math.min(100,
                 get(c).getInt("overlay_" + key + "_alpha_pct", 100)));

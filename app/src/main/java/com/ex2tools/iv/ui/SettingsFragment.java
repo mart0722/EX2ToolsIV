@@ -290,8 +290,6 @@ public final class SettingsFragment extends Fragment {
         });
         updateClimateRow();
 
-        view.findViewById(R.id.settingsCustomCommands).setOnClickListener(v ->
-                CustomCommandsDialog.show(c));
 
         view.findViewById(R.id.settingsReboot).setOnClickListener(v ->
                 FlymeDialog.showConfirm(c,
