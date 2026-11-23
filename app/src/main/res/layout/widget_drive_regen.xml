@@ -40,6 +40,7 @@
                 android:layout_weight="1">
 
                 <ImageView
+                    android:id="@+id/img_drive_eco"
                     style="@style/WgIcon"
                     android:src="@drawable/wg_ic_drive_eco"
                     android:tint="@color/wg_text" />
@@ -61,6 +62,7 @@
                 android:layout_weight="1">
 
                 <ImageView
+                    android:id="@+id/img_drive_comfort"
                     style="@style/WgIcon"
                     android:src="@drawable/wg_ic_drive_comfort"
                     android:tint="@color/wg_text" />
@@ -81,6 +83,7 @@
                 android:layout_weight="1">
 
                 <ImageView
+                    android:id="@+id/img_drive_sport"
                     style="@style/WgIcon"
                     android:src="@drawable/wg_ic_drive_sport"
                     android:tint="@color/wg_text" />
@@ -119,6 +122,7 @@
                 android:layout_weight="1">
 
                 <ImageView
+                    android:id="@+id/img_regen_low"
                     style="@style/WgIcon"
                     android:src="@drawable/wg_ic_regen_low"
                     android:tint="@color/wg_text" />
@@ -140,6 +144,7 @@
                 android:layout_weight="1">
 
                 <ImageView
+                    android:id="@+id/img_regen_mid"
                     style="@style/WgIcon"
                     android:src="@drawable/wg_ic_regen_mid"
                     android:tint="@color/wg_text" />
@@ -160,6 +165,7 @@
                 android:layout_weight="1">
 
                 <ImageView
+                    android:id="@+id/img_regen_high"
                     style="@style/WgIcon"
                     android:src="@drawable/wg_ic_regen_high"
                     android:tint="@color/wg_text" />

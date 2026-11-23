@@ -21,6 +21,8 @@ final class SpeedWidgetRenderer {
     }
 
     static RemoteViews build(Context c, int appWidgetId, float kmh) {
+        WidgetGrid.Slot slot = WidgetGrid.appWidgetSlot(c, AppWidgetManager.getInstance(c),
+                appWidgetId, R.layout.widget_speed);
         RemoteViews views = new RemoteViews(c.getPackageName(), R.layout.widget_speed);
         views.setViewVisibility(R.id.speed_digital, View.GONE);
         views.setViewVisibility(R.id.speed_gauge, View.VISIBLE);
@@ -31,7 +33,9 @@ final class SpeedWidgetRenderer {
         float trip = WidgetsCommon.readTripKm(c);
         boolean showTrip = Prefs.speedShowTrip(c);
         Context theme = Prefs.climateIconStyle(c).isChrome() ? OverlayWidgetViews.themeContext(c) : c;
-        Bitmap bitmap = SpeedGaugePainter.render(theme, BITMAP_SIZE, BITMAP_SIZE,
+        int bitmapSize = Math.min(384, Math.max(BITMAP_SIZE,
+                Math.round(BITMAP_SIZE * slot.scale())));
+        Bitmap bitmap = SpeedGaugePainter.render(theme, bitmapSize, bitmapSize,
                 kmh, digital, backgroundAlpha, trip, showTrip && !digital);
         views.setImageViewBitmap(R.id.speed_gauge, bitmap);
 
@@ -47,7 +51,6 @@ final class SpeedWidgetRenderer {
                             | android.app.PendingIntent.FLAG_IMMUTABLE);
             views.setOnClickPendingIntent(R.id.speed_trip_tap, pending);
         }
-        return WidgetGrid.appWidgetSlot(c, AppWidgetManager.getInstance(c), appWidgetId,
-                R.layout.widget_speed).wrap(c, views);
+        return slot.wrap(c, views);
     }
 }
