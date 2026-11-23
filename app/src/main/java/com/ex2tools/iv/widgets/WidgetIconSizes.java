@@ -41,7 +41,8 @@ public final class WidgetIconSizes {
         if (WidgetAppearance.usesGlass(context)) {
             return Prefs.glassWidgetIconSizePct(context) / 100f * appWidgetScale(context);
         }
-        return Prefs.climateIconSizePct(context, appWidgetKey(context)) / 100f;
+        return Prefs.climateIconSizePct(context, appWidgetKey(context)) / 100f
+                * appWidgetScale(context);
     }
 
     static boolean appWidgetLabels(Context context) {

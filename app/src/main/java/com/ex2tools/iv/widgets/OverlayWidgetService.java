@@ -335,8 +335,15 @@ public final class OverlayWidgetService extends Service {
             boolean apps = WidgetsCommon.SIZE_APPS.equals(spec.key);
             boolean glass = WidgetAppearance.usesGlass(this);
             Size base = glass ? tileSize(spec) : apps ? AppsOverlay.sizeDp(this) : legacySize(spec);
-            float scale = glass ? WidgetGrid.scale(this) : (speed
-                    ? Prefs.widgetSizePct(this, spec.key) : Prefs.overlaySizePct(this, spec.key)) / 100f;
+            float scale;
+            if (Prefs.widgetsGlobalSize(this)) {
+                scale = Prefs.overlayGlobalSizePct(this) / 100f;
+            } else if (glass) {
+                scale = Prefs.overlaySizePct(this, spec.key) / 100f;
+            } else {
+                scale = (speed
+                        ? Prefs.widgetSizePct(this, spec.key) : Prefs.overlaySizePct(this, spec.key)) / 100f;
+            }
             DisplayMetrics metrics = getResources().getDisplayMetrics();
             Prefs.OverlayPlacement placement = Prefs.overlayPlacement(this);
             int maxWidth = Math.max(1, metrics.widthPixels - dp(16));
