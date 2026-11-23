@@ -69,9 +69,11 @@ final class OverlayWidgetViews {
         if (bg != null) bg.setBackground(OverlayBackground.create(c, key));
         int titleVisibility = Prefs.widgetTitles(c) ? View.VISIBLE : View.GONE;
         visibility(root, R.id.widget_title, titleVisibility);
-        if (WidgetAppearance.usesGlass(c)) visibility(root, R.id.txt_vent_header, titleVisibility);
+        visibility(root, R.id.txt_vent_header, titleVisibility);
         visibility(root, R.id.txt_drive_header, titleVisibility);
         visibility(root, R.id.txt_regen_header, titleVisibility);
+        visibility(root, R.id.tv_fan_label, titleVisibility);
+        visibility(root, R.id.tv_temp_label, titleVisibility);
 
         switch (key) {
             case WidgetsCommon.SIZE_DRIVE_REGEN:
@@ -724,8 +726,7 @@ final class OverlayWidgetViews {
         chip.setBackgroundResource(WidgetAppearance.chipBackground(c,
                 OverlayBackground.isTransparent(c, WidgetsCommon.SIZE_DRIVE_REGEN), active, accent));
         TextView text = root.findViewById(textId);
-        boolean showLabel = !WidgetAppearance.usesGlass(c)
-                || Prefs.climateIconLabels(c, WidgetsCommon.SIZE_DRIVE_REGEN);
+        boolean showLabel = Prefs.climateIconLabels(c, WidgetsCommon.SIZE_DRIVE_REGEN);
         String caption = c.getString(label);
         text.setText(caption);
         text.setVisibility(showLabel ? View.VISIBLE : View.GONE);

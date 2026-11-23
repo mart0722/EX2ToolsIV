@@ -37,7 +37,6 @@ import com.ex2tools.iv.car.RvcBlackBackground;
 import com.ex2tools.iv.car.Ttl65;
 import com.ex2tools.iv.drive.DriveController;
 import com.ex2tools.iv.screenshot.ScreenshotButtonService;
-import com.ex2tools.iv.service.DriveRegenService;
 import com.ex2tools.iv.service.DriveRegenWatchService;
 import com.ex2tools.iv.servicemode.ServiceModeManager;
 import com.ex2tools.iv.status.StatusIconService;
@@ -144,8 +143,6 @@ public final class SettingsFragment extends Fragment {
                 Toast.makeText(c, R.string.auto_apply_on, Toast.LENGTH_SHORT).show();
             }
         });
-
-        view.findViewById(R.id.applyNow).setOnClickListener(v -> applyFromSelection());
 
         FlymeSwitchRow fastWidgets = view.findViewById(R.id.switchFastWidgetResponse);
         fastWidgets.setChecked(Prefs.fastWidgetResponse(c));

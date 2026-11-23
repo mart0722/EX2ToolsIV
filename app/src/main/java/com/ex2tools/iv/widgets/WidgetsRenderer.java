@@ -113,9 +113,14 @@ public final class WidgetsRenderer {
     }
 
     public static RemoteViews fan(Context c, Integer fan, int layout) {
-        RemoteViews v = new RemoteViews(c.getPackageName(), WidgetGrid.layout(c, layout));
+        int actualLayout = WidgetGrid.layout(c, layout);
+        RemoteViews v = new RemoteViews(c.getPackageName(), actualLayout);
         bg(v, c);
-        titles(v, c, R.id.widget_title);
+        if (actualLayout == R.layout.widget_fan_speed) {
+            titles(v, c, R.id.widget_title, R.id.tv_fan_label);
+        } else {
+            titles(v, c, R.id.widget_title);
+        }
         if (WidgetAppearance.usesGlass(c)) {
             ClimateWidgetIcons.forRemote(c, OverlayWidgetViews.themeContext(c), v)
                     .chromeGlyph(R.id.img_fan_title, R.drawable.wg_ic_fan, 20);
@@ -134,9 +139,14 @@ public final class WidgetsRenderer {
     }
 
     public static RemoteViews temperature(Context c, Float temp, int layout) {
-        RemoteViews v = new RemoteViews(c.getPackageName(), WidgetGrid.layout(c, layout));
+        int actualLayout = WidgetGrid.layout(c, layout);
+        RemoteViews v = new RemoteViews(c.getPackageName(), actualLayout);
         bg(v, c);
-        titles(v, c, R.id.widget_title);
+        if (actualLayout == R.layout.widget_temperature) {
+            titles(v, c, R.id.widget_title, R.id.tv_temp_label);
+        } else {
+            titles(v, c, R.id.widget_title);
+        }
         if (WidgetAppearance.usesGlass(c)) {
             ClimateWidgetIcons.forRemote(c, OverlayWidgetViews.themeContext(c), v)
                     .chromeGlyph(R.id.img_temp_title, R.drawable.wg_ic_temp, 20);
@@ -165,7 +175,7 @@ public final class WidgetsRenderer {
             v.setViewVisibility(R.id.widget_vent_fan_row, View.GONE);
             titles(v, c, R.id.txt_vent_header);
         } else {
-            titles(v, c, R.id.widget_title);
+            titles(v, c, R.id.widget_title, R.id.txt_vent_header);
         }
         v.setTextViewText(R.id.txt_vent_header, c.getString(R.string.wg_vent_header));
         boolean directions = Prefs.ventDirectionButtons(c);
@@ -474,7 +484,7 @@ public final class WidgetsRenderer {
         v.setInt(chipId, "setBackgroundResource", WidgetAppearance.chipBackground(
                 c, Prefs.widgetBgOpacity(c) < 10, active, accent));
         v.setTextColor(textId, WidgetAppearance.chipTextColor(c, active, accent));
-        boolean showLabel = !WidgetAppearance.usesGlass(c) || WidgetIconSizes.appWidgetLabels(c);
+        boolean showLabel = WidgetIconSizes.appWidgetLabels(c);
         String caption = c.getString(label);
         v.setTextViewText(textId, caption);
         v.setViewVisibility(textId, showLabel ? View.VISIBLE : View.GONE);

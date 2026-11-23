@@ -19,6 +19,10 @@
     <color name="wg_chip_on">#16233A</color>
     <color name="wg_chip_on_green">#12291F</color>
     <color name="wg_chip_on_orange">#2A1A10</color>
+    <color name="wg_chip_on_boost">#1B3355</color>
+    <color name="wg_chip_on_green_boost">#143A29</color>
+    <color name="wg_chip_on_orange_boost">#3A2110</color>
+    <color name="wg_chip_on_red_boost">#3A1D20</color>
     <color name="wg_track">#263043</color>
 
     <color name="wg_text">#E9EFFA</color>

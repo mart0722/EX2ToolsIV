@@ -33,7 +33,6 @@
     <string name="auto_apply">Удерживать режим</string>
     <string name="auto_apply_note">Возвращать выбранный режим после загрузки, пробуждения и смены передачи. Ручное переключение в штатном меню не перебивается.</string>
     <string name="auto_apply_on">Режим будет удерживаться</string>
-    <string name="apply_now">Применить сейчас</string>
     <string name="applying">Применяю…</string>
     <string name="drive_apply_hint">Значения записываются в Car API и повторяются после перезапуска автомобиля.</string>
     <string name="regen_apply_hint">После старта машины значения могут сбрасываться — EX2ToolsIV применит их автоматически.</string>
@@ -350,7 +349,7 @@
     <string name="overlay_notification_text">Виджеты на рабочем столе</string>
     <string name="widgets_group_design">Оформление виджетов</string>
     <string name="widgets_size">Размер AppWidget</string>
-    <string name="widgets_size_note">50–200%. Для каждого AppWidget отдельно</string>
+    <string name="widgets_size_note">50–250%. Для каждого AppWidget отдельно</string>
     <string name="widgets_size_clock">Часы</string>
     <string name="widgets_size_drive_regen">Режим езды + рекуперация</string>
     <string name="widgets_size_drive_mode">Режим езды</string>
@@ -832,9 +831,7 @@
     <string name="widgets_climate_icons_title">Стиль виджетов</string>
     <string name="widgets_climate_icons_standard">Стандарт</string>
     <string name="widgets_climate_icons_thin">Тонкие</string>
-    <string name="widgets_climate_icons_extra_thin">Хром 0,25</string>
     <string name="widgets_climate_icons_chrome_thin">Хром 0,75</string>
-    <string name="widgets_climate_icons_chrome">Толстые</string>
     <string name="widgets_vent_settings">Настройки обдува</string>
     <string name="widgets_glass_scale">Общий размер виджетов</string>
     <string name="widgets_glass_icon_scale">Общий размер иконок</string>

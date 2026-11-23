@@ -581,11 +581,13 @@ public final class Prefs {
         return switch (prefs.getString("climate_icon_style", "")) {
             case "STANDARD" -> ClimateIconStyle.STANDARD;
             case "THIN" -> ClimateIconStyle.THIN;
-            case "EXTRA_THIN" -> ClimateIconStyle.EXTRA_THIN;
+            // The 0.25 px outline was removed from the UI; keep the preference
+            // forward-compatible by using the nearest remaining style.
+            case "EXTRA_THIN" -> ClimateIconStyle.THIN;
             case "CHROME_THIN" -> ClimateIconStyle.CHROME_THIN;
-            case "CHROME" -> ClimateIconStyle.CHROME;
-            default -> prefs.getBoolean("climate_outline_icons", true)
-                    ? ClimateIconStyle.CHROME : ClimateIconStyle.STANDARD;
+            // The thick chrome style was removed; fall back to the standard look.
+            case "CHROME" -> ClimateIconStyle.STANDARD;
+            default -> ClimateIconStyle.STANDARD;
         };
     }
 
@@ -772,7 +774,7 @@ public final class Prefs {
     }
 
     public static int overlaySizePct(Context c, String key) {
-        return Math.max(50, Math.min(200,
+        return Math.max(50, Math.min(250,
                 get(c).getInt("overlay_" + key + "_size_pct", 100)));
     }
 
@@ -786,7 +788,7 @@ public final class Prefs {
 
     public static void setOverlaySizePct(Context c, String key, int value) {
         get(c).edit().putInt("overlay_" + key + "_size_pct",
-                Math.max(50, Math.min(200, value))).apply();
+                Math.max(50, Math.min(250, value))).apply();
     }
 
     public static int overlayAlphaPct(Context c, String key) {
@@ -868,7 +870,7 @@ public final class Prefs {
     }
 
     public static boolean clockDate(Context c) {
-        return get(c).getBoolean("clock_date", false);
+        return get(c).getBoolean("clock_date", true);
     }
 
     public static void setClockDate(Context c, boolean value) {

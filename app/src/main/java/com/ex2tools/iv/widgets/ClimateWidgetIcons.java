@@ -107,7 +107,7 @@ final class ClimateWidgetIcons {
         style = Prefs.climateIconStyle(c);
         this.iconScale = iconScale;
         this.showLabels = showLabels;
-        accentBoost = usesOutline() && Prefs.widgetAccentBoost(c);
+        accentBoost = Prefs.widgetAccentBoost(c);
         night = (resources.getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK)
                 == Configuration.UI_MODE_NIGHT_YES;
         ink = c.getColor(R.color.wg_text);
@@ -271,7 +271,10 @@ final class ClimateWidgetIcons {
 
     private int buttonSurface(boolean transparent, boolean active, boolean pending, boolean airflow) {
         if (!usesOutline()) {
-            if (active) return airflow ? R.drawable.bg_wg_chip_on : R.drawable.bg_wg_chip_on_orange;
+            if (active) return airflow
+                    ? (accentBoost ? R.drawable.bg_wg_chip_on_boost : R.drawable.bg_wg_chip_on)
+                    : (accentBoost ? R.drawable.bg_wg_chip_on_orange_boost
+                            : R.drawable.bg_wg_chip_on_orange);
             return pending ? R.drawable.bg_wg_chip_pending : R.drawable.bg_wg_chip;
         }
         if (pending && !active) return R.drawable.bg_wg_climate_pending;

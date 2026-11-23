@@ -51,6 +51,10 @@ final class WidgetAppearance {
         BORDERLESS.put(R.drawable.bg_wg_chip_on_orange, R.drawable.bg_wg_chip_on_orange_borderless);
         BORDERLESS.put(R.drawable.bg_wg_chip_on_red, R.drawable.bg_wg_chip_on_red_borderless);
         BORDERLESS.put(R.drawable.bg_wg_chip_pending, R.drawable.bg_wg_chip_pending_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_chip_on_boost, R.drawable.bg_wg_chip_on_boost_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_chip_on_green_boost, R.drawable.bg_wg_chip_on_green_boost_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_chip_on_orange_boost, R.drawable.bg_wg_chip_on_orange_boost_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_chip_on_red_boost, R.drawable.bg_wg_chip_on_red_boost_borderless);
         BORDERLESS.put(R.drawable.bg_wg_climate_air, R.drawable.bg_wg_climate_air_borderless);
         BORDERLESS.put(R.drawable.bg_wg_climate_air_high, R.drawable.bg_wg_climate_air_high_borderless);
         BORDERLESS.put(R.drawable.bg_wg_climate_air_medium, R.drawable.bg_wg_climate_air_medium_borderless);
@@ -122,10 +126,14 @@ final class WidgetAppearance {
     private static int chipSurface(Context c, boolean transparent, boolean active, int accent) {
         if (!usesGlass(c)) {
             if (!active) return R.drawable.bg_wg_chip;
+            boolean boost = Prefs.widgetAccentBoost(c);
             return switch (accent) {
-                case 1 -> R.drawable.bg_wg_chip_on_green;
-                case 2 -> R.drawable.bg_wg_chip_on_red;
-                default -> R.drawable.bg_wg_chip_on;
+                case 1 -> boost ? R.drawable.bg_wg_chip_on_green_boost
+                        : R.drawable.bg_wg_chip_on_green;
+                case 2 -> boost ? R.drawable.bg_wg_chip_on_red_boost
+                        : R.drawable.bg_wg_chip_on_red;
+                default -> boost ? R.drawable.bg_wg_chip_on_boost
+                        : R.drawable.bg_wg_chip_on;
             };
         }
         if (transparent) return android.R.color.transparent;
