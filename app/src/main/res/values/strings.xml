@@ -410,6 +410,7 @@
     <string name="widgets_clock_note">Время и дата под часами. Формат зависит от региона</string>
     <string name="widgets_clock_date">Показывать дату</string>
     <string name="widgets_clock_date_note">Под временем, как в DIGI Clock</string>
+    <string name="widgets_clock_seconds">Показывать секунды</string>
     <string name="widgets_clock_font">Шрифт</string>
     <string name="widgets_clock_color">Цвет</string>
     <string name="widgets_clock_hint">Добавляйте виджеты долгим нажатием на рабочем столе → Виджеты</string>

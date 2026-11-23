@@ -84,6 +84,7 @@ public final class WidgetsFragment extends Fragment {
     private FlymeSegmentedGroup fontGroup;
     private FlymeSegmentedGroup colorGroup;
     private FlymeSwitchRow date;
+    private FlymeSwitchRow clockSeconds;
     private TextClock clockPreview;
     private TextView clockDatePreview;
 
@@ -151,6 +152,7 @@ public final class WidgetsFragment extends Fragment {
         fontGroup = view.findViewById(R.id.clockFontGroup);
         colorGroup = view.findViewById(R.id.clockColorGroup);
         date = view.findViewById(R.id.clockDate);
+        clockSeconds = view.findViewById(R.id.clockSeconds);
         clockPreview = view.findViewById(R.id.clockPreview);
         clockDatePreview = view.findViewById(R.id.clockDatePreview);
         clockSettings = view.findViewById(R.id.widgetSettingsClock);
@@ -771,6 +773,16 @@ public final class WidgetsFragment extends Fragment {
             else OverlayWidgetService.requestUpdate(context);
             WidgetUpdateService.refreshOpacity(context);
         });
+
+        clockSeconds.setChecked(Prefs.clockSeconds(c));
+        clockSeconds.setOnCheckedChangeListener((button, checked) -> {
+            if (binding) return;
+            Context context = requireContext();
+            Prefs.setClockSeconds(context, checked);
+            updateClockPreview();
+            ClockWidgetProvider.refreshAll(context);
+            OverlayWidgetService.requestUpdate(context);
+        });
     }
 
     private void ensureOverlayRows(Context c) {
@@ -1024,6 +1036,7 @@ public final class WidgetsFragment extends Fragment {
         fontGroup.check(Prefs.clockFont(c) == 1 ? R.id.clockFontCondensed : R.id.clockFontClassic);
         colorGroup.check(colorButton(Prefs.clockColor(c)));
         date.setChecked(Prefs.clockDate(c));
+        clockSeconds.setChecked(Prefs.clockSeconds(c));
         speedSizeGroup.check(switch (Prefs.overlaySpeedCells(c)) {
             case 4 -> R.id.widgetSpeed4x4;
             case 3 -> R.id.widgetSpeed3x3;
@@ -1166,6 +1179,7 @@ public final class WidgetsFragment extends Fragment {
     private void updateClockPreview() {
         if (clockPreview == null || !isAdded()) return;
         Context c = requireContext();
+        ClockWidgetProvider.applyTimeFormat(clockPreview);
         Typeface typeface = Prefs.clockFont(c) == 1
                 ? Typeface.create("sans-serif-condensed", Typeface.NORMAL)
                 : Typeface.SERIF;

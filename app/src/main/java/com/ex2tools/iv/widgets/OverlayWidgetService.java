@@ -372,7 +372,7 @@ public final class OverlayWidgetService extends Service {
                 spec.speedView.update(this, WidgetsCommon.readSpeed(this), WidgetsCommon.readTripKm(this));
             } else {
                 content = OverlayWidgetViews.create(this, spec.key, scale);
-                OverlayWidgetViews.update(content, spec.key);
+                OverlayWidgetViews.update(content, spec.key, width);
             }
             container.addView(content, new FrameLayout.LayoutParams(
                     FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
@@ -506,7 +506,7 @@ public final class OverlayWidgetService extends Service {
             if (WidgetsCommon.SIZE_SPEED.equals(spec.key) && spec.speedView != null) {
                 spec.speedView.update(this, WidgetsCommon.readSpeed(this), WidgetsCommon.readTripKm(this));
             } else {
-                OverlayWidgetViews.update(spec.content, spec.key);
+                OverlayWidgetViews.update(spec.content, spec.key, spec.params.width);
             }
             spec.view.setAlpha(1f);
         } catch (Throwable t) {

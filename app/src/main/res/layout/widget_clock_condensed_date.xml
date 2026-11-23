@@ -23,7 +23,7 @@
             android:layout_height="0dp"
             android:layout_weight="1"
             android:autoSizeMaxTextSize="96sp"
-            android:autoSizeMinTextSize="18sp"
+            android:autoSizeMinTextSize="12sp"
             android:autoSizeStepGranularity="2sp"
             android:autoSizeTextType="uniform"
             android:fontFamily="sans-serif-condensed"
@@ -31,6 +31,7 @@
             android:format24Hour="HH:mm"
             android:gravity="center"
             android:includeFontPadding="false"
+            android:maxLines="1"
             android:textColor="@color/wg_text"
             android:textSize="42sp"
 />
