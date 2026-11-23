@@ -115,7 +115,6 @@ public final class WidgetsCommon {
         if (Prefs.climateEnabled(c)) return Prefs.climateTarget(c);
         Float pending = ClimateController.pendingTemp();
         if (pending != null) return pending;
-        // Единый источник уставки: AOSP-канал, затем ADJUST/SET как фолбэки.
         return adjustTempDisplay(c, ClimateController.readTargetTemp(state(c)));
     }
 
@@ -278,10 +277,7 @@ public final class WidgetsCommon {
         subscribe(state, CarProps.HVAC_WINDSHIELD_HEAT, new int[]{117});
         subscribe(state, CarProps.STEERING_WHEEL_HEAT, CarProps.WHEEL_HEAT_AREAS);
         subscribe(state, CarProps.SEAT_HEAT, CarProps.SEAT_AREAS);
-        subscribe(state, CarProps.HVAC_TEMP_ADJUST, CarProps.HVAC_AREAS);
         subscribe(state, CarProps.HVAC_TEMP_AOSP, CarProps.HVAC_AREAS);
-        subscribe(state, CarProps.HVAC_TEMP_SET, CarProps.HVAC_AREAS);
-        subscribe(state, CarProps.HVAC_TEMP_SET_AOSP, CarProps.HVAC_AREAS);
         subscribe(state, CarProps.PERF_VEHICLE_SPEED, new int[]{0});
         subscribe(state, CarProps.ESC_SPEED, new int[]{0});
         subscribe(state, CarProps.SOC, new int[]{0});
