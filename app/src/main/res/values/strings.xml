@@ -274,6 +274,12 @@
     <string name="widgets_title">Виджеты</string>
     <string name="widgets_mode_stock">Штатный лаунчер</string>
     <string name="widgets_mode_third">Сторонний лаунчер</string>
+    <string name="widgets_stock_cards_title">Карточки Flyme Auto</string>
+    <string name="widgets_stock_cards_hide">Скрыть все</string>
+    <string name="widgets_stock_cards_show">Вернуть все</string>
+    <string name="widgets_stock_cards_sent">Команда отправлена в Flyme Auto</string>
+    <string name="widgets_stock_cards_launcher_missing">Лаунчер Flyme Auto не найден</string>
+    <string name="widgets_stock_cards_failed">Не удалось отправить команду в Flyme Auto</string>
     <string name="widgets_mode_stock_note">Overlay-виджеты поверх рабочего стола</string>
     <string name="widgets_mode_third_note">Виджеты для сторонних лаунчеров</string>
     <string name="widgets_mode_switch_title">Сменить режим?</string>
