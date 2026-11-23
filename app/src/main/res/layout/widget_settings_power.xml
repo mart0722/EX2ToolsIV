@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/widgetSettingsPower"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <com.ex2tools.iv.ui.FlymeSwitchRow
+        android:id="@+id/widgetPowerOffWithoutConfirmation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/widget_power_off_without_confirmation"
+        android:textColor="@color/flyme_label_level1"
+        android:textSize="20sp"
+        app:rowDescription="@string/widget_power_off_park_only" />
+</LinearLayout>

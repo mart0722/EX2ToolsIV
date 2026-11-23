@@ -59,22 +59,19 @@ public final class ClimateController {
     // --- temperature ---
 
     public CommandDispatcher.Result setTemp(float value) {
+        return setTemp(value, true);
+    }
+
+    private CommandDispatcher.Result setTemp(float value, boolean awaitConfirmation) {
         int celsius = Math.max(17, Math.min(32, Math.round(value)));
-        pendingTemp = celsius;
-        pendingTempAt = android.os.SystemClock.elapsedRealtime();
-        android.content.Context context = gateway.appContext();
-        if (context != null) com.ex2tools.iv.Prefs.setLastTempSet(context, celsius);
-        CommandDispatcher.Result last = null;
-        for (int area : TEMP_AREAS) {
-            // Основной setpoint, который использует штатный климат.
-            CommandDispatcher.Result set = dispatcher.submit(new CommandDispatcher.Command(
-                    CarProps.HVAC_TEMP_SET, area, PropertySpec.Type.INT, celsius), false);
-            // И adjust — его показывает штатный слайдер.
-            dispatcher.submit(new CommandDispatcher.Command(
-                    CarProps.HVAC_TEMP_ADJUST, area, PropertySpec.Type.INT, celsius), false);
-            last = set;
+        CommandDispatcher.Result last = writeTemp(celsius, awaitConfirmation);
+        if (last != null && last.ok()) {
+            pendingTempAt = android.os.SystemClock.elapsedRealtime();
+            pendingTemp = celsius;
+            android.content.Context context = gateway.appContext();
+            if (context != null) com.ex2tools.iv.Prefs.setLastTempSet(context, celsius);
         }
-        logTempState("write " + celsius);
+        if (awaitConfirmation) logTempState("write " + celsius);
         return last;
     }
 
@@ -85,15 +82,18 @@ public final class ClimateController {
      */
     public CommandDispatcher.Result setTempSilent(float value) {
         int celsius = Math.max(17, Math.min(32, Math.round(value)));
+        CommandDispatcher.Result result = writeTemp(celsius, false);
+        logTempState("silent " + celsius);
+        return result;
+    }
+
+    private CommandDispatcher.Result writeTemp(int celsius, boolean awaitConfirmation) {
         CommandDispatcher.Result last = null;
         for (int area : TEMP_AREAS) {
-            CommandDispatcher.Result set = dispatcher.submit(new CommandDispatcher.Command(
-                    CarProps.HVAC_TEMP_SET, area, PropertySpec.Type.INT, celsius), false);
-            dispatcher.submit(new CommandDispatcher.Command(
-                    CarProps.HVAC_TEMP_ADJUST, area, PropertySpec.Type.INT, celsius), false);
-            last = set;
+            CommandDispatcher.Result result = dispatcher.submit(new CommandDispatcher.Command(
+                    CarProps.HVAC_TEMP_ADJUST, area, PropertySpec.Type.INT, celsius), awaitConfirmation);
+            if (last == null || result.ok()) last = result;
         }
-        logTempState("silent " + celsius);
         return last;
     }
 
@@ -103,11 +103,39 @@ public final class ClimateController {
     }
 
     public CommandDispatcher.Result adjustTemp(float delta) {
+        return adjustTemp(delta, true);
+    }
+
+    public synchronized CommandDispatcher.Result adjustTempInteractive(float delta) {
+        return adjustTemp(delta, false);
+    }
+
+    private synchronized CommandDispatcher.Result adjustTemp(float delta, boolean awaitConfirmation) {
         Float current = pendingTemp();
         if (current == null) current = readTargetTemp(state());
-        float base = current == null ? 22f : Math.round(current);
-        logTempState("base " + base);
-        return setTemp(base + delta);
+        if (current == null) return CommandDispatcher.Result.unavailable("Climate setpoint unavailable");
+        return setTemp(Math.round(current) + delta, awaitConfirmation);
+    }
+
+    private Integer interactiveFan;
+    private long interactiveFanAt;
+
+    public synchronized CommandDispatcher.Result adjustFanInteractive(int delta) {
+        long now = android.os.SystemClock.elapsedRealtime();
+        Integer current = interactiveFan != null && now - interactiveFanAt < 1000L
+                ? interactiveFan : readIntAny(CarProps.HVAC_FAN_SPEED, CarProps.FAN_AREAS);
+        int target = Math.max(0, Math.min(7, (current == null ? 3 : current) + delta));
+        CommandDispatcher.Result result = null;
+        for (int area : state().areas(CarProps.HVAC_FAN_SPEED, CarProps.FAN_AREAS)) {
+            result = dispatcher.submit(new CommandDispatcher.Command(
+                    CarProps.HVAC_FAN_SPEED, area, PropertySpec.Type.INT, target), false);
+            if (result.ok()) break;
+        }
+        if (result != null && result.ok()) {
+            interactiveFan = target;
+            interactiveFanAt = android.os.SystemClock.elapsedRealtime();
+        } else interactiveFan = null;
+        return result;
     }
 
     /**
@@ -148,9 +176,8 @@ public final class ClimateController {
     private void logTempState(String why) {
         android.content.Context context = gateway.appContext();
         if (context == null) return;
-        int[] ids = {CarProps.HVAC_TEMP_ADJUST, CarProps.HVAC_TEMP_AOSP,
-                CarProps.HVAC_TEMP_SET, CarProps.HVAC_TEMP_SET_AOSP};
-        String[] names = {"adjust", "aosp", "set", "set_aosp"};
+        int[] ids = {CarProps.HVAC_TEMP_ADJUST, CarProps.HVAC_TEMP_AOSP};
+        String[] names = {"adjust", "aosp"};
         StringBuilder sb = new StringBuilder("temp diag ").append(why);
         for (int i = 0; i < ids.length; i++) {
             for (int area : new int[]{1, 4}) {
@@ -164,13 +191,28 @@ public final class ClimateController {
 
     // --- vent ---
 
-    public CommandDispatcher.Result setVent(int value) {
+    public synchronized CommandDispatcher.Result toggleVent(int direction) {
+        Integer current = readIntAny(CarProps.HVAC_FAN_DIRECTION, CarProps.FAN_DIRECTION_AREAS);
+        long now = android.os.SystemClock.elapsedRealtime();
+        int base = pendingVent != null && now - pendingVentAt < 2000L
+                ? pendingVent : (current == null ? 0 : current);
+        return setVent(VentSelection.toggle(base, direction));
+    }
+
+    private Integer pendingVent;
+    private long pendingVentAt;
+
+    public synchronized CommandDispatcher.Result setVent(int value) {
         int mode = validVent(value) ? value : 1;
         CommandDispatcher.Result last = null;
         for (int area : VENT_AREAS) {
             last = dispatcher.submit(new CommandDispatcher.Command(
                     CarProps.HVAC_FAN_DIRECTION, area, PropertySpec.Type.INT, mode), false);
         }
+        if (last != null && last.ok()) {
+            pendingVent = mode;
+            pendingVentAt = android.os.SystemClock.elapsedRealtime();
+        } else pendingVent = null;
         return last;
     }
 

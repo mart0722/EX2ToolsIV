@@ -19,15 +19,30 @@
     <color name="wg_chip_on">#E7F0FF</color>
     <color name="wg_chip_on_green">#E4F8EE</color>
     <color name="wg_chip_on_orange">#FDEDE3</color>
+    <color name="wg_chip_on_boost">#D4E5FF</color>
+    <color name="wg_chip_on_green_boost">#C9F1DE</color>
+    <color name="wg_chip_on_orange_boost">#FBDAC5</color>
+    <color name="wg_chip_on_red_boost">#F8D1D4</color>
     <color name="wg_track">#D3DBE9</color>
 
     <color name="wg_text">#16202E</color>
+    <color name="wg_climate_amber">#9D3400</color>
+    <color name="wg_climate_blue">#0048AD</color>
+    <color name="wg_climate_coral">#A22A42</color>
+    <color name="wg_climate_neutral">#102038</color>
+    <color name="wg_climate_inactive">#3C516E</color>
+    <color name="wg_climate_glass_fill">#38FFFFFF</color>
+    <color name="wg_climate_glass_edge">#68FFFFFF</color>
+    <color name="wg_climate_air_fill">#559DD8FF</color>
+    <color name="wg_climate_warm_air_fill">#6EFFAC9B</color>
+    <color name="wg_climate_heat_fill">#66FFC397</color>
     <color name="wg_text2">#5B6B84</color>
     <color name="wg_muted">#8A99AE</color>
 
     <color name="wg_blue">#1F6FE5</color>
     <color name="wg_blue_light">#3E8BFF</color>
     <color name="wg_green">#12A85C</color>
-    <color name="wg_orange">#E8641A</color>`n    <color name="wg_red">#D93036</color>
+    <color name="wg_orange">#E8641A</color>
+    <color name="wg_red">#D93036</color>
     <color name="wg_white">#FFFFFF</color>
 </resources>

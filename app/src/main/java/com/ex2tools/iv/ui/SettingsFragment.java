@@ -37,7 +37,6 @@ import com.ex2tools.iv.car.RvcBlackBackground;
 import com.ex2tools.iv.car.Ttl65;
 import com.ex2tools.iv.drive.DriveController;
 import com.ex2tools.iv.screenshot.ScreenshotButtonService;
-import com.ex2tools.iv.service.DriveRegenService;
 import com.ex2tools.iv.service.DriveRegenWatchService;
 import com.ex2tools.iv.servicemode.ServiceModeManager;
 import com.ex2tools.iv.status.StatusIconService;
@@ -59,6 +58,7 @@ public final class SettingsFragment extends Fragment {
     private FlymeSwitchRow switchClimate;
     private FlymeSwitchRow switchComfort;
     private FlymeSwitchRow switchWindowFollow;
+    private FlymeSwitchRow switchWipersOnLock;
     private View settingsClimate;
     private FlymeSegmentedGroup autoLockTimeGroup;
     private Dialog rvcProgress;
@@ -100,6 +100,7 @@ public final class SettingsFragment extends Fragment {
         switchClimate = view.findViewById(R.id.switchClimate);
         switchComfort = view.findViewById(R.id.switchComfort);
         switchWindowFollow = view.findViewById(R.id.switchWindowFollow);
+        switchWipersOnLock = view.findViewById(R.id.switchWipersOnLock);
         settingsClimate = view.findViewById(R.id.settingsClimate);
         autoLockTimeGroup = view.findViewById(R.id.autoLockTimeGroup);
         applyResult = view.findViewById(R.id.applyResult);
@@ -143,7 +144,10 @@ public final class SettingsFragment extends Fragment {
             }
         });
 
-        view.findViewById(R.id.applyNow).setOnClickListener(v -> applyFromSelection());
+        FlymeSwitchRow fastWidgets = view.findViewById(R.id.switchFastWidgetResponse);
+        fastWidgets.setChecked(Prefs.fastWidgetResponse(c));
+        fastWidgets.setOnCheckedChangeListener((button, checked) ->
+                Prefs.setFastWidgetResponse(c, checked));
 
         switchScreenshotButton.setChecked(Prefs.screenshotButton(c));
         switchScreenshotButton.setOnCheckedChangeListener((b, checked) -> {
@@ -229,6 +233,13 @@ public final class SettingsFragment extends Fragment {
             Prefs.setAutoLockTimeoutSec(requireContext(), sec);
         });
 
+        switchWipersOnLock.setChecked(Prefs.wipersOnLock(c));
+        switchWipersOnLock.setOnCheckedChangeListener((button, checked) -> {
+            if (binding) return;
+            Prefs.setWipersOnLock(c, checked);
+            com.ex2tools.iv.body.WipersOnLockService.sync(c);
+        });
+
         switchWindowFollow.setChecked(Prefs.windowFollowDoor(c));
         switchWindowFollow.setOnCheckedChangeListener((b, checked) -> {
             if (binding) return;
@@ -279,8 +290,6 @@ public final class SettingsFragment extends Fragment {
         });
         updateClimateRow();
 
-        view.findViewById(R.id.settingsCustomCommands).setOnClickListener(v ->
-                CustomCommandsDialog.show(c));
 
         view.findViewById(R.id.settingsReboot).setOnClickListener(v ->
                 FlymeDialog.showConfirm(c,
@@ -383,6 +392,11 @@ public final class SettingsFragment extends Fragment {
         if (switchWindowFollow != null) {
             binding = true;
             switchWindowFollow.setChecked(Prefs.windowFollowDoor(c));
+            binding = false;
+        }
+        if (switchWipersOnLock != null) {
+            binding = true;
+            switchWipersOnLock.setChecked(Prefs.wipersOnLock(c));
             binding = false;
         }
         if (switchComfort != null) {

@@ -251,6 +251,7 @@ public final class ServiceModeManager {
         }
         try {
             WidgetUpdateService.stop(c);
+            com.ex2tools.iv.body.WipersOnLockService.stop(c);
         } catch (Throwable ignored) {
         }
         try {
@@ -288,6 +289,7 @@ public final class ServiceModeManager {
         }
         try {
             WidgetUpdateService.sync(c);
+            com.ex2tools.iv.body.WipersOnLockService.sync(c);
         } catch (Throwable t) {
             LogStore.add(c, "restore widgets failed: " + t);
         }

@@ -45,8 +45,6 @@ public final class CarApiDialog {
             new Prop(291504647, "SPEED"),
             new Prop(291504648, "SPEED_DISPLAY"),
             new Prop(624955446, "HVAC_TEMP_ADJUST"),
-            new Prop(557885148, "HVAC_TEMP_SET"),
-            new Prop(354419971, "HVAC_TEMP_SET_AOSP"),
             new Prop(358614274, "HVAC_TEMP_CURRENT"),
             new Prop(358614275, "HVAC_TEMP_AOSP"),
             new Prop(356517120, "HVAC_FAN_SPEED"),

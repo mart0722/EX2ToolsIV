@@ -6,6 +6,8 @@ import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
+import android.text.TextUtils;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,12 +22,11 @@ import com.ex2tools.iv.LogStore;
 import com.ex2tools.iv.Prefs;
 import com.ex2tools.iv.R;
 import com.ex2tools.iv.car.CarProps;
+import com.ex2tools.iv.car.RangeModel;
 import com.ex2tools.iv.car.Telemetry;
 import com.ex2tools.iv.climate.Thermostat;
 import com.ex2tools.iv.lock.LockActivity;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -53,15 +54,26 @@ final class OverlayWidgetViews {
      * вместе с карточкой увеличивались иконки, отступы и текст.
      */
     static View create(Context c, String key, float scale) {
-        View root = LayoutInflater.from(themeContext(c, scale)).inflate(layout(key), null);
+        boolean apps = WidgetsCommon.SIZE_APPS.equals(key);
+        Context theme = themeContext(c, apps && !WidgetAppearance.usesGlass(c) ? 1f : scale);
+        View root = LayoutInflater.from(theme).inflate(layout(c, key), null);
+        visibility(root, R.id.widget_vent_fan_row, WidgetsCommon.SIZE_VENT_FAN.equals(key)
+                ? View.VISIBLE : View.GONE);
         bindClicks(c, root, key);
         return root;
     }
 
-    static void update(Context context, View root, String key) {
-        Context c = themeContext(context);
+    static void update(View root, String key) {
+        Context c = root.getContext();
         View bg = root.findViewById(R.id.widget_bg_layer);
         if (bg != null) bg.setBackground(OverlayBackground.create(c, key));
+        int titleVisibility = Prefs.widgetTitles(c) ? View.VISIBLE : View.GONE;
+        visibility(root, R.id.widget_title, titleVisibility);
+        visibility(root, R.id.txt_vent_header, titleVisibility);
+        visibility(root, R.id.txt_drive_header, titleVisibility);
+        visibility(root, R.id.txt_regen_header, titleVisibility);
+        visibility(root, R.id.tv_fan_label, titleVisibility);
+        visibility(root, R.id.tv_temp_label, titleVisibility);
 
         switch (key) {
             case WidgetsCommon.SIZE_DRIVE_REGEN:
@@ -85,20 +97,50 @@ final class OverlayWidgetViews {
             case WidgetsCommon.SIZE_VENT_FAN:
                 updateVentFan(c, root);
                 break;
+            case WidgetsCommon.SIZE_WIPERS:
+            case WidgetsCommon.SIZE_POWER_OFF:
+                updateVehicleControl(c, root, key);
+                break;
+            case WidgetsCommon.SIZE_RECIRC:
+                updateRecirc(c, root);
+                break;
+            case WidgetsCommon.SIZE_WHEEL_HEAT:
+                updateWheelHeat(c, root);
+                break;
+            case WidgetsCommon.SIZE_WINDSHIELD_HEAT:
+                updateWindshieldHeat(c, root);
+                break;
             case WidgetsCommon.SIZE_HEATING:
                 updateHeating(c, root);
                 break;
             case WidgetsCommon.SIZE_BATTERY_RANGE:
                 updateBatteryRange(c, root);
                 break;
+            case WidgetsCommon.SIZE_REAL_RANGE:
+                text(root, R.id.tv_real_range,
+                        WidgetsRenderer.realRangeText(c, RangeModel.estimateKm(c)));
+                break;
             case WidgetsCommon.SIZE_APPS:
                 // Built once in create(); the selection only changes on restart.
+                break;
+            case WidgetsCommon.SIZE_LOCK:
+                if (WidgetAppearance.usesGlass(c)) {
+                    ClimateWidgetIcons.forOverlay(c, root, key)
+                            .chromeGlyph(R.id.img_lock, R.drawable.wg_ic_lock, ClimateWidgetIcons.ACTION_ICON_DP);
+                }
                 break;
             case WidgetsCommon.SIZE_CLIMATE:
                 updateClimate(c, root);
                 break;
             case WidgetsCommon.SIZE_CLOCK:
-                updateClock(c, root);
+            case WidgetsCommon.SIZE_CLOCK_LARGE:
+                updateClock(c, root, WidgetsCommon.SIZE_CLOCK_LARGE.equals(key));
+                break;
+            case WidgetsCommon.SIZE_OUTSIDE_TEMP:
+            case WidgetsCommon.SIZE_OUTSIDE_TEMP_WIDE:
+                ClimateWidgetIcons.forOverlay(c, root, key).outsideTemperature();
+                text(root, R.id.tv_outside_temp,
+                        WidgetsCommon.outsideTemperatureText(c, Telemetry.outsideTemp(c)));
                 break;
             default:
                 break;
@@ -134,8 +176,16 @@ final class OverlayWidgetViews {
         }
     }
 
-    private static int layout(String key) {
-        return WidgetCatalog.layout(key);
+    private static void visibility(View root, int id, int visibility) {
+        View view = root.findViewById(id);
+        if (view != null) view.setVisibility(visibility);
+    }
+
+    private static int layout(Context c, String key) {
+        if (WidgetsCommon.SIZE_HEATING.equals(key) && Prefs.heatingSingleRow(c)) {
+            return WidgetGrid.layout(c, R.layout.widget_heating_single_row);
+        }
+        return WidgetGrid.layout(c, WidgetCatalog.layout(key));
     }
 
     private static void bindClicks(Context c, View root, String key) {
@@ -167,28 +217,44 @@ final class OverlayWidgetViews {
             case WidgetsCommon.SIZE_VENT:
                 click(c, root, R.id.chip_vent_face, WidgetsCommon.VENT_FACE);
                 click(c, root, R.id.chip_vent_floor, WidgetsCommon.VENT_FLOOR);
-                click(c, root, R.id.chip_vent_face_floor, WidgetsCommon.VENT_FACE_FLOOR);
                 click(c, root, R.id.chip_vent_windshield, WidgetsCommon.VENT_WINDSHIELD);
+                click(c, root, R.id.chip_vent_face_floor, WidgetsCommon.VENT_FACE_FLOOR);
                 click(c, root, R.id.chip_vent_floor_windshield, WidgetsCommon.VENT_FLOOR_WINDSHIELD);
                 click(c, root, R.id.chip_recirc, WidgetsCommon.RECIRC_TOGGLE);
                 break;
             case WidgetsCommon.SIZE_VENT_FAN:
                 click(c, root, R.id.chip_vent_face, WidgetsCommon.VENT_FACE);
                 click(c, root, R.id.chip_vent_floor, WidgetsCommon.VENT_FLOOR);
-                click(c, root, R.id.chip_vent_face_floor, WidgetsCommon.VENT_FACE_FLOOR);
                 click(c, root, R.id.chip_vent_windshield, WidgetsCommon.VENT_WINDSHIELD);
+                click(c, root, R.id.chip_vent_face_floor, WidgetsCommon.VENT_FACE_FLOOR);
                 click(c, root, R.id.chip_vent_floor_windshield, WidgetsCommon.VENT_FLOOR_WINDSHIELD);
                 click(c, root, R.id.chip_recirc, WidgetsCommon.RECIRC_TOGGLE);
                 click(c, root, R.id.btn_fan_minus, WidgetsCommon.FAN_MINUS);
                 click(c, root, R.id.btn_fan_plus, WidgetsCommon.FAN_PLUS);
                 break;
+            case WidgetsCommon.SIZE_WINDSHIELD_HEAT:
+                click(c, root, R.id.chip_windshield_heat, WidgetsCommon.WINDSHIELD_HEAT_TOGGLE);
+                break;
+            case WidgetsCommon.SIZE_RECIRC:
+                click(c, root, R.id.chip_recirc, WidgetsCommon.RECIRC_TOGGLE);
+                break;
+            case WidgetsCommon.SIZE_WHEEL_HEAT:
+                click(c, root, R.id.chip_wheel_heat, WidgetsCommon.WHEEL_HEAT_TOGGLE);
+                break;
             case WidgetsCommon.SIZE_HEATING:
+                click(c, root, R.id.chip_front_max_defrost, WidgetsCommon.FRONT_MAX_DEFROST_TOGGLE);
                 click(c, root, R.id.chip_wheel_heat, WidgetsCommon.WHEEL_HEAT_TOGGLE);
                 click(c, root, R.id.chip_front_rear_defrost, WidgetsCommon.REAR_DEFROST_TOGGLE);
-                click(c, root, R.id.chip_front_max_defrost, WidgetsCommon.FRONT_MAX_DEFROST_TOGGLE);
                 click(c, root, R.id.chip_windshield_heat, WidgetsCommon.WINDSHIELD_HEAT_TOGGLE);
                 click(c, root, R.id.chip_seat_heat_driver, WidgetsCommon.SEAT_DRIVER_CYCLE);
                 click(c, root, R.id.chip_seat_heat_passenger, WidgetsCommon.SEAT_PASSENGER_CYCLE);
+                break;
+            case WidgetsCommon.SIZE_WIPERS:
+                click(c, root, R.id.chip_wipers, WidgetsCommon.WIPERS_TOGGLE);
+                break;
+            case WidgetsCommon.SIZE_POWER_OFF:
+                root.findViewById(R.id.chip_power_off).setOnClickListener(v ->
+                        c.startActivity(VehiclePowerOffActivity.widgetIntent(c)));
                 break;
             case WidgetsCommon.SIZE_LOCK:
                 View lock = root.findViewById(R.id.lock_body);
@@ -201,15 +267,15 @@ final class OverlayWidgetViews {
                 click(c, root, R.id.wg_climate_status, WidgetsCommon.CLIMATE_TOGGLE);
                 break;
             case WidgetsCommon.SIZE_APPS:
-                bindApps(c, root);
+                bindApps(root);
                 break;
             default:
                 break;
         }
     }
 
-    private static void bindApps(Context base, View root) {
-        Context c = themeContext(base);
+    private static void bindApps(View root) {
+        Context c = root.getContext();
         View containerView = root.findViewById(R.id.apps_container);
         if (!(containerView instanceof LinearLayout)) return;
         LinearLayout container = (LinearLayout) containerView;
@@ -219,11 +285,21 @@ final class OverlayWidgetViews {
 
         int count = packages.size();
         int columns = AppsOverlay.columns(c, count);
-        float scale = Prefs.overlaySizePct(c, WidgetsCommon.SIZE_APPS) / 100f;
-        int padding = dp(c, Math.round(AppsOverlay.PADDING_DP * scale));
+        boolean glass = WidgetAppearance.usesGlass(c);
+        float scale = glass ? 1f : Prefs.overlaySizePct(c, WidgetsCommon.SIZE_APPS) / 100f;
+        int padding = glass ? c.getResources().getDimensionPixelSize(R.dimen.wg_glass_inset)
+                : dp(c, Math.round(AppsOverlay.PADDING_DP * scale));
         int gap = dp(c, Math.round(AppsOverlay.GAP_DP * scale));
         int cell = dp(c, Math.round(AppsOverlay.CELL_DP * scale));
-        int iconSize = dp(c, Math.round(AppsOverlay.ICON_DP * scale));
+        if (glass) {
+            int rows = (count + columns - 1) / columns;
+            int availableWidth = dp(c, columns * WidgetGrid.UNIT_DP) - 2 * padding - (columns - 1) * gap;
+            int availableHeight = dp(c, rows * WidgetGrid.UNIT_DP) - 2 * padding - (rows - 1) * gap;
+            cell = Math.max(1, Math.min(availableWidth / columns, availableHeight / rows));
+        }
+        float iconScale = glass ? Prefs.glassWidgetIconSizePct(c) / 100f : scale;
+        int iconSize = dp(c, Math.round((glass ? ClimateWidgetIcons.ACTION_ICON_DP
+                : AppsOverlay.ICON_DP) * iconScale));
         int corner = dp(c, Math.round(AppsOverlay.CORNER_DP * scale));
         container.setPadding(padding, padding, padding, padding);
         LinearLayout row = null;
@@ -258,11 +334,14 @@ final class OverlayWidgetViews {
         int inset = Math.max(0, (cellPx - iconPx) / 2);
         icon.setPadding(inset, inset, inset, inset);
 
-        GradientDrawable shape = new GradientDrawable();
-        shape.setShape(GradientDrawable.RECTANGLE);
-        shape.setCornerRadius(cornerPx);
-        shape.setColor(Color.TRANSPARENT);
-        icon.setBackground(shape);
+        if (WidgetAppearance.usesGlass(c)) {
+            icon.setBackgroundResource(WidgetAppearance.buttonBackground(c, R.drawable.bg_wg_climate_glass));
+        } else {
+            GradientDrawable shape = new GradientDrawable();
+            shape.setCornerRadius(cornerPx);
+            shape.setColor(Color.TRANSPARENT);
+            icon.setBackground(shape);
+        }
         icon.setClipToOutline(true);
         icon.setOnClickListener(v -> AppsOverlay.launch(c, pkg));
         return icon;
@@ -275,29 +354,28 @@ final class OverlayWidgetViews {
     private static void updateDriveRegen(Context c, View root) {
         Integer drive = WidgetsCommon.readDrive();
         Integer regen = WidgetsCommon.readRegen();
+        if (WidgetAppearance.usesGlass(c)) {
+            ClimateWidgetIcons.forOverlay(c, root, WidgetsCommon.SIZE_DRIVE_REGEN).driveAndRegen();
+        }
         text(root, R.id.txt_drive_header, c.getString(R.string.wg_drive_header));
         text(root, R.id.txt_regen_header, c.getString(R.string.wg_regen_header));
-        text(root, R.id.txt_drive_eco, c.getString(R.string.wg_drive_eco));
-        text(root, R.id.txt_drive_comfort, c.getString(R.string.wg_drive_comfort));
-        text(root, R.id.txt_drive_sport, c.getString(R.string.wg_drive_sport));
-        text(root, R.id.txt_regen_low, c.getString(R.string.wg_regen_low));
-        text(root, R.id.txt_regen_mid, c.getString(R.string.wg_regen_mid));
-        text(root, R.id.txt_regen_high, c.getString(R.string.wg_regen_high));
-        chip(c, root, R.id.chip_drive_eco, R.id.txt_drive_eco,
+        chip(c, root, R.id.chip_drive_eco, R.id.txt_drive_eco, R.string.wg_drive_eco,
                 drive != null && drive == CarProps.DRIVE_ECO, 1);
-        chip(c, root, R.id.chip_drive_comfort, R.id.txt_drive_comfort,
+        chip(c, root, R.id.chip_drive_comfort, R.id.txt_drive_comfort, R.string.wg_drive_comfort,
                 drive != null && drive == CarProps.DRIVE_COMFORT, 0);
-        chip(c, root, R.id.chip_drive_sport, R.id.txt_drive_sport,
+        chip(c, root, R.id.chip_drive_sport, R.id.txt_drive_sport, R.string.wg_drive_sport,
                 drive != null && drive == CarProps.DRIVE_SPORT, 2);
-        chip(c, root, R.id.chip_regen_low, R.id.txt_regen_low,
+        chip(c, root, R.id.chip_regen_low, R.id.txt_regen_low, R.string.wg_regen_low,
                 regen != null && regen == CarProps.REGEN_WEAK);
-        chip(c, root, R.id.chip_regen_mid, R.id.txt_regen_mid,
+        chip(c, root, R.id.chip_regen_mid, R.id.txt_regen_mid, R.string.wg_regen_mid,
                 regen != null && regen == CarProps.REGEN_MEDIUM);
-        chip(c, root, R.id.chip_regen_high, R.id.txt_regen_high,
+        chip(c, root, R.id.chip_regen_high, R.id.txt_regen_high, R.string.wg_regen_high,
                 regen != null && regen == CarProps.REGEN_STRONG);
     }
 
     private static void updateDrive(Context c, View root) {
+        controls(c, root, WidgetsCommon.SIZE_DRIVE_MODE, R.drawable.bg_wg_round,
+                R.id.btn_drive_next, R.id.btn_drive_prev);
         Integer read = WidgetsCommon.readDrive();
         int drive = read == null ? 0 : read;
         int icon;
@@ -312,12 +390,21 @@ final class OverlayWidgetViews {
             icon = R.drawable.wg_ic_drive_comfort;
             label = R.string.wg_drive_comfort;
         }
-        image(root, R.id.img_drive_mode, icon);
-        text(root, R.id.tv_drive_mode_label, c.getString(label));
-        text(root, R.id.tv_drive_mode_footer, c.getString(R.string.wg_footer_drive));
+        if (WidgetAppearance.usesGlass(c)) {
+            ClimateWidgetIcons icons = ClimateWidgetIcons.forOverlay(c, root, WidgetsCommon.SIZE_DRIVE_MODE);
+            icons.chromeGlyph(R.id.img_drive_mode, icon, ClimateWidgetIcons.ACTION_ICON_DP);
+            climateCaption(root, icons, R.id.img_drive_mode, root.findViewById(R.id.tv_drive_mode_label),
+                    c.getString(label));
+        } else {
+            image(root, R.id.img_drive_mode, icon);
+            text(root, R.id.tv_drive_mode_label, c.getString(label));
+        }
+        text(root, R.id.widget_title, c.getString(R.string.wg_footer_drive));
     }
 
     private static void updateRegen(Context c, View root) {
+        controls(c, root, WidgetsCommon.SIZE_REGEN, R.drawable.bg_wg_round,
+                R.id.btn_regen_next, R.id.btn_regen_prev);
         Integer read = WidgetsCommon.readRegen();
         int regen = read == null ? 0 : read;
         int icon;
@@ -332,12 +419,26 @@ final class OverlayWidgetViews {
             icon = R.drawable.wg_ic_regen_mid;
             label = R.string.wg_regen_mid;
         }
-        image(root, R.id.img_regen_level, icon);
-        text(root, R.id.tv_regen_level_label, c.getString(label));
-        text(root, R.id.tv_regen_level_footer, c.getString(R.string.wg_footer_regen));
+        if (WidgetAppearance.usesGlass(c)) {
+            ClimateWidgetIcons icons = ClimateWidgetIcons.forOverlay(c, root, WidgetsCommon.SIZE_REGEN);
+            icons.regen(R.id.img_regen_level,
+                    regen == CarProps.REGEN_WEAK ? 1 : regen == CarProps.REGEN_STRONG ? 3 : 2);
+            climateCaption(root, icons, R.id.img_regen_level, root.findViewById(R.id.tv_regen_level_label),
+                    c.getString(label));
+        } else {
+            image(root, R.id.img_regen_level, icon);
+            text(root, R.id.tv_regen_level_label, c.getString(label));
+        }
+        text(root, R.id.widget_title, c.getString(R.string.wg_footer_regen));
     }
 
     private static void updateFan(Context c, View root) {
+        if (WidgetAppearance.usesGlass(c)) {
+            ClimateWidgetIcons.forOverlay(c, root, WidgetsCommon.SIZE_FAN)
+                    .chromeGlyph(R.id.img_fan_title, R.drawable.wg_ic_fan, 20);
+        }
+        controls(c, root, WidgetsCommon.SIZE_FAN, R.drawable.bg_wg_round,
+                R.id.btn_fan_minus, R.id.btn_fan_plus);
         Integer fan = WidgetsCommon.readFan();
         text(root, R.id.tv_fan_value, fan == null ? "—" : String.valueOf(fan));
         text(root, R.id.tv_fan_label, c.getString(R.string.wg_fan));
@@ -351,6 +452,12 @@ final class OverlayWidgetViews {
     }
 
     private static void updateTemp(Context c, View root) {
+        if (WidgetAppearance.usesGlass(c)) {
+            ClimateWidgetIcons.forOverlay(c, root, WidgetsCommon.SIZE_TEMP)
+                    .chromeGlyph(R.id.img_temp_title, R.drawable.wg_ic_temp, 20);
+        }
+        controls(c, root, WidgetsCommon.SIZE_TEMP, R.drawable.bg_wg_round,
+                R.id.btn_temp_minus, R.id.btn_temp_plus);
         Float temp = WidgetsCommon.readTemp(c);
         text(root, R.id.tv_temp_value, temp == null ? "—" : String.valueOf(Math.round(temp)));
         text(root, R.id.tv_temp_unit, "\u00B0C");
@@ -367,18 +474,19 @@ final class OverlayWidgetViews {
         Boolean recirc = WidgetsCommon.readRecirc();
         int mode = vent == null ? 1 : vent;
         text(root, R.id.txt_vent_header, c.getString(R.string.wg_vent_header));
-        text(root, R.id.txt_vent_face, c.getString(R.string.wg_vent_face));
-        text(root, R.id.txt_vent_floor, c.getString(R.string.wg_vent_floor));
-        text(root, R.id.txt_vent_face_floor, c.getString(R.string.wg_vent_face_floor));
-        text(root, R.id.txt_vent_windshield, c.getString(R.string.wg_vent_windshield));
-        text(root, R.id.txt_vent_floor_windshield, c.getString(R.string.wg_vent_floor_windshield));
-        text(root, R.id.txt_recirc, c.getString(R.string.wg_recirc));
-        chip(c, root, R.id.chip_vent_face, R.id.txt_vent_face, mode == 1);
-        chip(c, root, R.id.chip_vent_floor, R.id.txt_vent_floor, mode == 2);
-        chip(c, root, R.id.chip_vent_face_floor, R.id.txt_vent_face_floor, mode == 3);
-        chip(c, root, R.id.chip_vent_windshield, R.id.txt_vent_windshield, mode == 4);
-        chip(c, root, R.id.chip_vent_floor_windshield, R.id.txt_vent_floor_windshield, mode == 6);
-        chip(c, root, R.id.chip_recirc, R.id.txt_recirc, Boolean.TRUE.equals(recirc));
+        boolean directions = Prefs.ventDirectionButtons(c);
+        boolean transparent = OverlayBackground.isTransparent(c, WidgetsCommon.SIZE_VENT);
+        ClimateWidgetIcons icons = ClimateWidgetIcons.forOverlay(c, root, WidgetsCommon.SIZE_VENT);
+        icons.ventButtons(vent == null ? 0 : vent, directions);
+        root.findViewById(R.id.chip_vent_face_floor).setVisibility(directions ? View.GONE : View.VISIBLE);
+        ventChip(icons, root, transparent, R.id.chip_vent_face_floor, R.id.txt_vent_face_floor, mode == 3);
+        root.findViewById(R.id.chip_vent_floor_windshield).setVisibility(directions ? View.GONE : View.VISIBLE);
+        ventChip(icons, root, transparent, R.id.chip_vent_floor_windshield, R.id.txt_vent_floor_windshield, mode == 6);
+        ventChip(icons, root, transparent, R.id.chip_vent_face, R.id.txt_vent_face, directions ? (mode & 1) != 0 : mode == 1);
+        ventChip(icons, root, transparent, R.id.chip_vent_floor, R.id.txt_vent_floor, directions ? (mode & 2) != 0 : mode == 2);
+        ventChip(icons, root, transparent, R.id.chip_vent_windshield, R.id.txt_vent_windshield, directions ? (mode & 4) != 0 : mode == 4);
+        visibility(root, R.id.chip_recirc, Prefs.showVentRecirc(c) ? View.VISIBLE : View.GONE);
+        ventChip(icons, root, transparent, R.id.chip_recirc, R.id.txt_recirc, Boolean.TRUE.equals(recirc));
     }
 
     private static void updateVentFan(Context c, View root) {
@@ -386,12 +494,24 @@ final class OverlayWidgetViews {
         Boolean recirc = WidgetsCommon.readRecirc();
         Integer fan = WidgetsCommon.readFan();
         int mode = vent == null ? 1 : vent;
-        chip(c, root, R.id.chip_vent_face, R.id.txt_vent_face, mode == 1);
-        chip(c, root, R.id.chip_vent_floor, R.id.txt_vent_floor, mode == 2);
-        chip(c, root, R.id.chip_vent_face_floor, R.id.txt_vent_face_floor, mode == 3);
-        chip(c, root, R.id.chip_vent_windshield, R.id.txt_vent_windshield, mode == 4);
-        chip(c, root, R.id.chip_vent_floor_windshield, R.id.txt_vent_floor_windshield, mode == 6);
-        chip(c, root, R.id.chip_recirc, R.id.txt_recirc, Boolean.TRUE.equals(recirc));
+        boolean directions = Prefs.ventDirectionButtons(c);
+        boolean transparent = OverlayBackground.isTransparent(c, WidgetsCommon.SIZE_VENT_FAN);
+        ClimateWidgetIcons icons = ClimateWidgetIcons.forOverlay(c, root, WidgetsCommon.SIZE_VENT_FAN);
+        if (icons.usesOutline()) {
+            text(root, R.id.txt_vent_header, c.getString(R.string.widgets_size_vent_fan));
+        }
+        icons.ventButtons(vent == null ? 0 : vent, directions);
+        root.findViewById(R.id.chip_vent_face_floor).setVisibility(directions ? View.GONE : View.VISIBLE);
+        ventChip(icons, root, transparent, R.id.chip_vent_face_floor, R.id.txt_vent_face_floor, mode == 3);
+        root.findViewById(R.id.chip_vent_floor_windshield).setVisibility(directions ? View.GONE : View.VISIBLE);
+        ventChip(icons, root, transparent, R.id.chip_vent_floor_windshield, R.id.txt_vent_floor_windshield, mode == 6);
+        ventChip(icons, root, transparent, R.id.chip_vent_face, R.id.txt_vent_face, directions ? (mode & 1) != 0 : mode == 1);
+        ventChip(icons, root, transparent, R.id.chip_vent_floor, R.id.txt_vent_floor, directions ? (mode & 2) != 0 : mode == 2);
+        ventChip(icons, root, transparent, R.id.chip_vent_windshield, R.id.txt_vent_windshield, directions ? (mode & 4) != 0 : mode == 4);
+        visibility(root, R.id.chip_recirc, Prefs.showVentRecirc(c) ? View.VISIBLE : View.GONE);
+        ventChip(icons, root, transparent, R.id.chip_recirc, R.id.txt_recirc, Boolean.TRUE.equals(recirc));
+        controls(c, root, WidgetsCommon.SIZE_VENT_FAN, R.drawable.bg_wg_round,
+                R.id.btn_fan_minus, R.id.btn_fan_plus);
         text(root, R.id.tv_fan_value, fan == null ? "—" : String.valueOf(fan));
         for (int i = 0; i < FAN_DOTS.length; i++) {
             View dot = root.findViewById(FAN_DOTS[i]);
@@ -447,61 +567,82 @@ final class OverlayWidgetViews {
     private static void updateHeating(Context c, View root) {
         Boolean wheel = WidgetsCommon.readWheelHeat();
         Boolean rear = WidgetsCommon.readRearDefrost();
-        Boolean front = WidgetsCommon.readFrontMaxDefrost();
         Boolean windshield = WidgetsCommon.readWindshieldHeat();
         Integer seatDriver = WidgetsCommon.readSeatHeat(1);
         Integer seatPassenger = WidgetsCommon.readSeatHeat(4);
 
         text(root, R.id.txt_heat_header, c.getString(R.string.wg_heat_header));
-        boolean night = (c.getResources().getConfiguration().uiMode
-                & android.content.res.Configuration.UI_MODE_NIGHT_MASK)
-                == android.content.res.Configuration.UI_MODE_NIGHT_YES;
-        View windshieldIcon = root.findViewById(R.id.img_windshield_heat);
-        if (windshieldIcon instanceof android.widget.ImageView) {
-            ((android.widget.ImageView) windshieldIcon).setImageResource(
-                    night ? R.drawable.wg_ic_windshield_heat_dark
-                            : R.drawable.wg_ic_windshield_heat_light);
+        ClimateWidgetIcons icons = ClimateWidgetIcons.forOverlay(c, root, WidgetsCommon.SIZE_HEATING);
+        boolean singleRow = Prefs.heatingSingleRow(c);
+        if (icons.usesOutline()) {
+            icons.chromeGlyph(R.id.img_heating_title, R.drawable.wg_ic_heat, singleRow ? 14 : 20);
         }
-        View rearIcon = root.findViewById(R.id.img_front_rear_defrost);
-        if (rearIcon instanceof android.widget.ImageView) {
-            ((android.widget.ImageView) rearIcon).setImageResource(
-                    night ? R.drawable.wg_ic_rear_heat_dark
-                            : R.drawable.wg_ic_rear_heat_light);
+        icons.heating(wheel, rear, windshield, seatDriver, seatPassenger);
+        boolean showMaxAir = Prefs.showHeatingMaxAir(c);
+        visibility(root, R.id.chip_front_max_defrost, showMaxAir ? View.VISIBLE : View.GONE);
+        if (showMaxAir) {
+            boolean front = Boolean.TRUE.equals(WidgetsCommon.readFrontMaxDefrost());
+            icons.frontMaxDefrost(front);
+            toggle(c, root, icons, R.id.chip_front_max_defrost, R.id.txt_front_max_defrost,
+                    front, c.getString(icons.frontAirLabel()));
         }
-        View wheelIcon = root.findViewById(R.id.img_wheel_heat);
-        if (wheelIcon instanceof android.widget.ImageView) {
-            ((android.widget.ImageView) wheelIcon).setImageResource(
-                    night ? R.drawable.wg_ic_wheel_heat_dark
-                            : R.drawable.wg_ic_wheel_heat_light);
-        }
-        toggle(c, root, R.id.chip_wheel_heat, R.id.txt_wheel_heat,
+        toggle(c, root, icons, R.id.chip_wheel_heat, R.id.txt_wheel_heat,
                 Boolean.TRUE.equals(wheel), WidgetsCommon.wheelHeatPending(c),
                 c.getString(R.string.wg_heat_wheel));
-        toggle(c, root, R.id.chip_front_rear_defrost, R.id.txt_front_rear_defrost,
+        toggle(c, root, icons, R.id.chip_front_rear_defrost, R.id.txt_front_rear_defrost,
                 Boolean.TRUE.equals(rear), c.getString(R.string.wg_heat_rear));
-        toggle(c, root, R.id.chip_front_max_defrost, R.id.txt_front_max_defrost,
-                Boolean.TRUE.equals(front), c.getString(R.string.wg_heat_front_max));
-        toggle(c, root, R.id.chip_windshield_heat, R.id.txt_windshield_heat,
-                Boolean.TRUE.equals(windshield), c.getString(R.string.wg_heat_windshield));
-        seat(c, root, R.id.chip_seat_heat_driver, R.id.txt_seat_heat_driver,
-                seatDriver, c.getString(R.string.wg_heat_seat_driver));
-        seat(c, root, R.id.chip_seat_heat_passenger, R.id.txt_seat_heat_passenger,
-                seatPassenger, c.getString(R.string.wg_heat_seat_passenger));
+        toggle(c, root, icons, R.id.chip_windshield_heat, R.id.txt_windshield_heat,
+                Boolean.TRUE.equals(windshield), c.getString(icons.electricWindshieldLabel()));
+        seat(c, root, icons, R.id.chip_seat_heat_driver, R.id.txt_seat_heat_driver,
+                seatDriver, c.getString(R.string.wg_heat_seat_driver), icons.usesOutline());
+        seat(c, root, icons, R.id.chip_seat_heat_passenger, R.id.txt_seat_heat_passenger,
+                seatPassenger, c.getString(R.string.wg_heat_seat_passenger), icons.usesOutline());
     }
 
-    private static void updateClock(Context c, View root) {
+    private static void updateVehicleControl(Context c, View root, String key) {
+        boolean powerOff = WidgetsCommon.SIZE_POWER_OFF.equals(key);
+        ClimateWidgetIcons icons = ClimateWidgetIcons.forOverlay(c, root, key);
+        icons.vehicleControl(powerOff);
+        boolean active = !powerOff && WidgetsCommon.wiperServicePositionActive();
+        int chip = powerOff ? R.id.chip_power_off : R.id.chip_wipers;
+        int caption = powerOff ? R.id.txt_power_off : R.id.txt_wipers;
+        int label = powerOff ? R.string.widget_name_power_off : R.string.widget_name_wipers;
+        toggle(c, root, icons, chip, caption, active, false, c.getString(label), false);
+    }
+
+    private static void updateRecirc(Context c, View root) {
+        ClimateWidgetIcons icons = ClimateWidgetIcons.forOverlay(c, root, WidgetsCommon.SIZE_RECIRC);
+        icons.recirculation(R.id.img_recirc);
+        toggle(c, root, icons, R.id.chip_recirc, R.id.txt_recirc,
+                Boolean.TRUE.equals(WidgetsCommon.readRecirc()), false,
+                c.getString(R.string.widget_name_recirc), false);
+    }
+
+    private static void updateWheelHeat(Context c, View root) {
+        Boolean state = WidgetsCommon.readWheelHeat();
+        ClimateWidgetIcons icons = ClimateWidgetIcons.forOverlay(c, root, WidgetsCommon.SIZE_WHEEL_HEAT);
+        icons.wheelHeat(state);
+        toggle(c, root, icons, R.id.chip_wheel_heat, R.id.txt_wheel_heat,
+                Boolean.TRUE.equals(state), WidgetsCommon.wheelHeatPending(c),
+                c.getString(R.string.widget_name_wheel_heat), false);
+    }
+
+    private static void updateWindshieldHeat(Context c, View root) {
+        Boolean state = WidgetsCommon.readWindshieldHeat();
+        ClimateWidgetIcons icons = ClimateWidgetIcons.forOverlay(c, root, WidgetsCommon.SIZE_WINDSHIELD_HEAT);
+        icons.windshieldHeat(state);
+        boolean transparent = !icons.usesOutline()
+                && OverlayBackground.isTransparent(c, WidgetsCommon.SIZE_WINDSHIELD_HEAT);
+        toggle(c, root, icons, R.id.chip_windshield_heat, R.id.txt_windshield_heat,
+                Boolean.TRUE.equals(state), false, c.getString(R.string.widget_name_windshield_heat),
+                transparent);
+    }
+
+    private static void updateClock(Context c, View root, boolean large) {
         int color = Prefs.clockColor(c) == 1 ? android.graphics.Color.WHITE
                 : Prefs.clockColor(c) == 2 ? android.graphics.Color.BLACK
                 : c.getColor(R.color.clock_text);
-        String dateText;
-        try {
-            String value = new SimpleDateFormat("EEEE, d MMMM", new java.util.Locale("ru"))
-                    .format(new Date());
-            dateText = value.isEmpty() ? value
-                    : Character.toUpperCase(value.charAt(0)) + value.substring(1);
-        } catch (Throwable t) {
-            dateText = "";
-        }
+        String dateText = ClockWidgetProvider.dateText();
         android.graphics.Typeface typeface = android.graphics.Typeface.create(
                 Prefs.clockFont(c) == 1 ? "sans-serif-condensed" : "sans-serif-medium",
                 android.graphics.Typeface.NORMAL);
@@ -510,17 +651,25 @@ final class OverlayWidgetViews {
             ((TextView) time).setTextColor(color);
             ((TextView) time).setTypeface(typeface);
         }
-        View date = root.findViewById(R.id.clockDate);
-        if (date instanceof TextView) {
-            ((TextView) date).setText(dateText);
-            ((TextView) date).setTextColor(color);
-            ((TextView) date).setTypeface(android.graphics.Typeface.create(
+        if (root.findViewById(R.id.clockDate) instanceof TextView date) {
+            date.setVisibility(Prefs.clockDate(c) ? View.VISIBLE : View.GONE);
+            date.setText(dateText);
+            date.setTextColor(color);
+            date.setTypeface(android.graphics.Typeface.create(
                     Prefs.clockFont(c) == 1 ? "sans-serif-condensed" : "sans-serif",
                     android.graphics.Typeface.NORMAL));
+            if (WidgetAppearance.usesGlass(c)) {
+                date.setTextSize(TypedValue.COMPLEX_UNIT_SP, large
+                        ? ClockWidgetProvider.LARGE_DATE_TEXT_SP : ClockWidgetProvider.GLASS_DATE_TEXT_SP);
+                date.setMaxLines(1);
+                date.setEllipsize(TextUtils.TruncateAt.END);
+            }
         }
     }
 
     private static void updateClimate(Context c, View root) {
+        controls(c, root, WidgetsCommon.SIZE_CLIMATE, R.drawable.bg_wg_chip,
+                R.id.wg_climate_minus, R.id.wg_climate_plus);
         boolean enabled = Prefs.climateEnabled(c);
         float temp = Prefs.sensorTemp(c);
         long at = Prefs.sensorAt(c);
@@ -566,64 +715,109 @@ final class OverlayWidgetViews {
         if (v instanceof ImageView) ((ImageView) v).setImageResource(res);
     }
 
-    private static void chip(Context c, View root, int chipId, int textId, boolean active) {
-        chip(c, root, chipId, textId, active, 0);
+    private static void chip(Context c, View root, int chipId, int textId, int label, boolean active) {
+        chip(c, root, chipId, textId, label, active, 0);
     }
 
     /** accent: 0 — синий, 1 — зелёный, 2 — красный. */
-    private static void chip(Context c, View root, int chipId, int textId,
+    private static void chip(Context c, View root, int chipId, int textId, int label,
                              boolean active, int accent) {
         View chip = root.findViewById(chipId);
-        if (chip != null) {
-            int background;
-            if (!active) {
-                background = R.drawable.bg_wg_chip;
-            } else if (accent == 1) {
-                background = R.drawable.bg_wg_chip_on_green;
-            } else if (accent == 2) {
-                background = R.drawable.bg_wg_chip_on_red;
-            } else {
-                background = R.drawable.bg_wg_chip_on;
-            }
-            chip.setBackgroundResource(background);
-        }
-        View text = root.findViewById(textId);
-        if (text instanceof TextView) {
-            ((TextView) text).setTextColor(c.getColor(R.color.wg_text));
+        chip.setBackgroundResource(WidgetAppearance.chipBackground(c,
+                OverlayBackground.isTransparent(c, WidgetsCommon.SIZE_DRIVE_REGEN), active, accent));
+        TextView text = root.findViewById(textId);
+        boolean showLabel = Prefs.climateIconLabels(c, WidgetsCommon.SIZE_DRIVE_REGEN);
+        String caption = c.getString(label);
+        text.setText(caption);
+        text.setVisibility(showLabel ? View.VISIBLE : View.GONE);
+        text.setTextColor(WidgetAppearance.chipTextColor(c, active, accent));
+        chip.setContentDescription(showLabel ? null : caption);
+    }
+
+    private static void controls(Context c, View root, String key, int standard, int first, int second) {
+        int background = WidgetAppearance.controlBackground(c,
+                OverlayBackground.isTransparent(c, key), standard);
+        TextView firstControl = root.findViewById(first);
+        TextView secondControl = root.findViewById(second);
+        firstControl.setBackgroundResource(background);
+        secondControl.setBackgroundResource(background);
+        if (WidgetAppearance.usesGlass(c)) {
+            int base = switch (key) {
+                case WidgetsCommon.SIZE_CLIMATE -> 22;
+                case WidgetsCommon.SIZE_FAN, WidgetsCommon.SIZE_TEMP, WidgetsCommon.SIZE_VENT_FAN -> 26;
+                default -> 24;
+            };
+            float size = base * Prefs.glassWidgetIconSizePct(c) / 100f;
+            firstControl.setTextSize(TypedValue.COMPLEX_UNIT_SP, size);
+            secondControl.setTextSize(TypedValue.COMPLEX_UNIT_SP, size);
         }
     }
 
-    private static void toggle(Context c, View root, int chipId, int textId,
+    private static void ventChip(ClimateWidgetIcons icons, View root, boolean transparent,
+                                 int chipId, int textId, boolean active) {
+        View chip = root.findViewById(chipId);
+        chip.setBackgroundResource(icons.buttonBackground(transparent, active, false, true));
+        if (root.findViewById(R.id.widget_vent_fan_row) != null) {
+            int inset = dp(root.getContext(), 2);
+            chip.setPadding(inset, 0, inset, inset);
+        }
+        TextView caption = root.findViewById(textId);
+        climateCaption(root, icons, chipId, caption, icons.ventCaption(textId));
+        caption.setTextColor(icons.buttonTextColor(active, true));
+    }
+
+    private static void toggle(Context c, View root, ClimateWidgetIcons icons, int chipId, int textId,
                                boolean active, String label) {
-        toggle(c, root, chipId, textId, active, false, label);
+        toggle(c, root, icons, chipId, textId, active, false, label);
     }
 
-    private static void toggle(Context c, View root, int chipId, int textId,
+    private static void toggle(Context c, View root, ClimateWidgetIcons icons, int chipId, int textId,
                                boolean active, boolean pending, String label) {
-        View chip = root.findViewById(chipId);
-        if (chip != null) {
-            chip.setBackgroundResource(active
-                    ? R.drawable.bg_wg_chip_on_orange
-                    : pending ? R.drawable.bg_wg_chip_pending : R.drawable.bg_wg_chip);
-        }
-        text(root, textId, label);
-        View t = root.findViewById(textId);
-        if (t instanceof TextView) {
-            ((TextView) t).setTextColor(c.getColor(
-                    pending && !active ? R.color.wg_blue_light : R.color.wg_text));
+        toggle(c, root, icons, chipId, textId, active, pending, label,
+                OverlayBackground.isTransparent(c, WidgetsCommon.SIZE_HEATING));
+    }
+
+    private static void toggle(Context c, View root, ClimateWidgetIcons icons, int chipId, int textId,
+                               boolean active, boolean pending, String label, boolean transparent) {
+        boolean airflow = chipId == R.id.chip_front_max_defrost && icons.usesOutline();
+        root.findViewById(chipId).setBackgroundResource(
+                icons.buttonBackground(transparent, active, pending, airflow));
+        TextView caption = root.findViewById(textId);
+        climateCaption(root, icons, chipId, caption, icons.caption(label));
+        caption.setTextColor(pending && !active
+                ? c.getColor(R.color.wg_blue_light)
+                : icons.buttonTextColor(active, airflow));
+    }
+
+    private static void seat(Context c, View root, ClimateWidgetIcons icons, int chipId, int textId,
+                             Integer level, String label, boolean outline) {
+        boolean active = level != null && level > 0;
+        boolean transparent = OverlayBackground.isTransparent(c, WidgetsCommon.SIZE_HEATING);
+        root.findViewById(chipId).setBackgroundResource(
+                icons.buttonBackground(transparent, active, false, false));
+        String value = level == null ? "—" : String.valueOf(level);
+        String labelWithLevel = label + " " + value;
+        TextView caption = root.findViewById(textId);
+        if (caption != null) {
+            caption.setTextColor(icons.buttonTextColor(active, false));
+            climateCaption(root, icons, chipId, caption, icons.caption(outline ? label : labelWithLevel),
+                    labelWithLevel);
+            caption.setContentDescription(outline && icons.showsLabels()
+                    ? labelWithLevel : null);
         }
     }
 
-    private static void seat(Context c, View root, int chipId, int textId,
-                             Integer level, String label) {
-        boolean active = level != null && level > 0;
-        View chip = root.findViewById(chipId);
-        if (chip != null) {
-            chip.setBackgroundResource(active
-                    ? R.drawable.bg_wg_chip_on_orange : R.drawable.bg_wg_chip);
-        }
-        String value = level == null ? "—" : String.valueOf(level);
-        text(root, textId, label + " " + value);
+    private static void climateCaption(View root, ClimateWidgetIcons icons, int chipId,
+                                       TextView view, CharSequence caption) {
+        climateCaption(root, icons, chipId, view, caption, caption);
+    }
+
+    private static void climateCaption(View root, ClimateWidgetIcons icons, int chipId,
+                                       TextView view, CharSequence caption, CharSequence description) {
+        boolean hideLabel = !icons.showsLabels();
+        view.setVisibility(hideLabel ? View.GONE : View.VISIBLE);
+        view.setText(caption);
+        root.findViewById(chipId).setContentDescription(hideLabel ? description : null);
     }
 
     private static void click(Context c, View root, int id, String action) {

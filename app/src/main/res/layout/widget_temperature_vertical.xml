@@ -19,9 +19,9 @@
 
         <TextView
             android:id="@+id/btn_temp_plus"
-            style="@style/WgRoundButton"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            style="@style/WgClimateRoundButton"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
             android:text="+" />
 
         <LinearLayout
@@ -73,7 +73,7 @@
                 android:progressDrawable="@drawable/wg_progress" />
 
             <TextView
-                android:id="@+id/tv_temp_label"
+                android:id="@+id/widget_title"
                 style="@style/WgSection"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -83,9 +83,9 @@
 
         <TextView
             android:id="@+id/btn_temp_minus"
-            style="@style/WgRoundButton"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            style="@style/WgClimateRoundButton"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
             android:text="−" />
     </LinearLayout>
 </FrameLayout>

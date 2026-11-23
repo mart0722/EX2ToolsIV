@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/widget_bg_layer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_wg_card_100" />
+
+    <LinearLayout
+        android:id="@+id/widget_glass_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:padding="@dimen/wg_glass_inset">
+
+        <TextView
+            android:id="@+id/btn_fan_plus"
+            style="@style/WgClimateRoundButton"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:text="+" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <ImageView
+                android:id="@+id/img_fan_title"
+                style="@style/WgClimateIcon"
+                android:importantForAccessibility="no"
+                android:src="@drawable/wg_ic_fan" />
+
+            <TextView
+                android:id="@+id/tv_fan_value"
+                style="@style/WgValue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="—" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:gravity="bottom"
+                android:orientation="horizontal">
+                    <TextView
+                        android:id="@+id/dot_fan_1"
+                        android:layout_width="7dp"
+                        android:layout_height="7dp"
+                        android:layout_marginEnd="3dp"
+                        android:background="@drawable/bg_wg_dot_off" />
+                    <TextView
+                        android:id="@+id/dot_fan_2"
+                        android:layout_width="7dp"
+                        android:layout_height="7dp"
+                        android:layout_marginEnd="3dp"
+                        android:background="@drawable/bg_wg_dot_off" />
+                    <TextView
+                        android:id="@+id/dot_fan_3"
+                        android:layout_width="7dp"
+                        android:layout_height="7dp"
+                        android:layout_marginEnd="3dp"
+                        android:background="@drawable/bg_wg_dot_off" />
+                    <TextView
+                        android:id="@+id/dot_fan_4"
+                        android:layout_width="7dp"
+                        android:layout_height="7dp"
+                        android:layout_marginEnd="3dp"
+                        android:background="@drawable/bg_wg_dot_off" />
+                    <TextView
+                        android:id="@+id/dot_fan_5"
+                        android:layout_width="7dp"
+                        android:layout_height="7dp"
+                        android:layout_marginEnd="3dp"
+                        android:background="@drawable/bg_wg_dot_off" />
+                    <TextView
+                        android:id="@+id/dot_fan_6"
+                        android:layout_width="7dp"
+                        android:layout_height="7dp"
+                        android:layout_marginEnd="3dp"
+                        android:background="@drawable/bg_wg_dot_off" />
+                    <TextView
+                        android:id="@+id/dot_fan_7"
+                        android:layout_width="7dp"
+                        android:layout_height="7dp"
+                        android:background="@drawable/bg_wg_dot_off" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/widget_title"
+                style="@style/WgSection"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="ВЕНТИЛЯТОР" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/btn_fan_minus"
+            style="@style/WgClimateRoundButton"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:text="−" />
+    </LinearLayout>
+</FrameLayout>

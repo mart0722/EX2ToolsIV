@@ -105,6 +105,8 @@ public final class VoiceService extends Service {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent == null || !ACTION_ECARX_KEY.equals(intent.getAction())) return;
+            if (Prefs.steeringClimate(VoiceService.this)
+                    && intent.getIntExtra(EXTRA_ECARX_TYPE, 0) == 0) return;
             if (!Prefs.voiceEnabled(VoiceService.this) || !Prefs.voiceMicKey(VoiceService.this)) return;
             int type = intent.getIntExtra(EXTRA_ECARX_TYPE, 0);
             if (type != 0 && type != 1) return;
@@ -157,6 +159,14 @@ public final class VoiceService extends Service {
         }
     }
 
+    public static void commandsChanged(Context c) {
+        if (!Prefs.voiceEnabled(c) || !running) return;
+        try {
+            ContextCompat.startForegroundService(c, new Intent(c, VoiceService.class)
+                    .setAction("com.ex2tools.iv.voice.RELOAD_COMMANDS"));
+        } catch (Throwable t) { LogStore.add(c, "voice reload commands: " + t); }
+    }
+
     public static void sync(Context c) {
         if (!Prefs.voiceEnabled(c)) {
             stop(c);
@@ -195,6 +205,10 @@ public final class VoiceService extends Service {
         startForegroundSafe();
         maybeStartKeyserver();
         String action = intent == null ? null : intent.getAction();
+        if ("com.ex2tools.iv.voice.RELOAD_COMMANDS".equals(action)) {
+            restartRecognition.set(true);
+            return START_STICKY;
+        }
         if (ACTION_LISTEN.equals(action)) {
             if (ready) {
                 enterCommandMode(null);

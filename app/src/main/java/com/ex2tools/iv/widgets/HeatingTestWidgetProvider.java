@@ -6,6 +6,6 @@ import android.widget.RemoteViews;
 public final class HeatingTestWidgetProvider extends BaseWidgetProvider {
     @Override
     protected RemoteViews build(Context c) {
-        return WidgetsRenderer.heating(c, null, null, null, null, null, null, false);
+        return WidgetsRenderer.heating(c, null, null, null, null, null, false);
     }
 }

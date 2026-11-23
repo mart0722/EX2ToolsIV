@@ -29,6 +29,7 @@ public final class NotificationHelper {
     public static final int ID_CLIMATE = 2115;
     public static final int ID_COMFORT = 2116;
     public static final int ID_WINDOW = 2117;
+    public static final int ID_WIPERS_ON_LOCK = 2118;
 
     private NotificationHelper() {
     }
@@ -146,6 +147,15 @@ public final class NotificationHelper {
         return base(c, App.CH_WIDGETS, R.drawable.ic_widgets,
                 c.getString(R.string.overlay_notification_title),
                 c.getString(R.string.overlay_notification_text))
+                .setOngoing(true)
+                .setContentIntent(openApp(c))
+                .build();
+    }
+
+    public static Notification wipersOnLock(Context c) {
+        return base(c, App.CH_WIDGETS, R.drawable.ic_widgets,
+                c.getString(R.string.widget_name_wipers),
+                c.getString(R.string.widget_wipers_on_lock))
                 .setOngoing(true)
                 .setContentIntent(openApp(c))
                 .build();

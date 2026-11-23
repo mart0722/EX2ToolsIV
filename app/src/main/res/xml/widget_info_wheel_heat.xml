@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/widget_name_wheel_heat"
+    android:initialLayout="@layout/widget_wheel_heat"
+    android:previewLayout="@layout/widget_wheel_heat"
+    android:minWidth="96dp"
+    android:minHeight="96dp"
+    android:minResizeWidth="72dp"
+    android:minResizeHeight="72dp"
+    android:resizeMode="horizontal|vertical"
+    android:updatePeriodMillis="1800000"
+    android:widgetCategory="home_screen" />
