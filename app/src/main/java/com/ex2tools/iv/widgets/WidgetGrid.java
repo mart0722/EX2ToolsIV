@@ -321,7 +321,16 @@ final class WidgetGrid {
         }
         if (width <= 0 || height <= 0) return new Slot(1f, 0, 0, 0, 0);
 
-        Size base = size(context, layout);
+        AppWidgetProviderInfo provider = manager.getAppWidgetInfo(id);
+        int baseWidth = provider == null ? 0 : provider.minWidth;
+        int baseHeight = provider == null ? 0 : provider.minHeight;
+        if (Build.VERSION.SDK_INT >= 31 && provider != null
+                && provider.targetCellWidth > 0 && provider.targetCellHeight > 0) {
+            baseWidth = provider.targetCellWidth * UNIT_DP;
+            baseHeight = provider.targetCellHeight * UNIT_DP;
+        }
+        Size base = baseWidth > 0 && baseHeight > 0
+                ? new Size(baseWidth, baseHeight) : size(context, layout);
         float fit = Math.min(width / (float) base.getWidth(),
                 height / (float) base.getHeight());
         float scale = Math.max(0.5f, Math.min(2.5f, fit));
