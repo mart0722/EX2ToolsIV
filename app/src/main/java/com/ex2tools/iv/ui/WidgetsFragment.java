@@ -842,8 +842,11 @@ public final class WidgetsFragment extends Fragment {
                         .setText(variants.alternateLabel());
                 format.addOnButtonCheckedListener((group, id, checked) -> {
                     if (binding || !checked || !toggle.isChecked()) return;
+                    boolean useAlternate = id == R.id.overlayVariantAlternate;
                     Prefs.setOverlayVariant(context, key, variants.alternate(),
-                            id == R.id.overlayVariantAlternate, true);
+                            useAlternate, true);
+                    LogStore.add(context, "overlay variant " + key + " -> "
+                            + (useAlternate ? variants.alternate() : key));
                     refresh();
                     OverlayWidgetService.restart(context);
                 });
