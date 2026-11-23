@@ -29,9 +29,8 @@
 
             <TextView
                 android:id="@+id/tv_battery_range_percent"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="0.9"
                 android:ellipsize="end"
                 android:gravity="start"
                 android:includeFontPadding="false"
@@ -45,9 +44,9 @@
                 android:id="@+id/tv_battery_range_energy"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="2dp"
-                android:layout_marginEnd="2dp"
-                android:layout_weight="1.25"
+                android:layout_marginStart="6dp"
+                android:layout_marginEnd="6dp"
+                android:layout_weight="1"
                 android:ellipsize="end"
                 android:gravity="center"
                 android:includeFontPadding="false"
@@ -59,9 +58,8 @@
 
             <TextView
                 android:id="@+id/tv_battery_range_km"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="0.9"
                 android:ellipsize="end"
                 android:gravity="end"
                 android:includeFontPadding="false"

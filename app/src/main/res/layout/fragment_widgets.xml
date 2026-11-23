@@ -159,18 +159,6 @@
                             android:text="@string/widgets_climate_icons_thin" />
 
                         <com.google.android.material.button.MaterialButton
-                            android:id="@+id/widgetClimateIconExtraThin"
-                            style="@style/Widget.EX2.Toggle"
-                            android:layout_width="0dp"
-                            android:layout_height="56dp"
-                            android:layout_weight="1"
-                            android:minWidth="0dp"
-                            android:paddingStart="2dp"
-                            android:paddingEnd="2dp"
-                            android:textSize="14sp"
-                            android:text="@string/widgets_climate_icons_extra_thin" />
-
-                        <com.google.android.material.button.MaterialButton
                             android:id="@+id/widgetClimateIconChromeThin"
                             style="@style/Widget.EX2.Toggle"
                             android:layout_width="0dp"
@@ -181,18 +169,6 @@
                             android:paddingEnd="2dp"
                             android:textSize="14sp"
                             android:text="@string/widgets_climate_icons_chrome_thin" />
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/widgetClimateIconChrome"
-                            style="@style/Widget.EX2.Toggle"
-                            android:layout_width="0dp"
-                            android:layout_height="56dp"
-                            android:layout_weight="1"
-                            android:minWidth="0dp"
-                            android:paddingStart="2dp"
-                            android:paddingEnd="2dp"
-                            android:textSize="14sp"
-                            android:text="@string/widgets_climate_icons_chrome" />
                     </com.ex2tools.iv.ui.FlymeSegmentedGroup>
 
                     <LinearLayout
@@ -249,8 +225,7 @@
                         android:layout_marginTop="12dp"
                         android:text="@string/widgets_accent_boost"
                         android:textColor="@color/flyme_label_level1"
-                        android:textSize="20sp"
-                        android:visibility="gone" />
+                        android:textSize="20sp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
