@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Process;
+import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,6 +25,7 @@ import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
+import com.ex2tools.iv.MainActivity;
 import com.ex2tools.iv.Prefs;
 import com.ex2tools.iv.R;
 import com.ex2tools.iv.car.RangeModel;
@@ -65,10 +67,10 @@ public final class WidgetsFragment extends Fragment {
             WidgetsCommon.SIZE_WINDSHIELD_HEAT,
             WidgetsCommon.SIZE_WHEEL_HEAT,
             WidgetsCommon.SIZE_BATTERY_RANGE,
+            WidgetsCommon.SIZE_REAL_RANGE,
             WidgetsCommon.SIZE_WIPERS,
             WidgetsCommon.SIZE_POWER_OFF,
             WidgetsCommon.SIZE_LOCK,
-            WidgetsCommon.SIZE_APPS,
             WidgetsCommon.SIZE_CLIMATE
     };
 
@@ -117,7 +119,7 @@ public final class WidgetsFragment extends Fragment {
     private final List<OverlayCard> overlayCards = new ArrayList<>();
     private final Map<String, FlymeSwitchRow> individualIconLabels = new LinkedHashMap<>();
     private final Map<String, Integer> selectedAppWidgets = new LinkedHashMap<>();
-    private FlymeSegmentedGroup appsModeGroup;
+    private OverlayCard appsOverlayCard;
     private TextView appsCount;
     private TextView appsSelect;
     private boolean binding;
@@ -242,6 +244,8 @@ public final class WidgetsFragment extends Fragment {
             VehicleState.get().requestDisplayRefresh();
             WidgetUpdateService.sync(context);
         });
+        appsOverlayCard = new OverlayCard(c, WidgetsCommon.SIZE_APPS,
+                view.findViewById(R.id.widgetAppsOverlay));
     }
 
     private void refreshWidgetBorders() {
@@ -518,6 +522,7 @@ public final class WidgetsFragment extends Fragment {
                 ? R.string.widgets_speed_color_chrome : R.string.widgets_speed_color_white);
         widgetAccentBoost.setVisibility(glass ? View.VISIBLE : View.GONE);
         glassScaleControls.setVisibility(glass ? View.VISIBLE : View.GONE);
+        if (appsOverlayCard != null) appsOverlayCard.updateAppearance();
         for (OverlayCard card : overlayCards) card.updateAppearance();
     }
 
@@ -731,9 +736,6 @@ public final class WidgetsFragment extends Fragment {
         nextOverlayRow = 0;
         overlayCards.clear();
         individualIconLabels.clear();
-        appsModeGroup = null;
-        appsCount = null;
-        appsSelect = null;
     }
 
     private void appendOverlayRows() {
@@ -743,7 +745,7 @@ public final class WidgetsFragment extends Fragment {
         while (nextOverlayRow < end) {
             String key = OVERLAY_KEYS[nextOverlayRow++];
             if (!WidgetsCommon.SIZE_CLIMATE.equals(key) || Prefs.climateEnabled(c)) {
-                overlayCards.add(new OverlayCard(c, key));
+                overlayCards.add(new OverlayCard(c, key, overlayList));
             }
         }
         if (nextOverlayRow < OVERLAY_KEYS.length) overlayList.postOnAnimation(loadOverlayRows);
@@ -781,12 +783,12 @@ public final class WidgetsFragment extends Fragment {
         private View alphaRow;
         private View iconRow;
 
-        OverlayCard(Context context, String key) {
+        OverlayCard(Context context, String key, LinearLayout list) {
             this.context = context;
             this.key = key;
             variants = OverlayVariants.forWidget(key);
             LayoutInflater inflater = getLayoutInflater();
-            View card = inflater.inflate(R.layout.item_overlay_widget, overlayList, false);
+            View card = inflater.inflate(R.layout.item_overlay_widget, list, false);
             toggle = card.findViewById(R.id.overlayToggle);
             toggle.setText(getString(widgetLabel(key)));
             body = card.findViewById(R.id.widgetSettingsBody);
@@ -818,11 +820,15 @@ public final class WidgetsFragment extends Fragment {
                 }
                 refresh();
                 OverlayWidgetService.sync(context);
+                if (checked && (WidgetsCommon.SIZE_APPS.equals(key)
+                        || WidgetsCommon.SIZE_REAL_RANGE.equals(key)) && requestOverlayPermission()) {
+                    return;
+                }
                 if (checked && WidgetsCommon.SIZE_APPS.equals(key) && Prefs.overlayApps(context).isEmpty()) {
                     toggle.post(WidgetsFragment.this::openAppsPicker);
                 }
             });
-            overlayList.addView(card);
+            list.addView(card);
             refresh();
         }
 
@@ -863,19 +869,17 @@ public final class WidgetsFragment extends Fragment {
 
             boolean apps = WidgetsCommon.SIZE_APPS.equals(key);
             boolean speed = WidgetsCommon.SIZE_SPEED.equals(key);
-            if (apps) {
-                addAppsSettings(context, options);
-            } else {
-                FlymeSwitchRow pin = new FlymeSwitchRow(context);
-                pin.setText(getString(R.string.widgets_pin_over_apps));
-                pin.setChecked(Prefs.overlayPinned(context, selectedKey));
-                pin.setOnCheckedChangeListener((button, checked) -> {
-                    if (binding) return;
-                    Prefs.setOverlayPinned(context, selectedKey, checked);
-                    OverlayWidgetService.restart(context);
-                });
-                options.addView(pin);
-            }
+            FlymeSwitchRow pin = new FlymeSwitchRow(context);
+            pin.setText(getString(R.string.widgets_pin_over_apps));
+            pin.setChecked(Prefs.overlayPinned(context, selectedKey));
+            pin.setOnCheckedChangeListener((button, checked) -> {
+                if (binding) return;
+                Prefs.setOverlayPinned(context, selectedKey, checked);
+                if (apps && checked && requestOverlayPermission()) return;
+                OverlayWidgetService.restart(context);
+            });
+            options.addView(pin);
+            if (apps) addAppsSettings(context, options);
 
             Runnable restart = () -> OverlayWidgetService.restart(context);
             sizeRow = addPercentRow(options,
@@ -929,9 +933,17 @@ public final class WidgetsFragment extends Fragment {
         }
     }
 
+    private boolean requestOverlayPermission() {
+        Context c = requireContext();
+        if (Settings.canDrawOverlays(c)) return false;
+        Toast.makeText(c, R.string.overlay_permission_needed, Toast.LENGTH_LONG).show();
+        ((MainActivity) requireActivity()).openOverlaySettings();
+        return true;
+    }
+
     private void addAppsSettings(Context c, LinearLayout body) {
         View settings = getLayoutInflater().inflate(R.layout.widget_settings_apps, body, false);
-        appsModeGroup = settings.findViewById(R.id.appsModeGroup);
+        FlymeSegmentedGroup appsModeGroup = settings.findViewById(R.id.appsModeGroup);
         appsCount = settings.findViewById(R.id.appsCount);
         appsSelect = settings.findViewById(R.id.appsSelect);
         appsModeGroup.check(Prefs.overlayAppsLayout(c) == 1 ? R.id.appsModeGrid : R.id.appsModeRow);
@@ -1047,10 +1059,11 @@ public final class WidgetsFragment extends Fragment {
             resetOverlayRows();
             standardList.removeAllViews();
         }
+        appsOverlayCard.refresh();
+        updateAppsUi();
         if (stock) {
             ensureOverlayRows(c);
             for (OverlayCard card : overlayCards) card.refresh();
-            updateAppsUi();
         } else if (modeChanged || refreshStandard) {
             renderStandardWidgets(c);
         }
@@ -1067,7 +1080,7 @@ public final class WidgetsFragment extends Fragment {
     }
 
     private void openAppsPicker() {
-        if (!isAdded() || !Boolean.TRUE.equals(showingOverlay)) return;
+        if (!isAdded()) return;
         Context c = requireContext();
         if (!Prefs.overlayEnabled(c, WidgetsCommon.SIZE_APPS)) return;
         AppsPickerDialog.show(c, () -> {
@@ -1165,6 +1178,9 @@ public final class WidgetsFragment extends Fragment {
         resetOverlayRows();
         standardList.removeAllViews();
         individualIconLabels.clear();
+        appsOverlayCard = null;
+        appsCount = null;
+        appsSelect = null;
         showingOverlay = null;
         rangeRefresh++;
         super.onDestroyView();

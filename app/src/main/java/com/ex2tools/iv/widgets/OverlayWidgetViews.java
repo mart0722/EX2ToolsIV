@@ -22,6 +22,7 @@ import com.ex2tools.iv.LogStore;
 import com.ex2tools.iv.Prefs;
 import com.ex2tools.iv.R;
 import com.ex2tools.iv.car.CarProps;
+import com.ex2tools.iv.car.RangeModel;
 import com.ex2tools.iv.car.Telemetry;
 import com.ex2tools.iv.climate.Thermostat;
 import com.ex2tools.iv.lock.LockActivity;
@@ -112,6 +113,10 @@ final class OverlayWidgetViews {
                 break;
             case WidgetsCommon.SIZE_BATTERY_RANGE:
                 updateBatteryRange(c, root);
+                break;
+            case WidgetsCommon.SIZE_REAL_RANGE:
+                text(root, R.id.tv_real_range,
+                        WidgetsRenderer.realRangeText(c, RangeModel.estimateKm(c)));
                 break;
             case WidgetsCommon.SIZE_APPS:
                 // Built once in create(); the selection only changes on restart.

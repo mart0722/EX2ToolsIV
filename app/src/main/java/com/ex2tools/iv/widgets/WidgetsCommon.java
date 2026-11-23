@@ -68,6 +68,7 @@ public final class WidgetsCommon {
     public static final String SIZE_HEATING = "heating";
     public static final String SIZE_SPEED = "speed";
     public static final String SIZE_BATTERY_RANGE = "battery_range";
+    public static final String SIZE_REAL_RANGE = "real_range";
     static final String WIPERS_TOGGLE = "com.ex2tools.iv.widgets.WIPERS_TOGGLE";
 
     public static final String SIZE_WIPERS = "wipers";
