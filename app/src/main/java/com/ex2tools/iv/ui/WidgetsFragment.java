@@ -100,6 +100,7 @@ public final class WidgetsFragment extends Fragment {
     private View powerSettings;
     private int rangeRefresh;
     private FlymeSwitchRow speedBackground;
+    private FlymeSegmentedGroup speedSizeGroup;
     private FlymeSegmentedGroup speedModeGroup;
     private FlymeSegmentedGroup speedColorGroup;
     private View speedReset;
@@ -166,6 +167,7 @@ public final class WidgetsFragment extends Fragment {
         standardList = view.findViewById(R.id.widgetStandardList);
         standardEmpty = view.findViewById(R.id.widgetStandardEmpty);
         speedBackground = view.findViewById(R.id.widgetSpeedBackground);
+        speedSizeGroup = view.findViewById(R.id.widgetSpeedSizeGroup);
         speedModeGroup = view.findViewById(R.id.widgetSpeedModeGroup);
         speedColorGroup = view.findViewById(R.id.widgetSpeedColorGroup);
         speedReset = view.findViewById(R.id.widgetSpeedReset);
@@ -441,7 +443,11 @@ public final class WidgetsFragment extends Fragment {
         if (settings == null) return;
         if (settings.getParent() instanceof ViewGroup oldParent) oldParent.removeView(settings);
         body.addView(settings);
-        if (settings == speedSettings) speedReset.setVisibility(standard ? View.GONE : View.VISIBLE);
+        if (settings == speedSettings) {
+            int overlayVisibility = standard ? View.GONE : View.VISIBLE;
+            speedSettings.findViewById(R.id.widgetSpeedSizeOptions).setVisibility(overlayVisibility);
+            speedReset.setVisibility(overlayVisibility);
+        }
         if (settings == rangeSettings) refreshRangeInfo();
     }
 
@@ -631,6 +637,14 @@ public final class WidgetsFragment extends Fragment {
     }
 
     private void setupSpeedControls() {
+        speedSizeGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+            if (!isChecked || binding) return;
+            int cells = checkedId == R.id.widgetSpeed4x4 ? 4
+                    : checkedId == R.id.widgetSpeed3x3 ? 3 : 2;
+            Context c = requireContext();
+            Prefs.setOverlaySpeedCells(c, cells);
+            OverlayWidgetService.restart(c);
+        });
         speedModeGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
             if (!isChecked || binding) return;
             Prefs.setSpeedMode(requireContext(), checkedId == R.id.widgetSpeedAnalog ? 1 : 0);
@@ -1010,6 +1024,11 @@ public final class WidgetsFragment extends Fragment {
         fontGroup.check(Prefs.clockFont(c) == 1 ? R.id.clockFontCondensed : R.id.clockFontClassic);
         colorGroup.check(colorButton(Prefs.clockColor(c)));
         date.setChecked(Prefs.clockDate(c));
+        speedSizeGroup.check(switch (Prefs.overlaySpeedCells(c)) {
+            case 4 -> R.id.widgetSpeed4x4;
+            case 3 -> R.id.widgetSpeed3x3;
+            default -> R.id.widgetSpeed2x2;
+        });
         speedModeGroup.check(Prefs.speedMode(c) == 1
                 ? R.id.widgetSpeedAnalog : R.id.widgetSpeedDigital);
         speedColorGroup.check(Prefs.speedColor(c) == 1 ? R.id.widgetSpeedColorBlack

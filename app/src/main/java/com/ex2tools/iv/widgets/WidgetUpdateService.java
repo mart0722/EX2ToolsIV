@@ -54,7 +54,6 @@ public final class WidgetUpdateService extends Service {
             WindshieldHeatWidgetProvider.class,
             WheelHeatWidgetProvider.class,
             RecircWidgetProvider.class,
-            SpeedWidgetProvider.class,
             BatteryRangeWidgetProvider.class,
             RealRangeWidgetProvider.class,
             WipersWidgetProvider.class,
@@ -240,7 +239,6 @@ public final class WidgetUpdateService extends Service {
         int[] wheelIds = ids(awm, WheelHeatWidgetProvider.class);
         int[] windshieldIds = ids(awm, WindshieldHeatWidgetProvider.class);
         int[] heatingIds = ids(awm, HeatingTestWidgetProvider.class);
-        int[] speedIds = ids(awm, SpeedWidgetProvider.class);
         int[] batteryRangeIds = ids(awm, BatteryRangeWidgetProvider.class);
         int[] realRangeIds = ids(awm, RealRangeWidgetProvider.class);
         int[] lockIds = ids(awm, LockWidgetProvider.class);
@@ -305,10 +303,7 @@ public final class WidgetUpdateService extends Service {
         any |= update(awm, heatingIds,
                 c -> WidgetsRenderer.heating(c, wheelHeat, rearDefrost, windshield,
                         driverHeat, passengerHeat, WidgetsCommon.wheelHeatPending(this)));
-        if (speedIds.length > 0) {
-            SpeedWidgetProvider.update(this, awm, speedIds);
-            any = true;
-        }
+        any |= SpeedWidgetProvider.updateAll(this, awm, Prefs.speedCache(this));
         float learnedKm = needBatteryRange || realRangeIds.length > 0
                 ? RangeModel.estimateKm(this) : Float.NaN;
         float displayRange = Float.isNaN(learnedKm) ? rangeKm : learnedKm;
@@ -372,8 +367,7 @@ public final class WidgetUpdateService extends Service {
     private static boolean hasSpeedWidget(Context c) {
         try {
             AppWidgetManager awm = AppWidgetManager.getInstance(c);
-            int[] ids = awm.getAppWidgetIds(new ComponentName(c, SpeedWidgetProvider.class));
-            return ids != null && ids.length > 0;
+            return SpeedWidgetProvider.hasWidgets(c, awm);
         } catch (Throwable ignored) {
             return false;
         }
@@ -386,6 +380,7 @@ public final class WidgetUpdateService extends Service {
                 int[] ids = awm.getAppWidgetIds(new ComponentName(c, provider));
                 if (ids != null && ids.length > 0) return true;
             }
+            return SpeedWidgetProvider.hasWidgets(c, awm);
         } catch (Throwable ignored) {
         }
         return false;

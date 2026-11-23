@@ -207,6 +207,10 @@ final class WidgetGrid {
     }
 
     static Slot appWidgetSlot(Context context, AppWidgetManager manager, int id, int layout) {
+        return appWidgetSlot(context, manager, id, size(context, layout));
+    }
+
+    static Slot appWidgetSlot(Context context, AppWidgetManager manager, int id, Size base) {
         if (!WidgetAppearance.usesGlass(context)) return new Slot(1f, 0, 0, 0, 0);
         boolean landscape = context.getResources().getConfiguration().orientation
                 == Configuration.ORIENTATION_LANDSCAPE;
@@ -231,7 +235,6 @@ final class WidgetGrid {
         float scale = scale(context);
         if (width <= 0 || height <= 0) return new Slot(scale, 0, 0, 0, 0);
 
-        Size base = size(context, layout);
         scale = Math.min(scale, Math.min(width / (float) base.getWidth(),
                 height / (float) base.getHeight()));
         float density = context.getResources().getDisplayMetrics().density;
