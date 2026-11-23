@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.IBinder;
+import android.os.SystemClock;
 
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
@@ -19,13 +20,15 @@ import com.ex2tools.iv.car.Telemetry;
 import com.ex2tools.iv.drive.DriveController;
 import com.ex2tools.iv.state.VehicleState;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 /**
  * Принудительное удержание режима движения и рекуперации.
  *
  * Работает только если пользователь включил переключатель «Удерживать режим».
  * Пишет в машину строго в четырёх случаях:
  *   1) после загрузки ГУ (сервис стартует из BootReceiver);
- *   2) после пробуждения экрана (SCREEN_ON / USER_PRESENT);
+ *   2) после пробуждения экрана (SCREEN_ON / USER_PRESENT) или включения зажигания;
  *   3) после смены передачи;
  *   4) по команде синхронизации из UI.
  *
@@ -38,10 +41,11 @@ public final class DriveRegenWatchService extends Service {
     private static final long WINDOW_MS = 10 * 60 * 1000L;
     private static final int MAX_APPLIES = 8;
     private static final long QUIET_BEFORE_ADOPT_MS = 30_000L;
+    private static final long WAKE_GRACE_MS = 180_000L;
 
     private static volatile boolean running;
 
-    private volatile boolean forceApply;
+    private final AtomicBoolean forceApply = new AtomicBoolean();
     private volatile boolean stopRequested;
     private volatile long wakeGraceUntil;
     private boolean driveRestored;
@@ -53,10 +57,14 @@ public final class DriveRegenWatchService extends Service {
     private final BroadcastReceiver wakeReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            forceApply = true;
-            wakeGraceUntil = System.currentTimeMillis() + 180_000L;
+            requestRestore(WAKE_GRACE_MS);
         }
     };
+
+    private void requestRestore(long graceMs) {
+        wakeGraceUntil = SystemClock.elapsedRealtime() + graceMs;
+        forceApply.set(true);
+    }
 
     public static void start(Context context) {
         try {
@@ -101,8 +109,7 @@ public final class DriveRegenWatchService extends Service {
             stopSelf();
             return START_NOT_STICKY;
         }
-        forceApply = true;
-        wakeGraceUntil = System.currentTimeMillis() + 120_000L;
+        requestRestore(120_000L);
         if (!running) {
             running = true;
             worker = new Thread(this::runWatch, "ex2-drive-watch");
@@ -129,19 +136,28 @@ public final class DriveRegenWatchService extends Service {
             long[] delays = {0L, 1500L, 4000L, 8000L, 16000L};
             long lastWriteAt = 0L;
             int lastGear = Telemetry.gear(this);
-            long windowStart = System.currentTimeMillis();
+            long windowStart = SystemClock.elapsedRealtime();
             long lastRangeSample = 0L;
             int applies = 0;
+            boolean ignitionKnown = false;
+            boolean waitingForIgnition = false;
 
             // Первичное применение после загрузки/синхронизации.
             for (long delay : delays) {
                 if (stopRequested || Thread.currentThread().isInterrupted()) return;
                 if (!Prefs.autoApply(this)) return;
                 if (delay > 0) Thread.sleep(delay);
+                Boolean ignitionOn = Telemetry.ignitionOn();
+                ignitionKnown |= ignitionOn != null;
+                if (ignitionKnown && !Boolean.TRUE.equals(ignitionOn)) {
+                    waitingForIgnition = Boolean.FALSE.equals(ignitionOn);
+                    driveRestored = false;
+                    break;
+                }
                 DriveController.Outcome r = controller.applySaved(this);
                 driveRestored = r.readDrive != null && r.readDrive == r.drive;
                 applies++;
-                lastWriteAt = System.currentTimeMillis();
+                lastWriteAt = SystemClock.elapsedRealtime();
                 LogStore.add(this, "watch apply: " + r.describe());
                 if (r.exact) break;
             }
@@ -150,7 +166,7 @@ public final class DriveRegenWatchService extends Service {
                 if (!Prefs.autoApply(this)) break;
                 Thread.sleep(1000L);
 
-                long now = System.currentTimeMillis();
+                long now = SystemClock.elapsedRealtime();
                 if (now - lastRangeSample > 10_000L) {
                     lastRangeSample = now;
                     com.ex2tools.iv.car.RangeModel.sample(this);
@@ -160,27 +176,43 @@ public final class DriveRegenWatchService extends Service {
                     applies = 0;
                 }
 
+                Boolean ignitionOn = Telemetry.ignitionOn();
+                ignitionKnown |= ignitionOn != null;
+                if (ignitionKnown && !Boolean.TRUE.equals(ignitionOn)) {
+                    if (Boolean.FALSE.equals(ignitionOn)) {
+                        waitingForIgnition = true;
+                        driveRestored = false;
+                    }
+                    stableCount = 0;
+                    continue;
+                }
+                boolean ignitionResumed = waitingForIgnition;
+                if (ignitionResumed) {
+                    waitingForIgnition = false;
+                    // На Flyme экран может остаться включённым между поездками.
+                    requestRestore(WAKE_GRACE_MS);
+                }
+
                 int gear = Telemetry.gear(this);
                 boolean gearChanged = gear != Integer.MIN_VALUE && gear != lastGear;
                 if (gearChanged) {
                     lastGear = gear;
-                    forceApply = true;
+                    forceApply.set(true);
                 }
 
-                if (forceApply && applies < MAX_APPLIES) {
-                    forceApply = false;
-                    DriveController.Outcome r = controller.applySaved(this);
-                    driveRestored = r.readDrive != null && r.readDrive == r.drive;
+                if (forceApply.getAndSet(false)) {
+                    String trigger = ignitionResumed ? "ignition" : gearChanged ? "gear" : "wake";
                     stableCount = 0;
-                    applies++;
-                    lastWriteAt = System.currentTimeMillis();
-                    LogStore.add(this, "watch " + (gearChanged ? "gear" : "wake")
-                            + " apply: " + r.describe());
-                } else if (forceApply) {
-                    forceApply = false;
-                    driveRestored = false;
-                    stableCount = 0;
-                    LogStore.add(this, "watch: лимит попыток исчерпан, ждём пробуждения");
+                    if (applies < MAX_APPLIES) {
+                        DriveController.Outcome r = controller.applySaved(this);
+                        driveRestored = r.readDrive != null && r.readDrive == r.drive;
+                        applies++;
+                        lastWriteAt = SystemClock.elapsedRealtime();
+                        LogStore.add(this, "watch " + trigger + " apply: " + r.describe());
+                    } else {
+                        driveRestored = false;
+                        LogStore.add(this, "watch " + trigger + ": лимит попыток исчерпан");
+                    }
                 }
 
                 // Ручное переключение в штатном меню принимаем как новое желаемое,

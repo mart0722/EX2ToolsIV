@@ -1,8 +1,11 @@
 package com.ex2tools.iv.car;
 
+import android.car.hardware.CarPropertyValue;
 import android.content.Context;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+
+import com.ex2tools.iv.vehicle.VhalGateway;
 
 public final class Telemetry {
 
@@ -69,6 +72,23 @@ public final class Telemetry {
         CarConnection cc = CarConnection.get();
         if (!cc.ensure(c)) return Integer.MIN_VALUE;
         return cc.readInt(CarProps.GEAR, 0);
+    }
+
+    public static Boolean ignitionOn() {
+        VhalGateway gateway = VhalGateway.get();
+        Boolean powered = decodeIgnitionOn(gateway.readValue(CarProps.IGNITION_STATE_VENDOR, 0));
+        return powered != null ? powered
+                : decodeIgnitionOn(gateway.readValue(CarProps.IGNITION_STATE, 0));
+    }
+
+    private static Boolean decodeIgnitionOn(CarPropertyValue<?> value) {
+        if (value == null || value.getStatus() != CarPropertyValue.STATUS_AVAILABLE
+                || !(value.getValue() instanceof Integer state)) {
+            return null;
+        }
+        // Flyme maps raw OFF/ACC/ON to 2/3/4 when it returns the Android property ID.
+        return value.getPropertyId() == CarProps.IGNITION_STATE
+                ? state == 4 || state == 5 : state == 2 || state == 4;
     }
 
     public static int driveNow(Context c) {
