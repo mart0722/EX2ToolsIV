@@ -336,34 +336,38 @@ public final class OverlayWidgetService extends Service {
             boolean apps = WidgetsCommon.SIZE_APPS.equals(spec.key);
             boolean glass = WidgetAppearance.usesGlass(this);
             Size base = glass ? tileSize(spec) : apps ? AppsOverlay.sizeDp(this) : legacySize(spec);
+            boolean sharedScale = Prefs.widgetsGlobalSize(this);
+            boolean independentSpeed = speed && !sharedScale;
             float scale;
-            if (Prefs.widgetsGlobalSize(this)) {
+            if (sharedScale) {
                 scale = Prefs.overlayGlobalSizePct(this) / 100f;
-            } else if (glass) {
-                scale = Prefs.overlaySizePct(this, spec.key) / 100f;
+            } else if (speed) {
+                scale = Prefs.widgetSizePct(this, spec.key) / 100f;
             } else {
-                scale = (speed
-                        ? Prefs.widgetSizePct(this, spec.key) : Prefs.overlaySizePct(this, spec.key)) / 100f;
+                scale = Prefs.overlaySizePct(this, spec.key) / 100f;
             }
             DisplayMetrics metrics = getResources().getDisplayMetrics();
             Prefs.OverlayPlacement placement = Prefs.overlayPlacement(this);
             int maxWidth = Math.max(1, metrics.widthPixels - dp(16));
             int maxHeight = Math.max(1, metrics.heightPixels - dp(16));
+            int gap = tilePitch > 0 ? tileGap() : 0;
             int width;
             int height;
-            if (tilePitch > 0) {
+            if (tilePitch > 0 && !independentSpeed) {
                 // Reserve one gutter per grid line, including between neighboring tiles.
-                int gap = tileGap();
                 width = base.getWidth() / WidgetGrid.UNIT_DP * tilePitch - gap;
                 height = base.getHeight() / WidgetGrid.UNIT_DP * tilePitch - gap;
                 scale = tilePitch / (WidgetGrid.UNIT_DP * density());
             } else {
+                // The speedometer keeps its own size even when its position snaps to the grid.
+                float baseWidth = base.getWidth() * density();
+                float baseHeight = base.getHeight() * density();
                 if (glass || largeSpeed) {
-                    scale = Math.min(scale, Math.min(maxWidth / (base.getWidth() * density()),
-                            maxHeight / (base.getHeight() * density())));
+                    scale = Math.min(scale, Math.min((maxWidth + gap) / baseWidth,
+                            (maxHeight + gap) / baseHeight));
                 }
-                width = Math.min(maxWidth, Math.max(1, Math.round(base.getWidth() * density() * scale)));
-                height = Math.min(maxHeight, Math.max(1, Math.round(base.getHeight() * density() * scale)));
+                width = Math.min(maxWidth, Math.max(1, Math.round(baseWidth * scale) - gap));
+                height = Math.min(maxHeight, Math.max(1, Math.round(baseHeight * scale) - gap));
             }
 
             View content;
@@ -472,9 +476,12 @@ public final class OverlayWidgetService extends Service {
         int gap = dp(WIDGET_GAP_DP);
         int maxWidth = Math.max(1, metrics.widthPixels - dp(16));
         int maxHeight = Math.max(1, metrics.heightPixels - dp(16));
-        int pitch = Math.round(WidgetGrid.UNIT_DP * density() * WidgetGrid.scale(this));
+        boolean sharedScale = Prefs.widgetsGlobalSize(this);
+        float scale = sharedScale ? Prefs.overlayGlobalSizePct(this) / 100f : WidgetGrid.scale(this);
+        int pitch = Math.round(WidgetGrid.UNIT_DP * density() * scale);
         for (OverlaySpec spec : specs) {
             if (!Prefs.overlayEnabled(this, spec.key)) continue;
+            if (!sharedScale && WidgetsCommon.SIZE_SPEED.equals(spec.key)) continue;
             if (WidgetsCommon.SIZE_CLIMATE.equals(spec.key) && !Prefs.climateEnabled(this)) continue;
             Size size = tileSize(spec);
             pitch = Math.min(pitch, (maxWidth + gap) / (size.getWidth() / WidgetGrid.UNIT_DP));
