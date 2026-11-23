@@ -73,6 +73,8 @@ public final class WidgetCatalog {
                 R.layout.widget_windshield_heat, 160, 100, 480, 420);
         add(WidgetsCommon.SIZE_BATTERY_RANGE, R.string.widgets_size_battery_range,
                 R.layout.widget_battery_range, 300, 96, 40, 700);
+        add(WidgetsCommon.SIZE_REAL_RANGE, R.string.widget_name_real_range,
+                R.layout.widget_real_range, 192, 96, 470, 170);
         add(WidgetsCommon.SIZE_WIPERS, R.string.widget_name_wipers,
                 R.layout.widget_wipers, 127, 91, 650, 420);
         add(WidgetsCommon.SIZE_POWER_OFF, R.string.widget_name_power_off,

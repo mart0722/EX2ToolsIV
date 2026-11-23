@@ -362,6 +362,12 @@
             </intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_info_battery_range" />
         </receiver>
+        <receiver android:name=".widgets.RealRangeWidgetProvider" android:exported="true" android:label="@string/widget_name_real_range">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_info_real_range" />
+        </receiver>
         <receiver android:name=".widgets.LockWidgetProvider" android:exported="true" android:label="@string/widget_name_lock">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />

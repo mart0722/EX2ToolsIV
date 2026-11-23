@@ -28,6 +28,7 @@ import com.ex2tools.iv.LogStore;
 import com.ex2tools.iv.NotificationHelper;
 import com.ex2tools.iv.Prefs;
 import com.ex2tools.iv.R;
+import com.ex2tools.iv.car.RangeModel;
 import com.ex2tools.iv.state.VehicleState;
 
 import java.util.ArrayList;
@@ -99,9 +100,10 @@ public final class OverlayWidgetService extends Service {
                 return;
             }
             long now = System.currentTimeMillis();
-            if (now - lastRangeSample > 10_000L) {
+            boolean rangeSampled = now - lastRangeSample >= 10_000L;
+            if (rangeSampled) {
                 lastRangeSample = now;
-                com.ex2tools.iv.car.RangeModel.sample(OverlayWidgetService.this);
+                RangeModel.sample(OverlayWidgetService.this);
             }
             long clockMinute = now / 60_000L;
             boolean clockTick = clockMinute != lastClockMinute;
@@ -127,12 +129,11 @@ public final class OverlayWidgetService extends Service {
                         && !(WidgetsCommon.SIZE_CLIMATE.equals(spec.key)
                         && !Prefs.climateEnabled(OverlayWidgetService.this));
                 anyEnabled |= active;
+                boolean apps = WidgetsCommon.SIZE_APPS.equals(spec.key);
                 boolean pinned = Prefs.overlayPinned(OverlayWidgetService.this, spec.key);
-                boolean show = active && !state.appList && (pinned || state.launcher);
-                if (show && WidgetsCommon.SIZE_APPS.equals(spec.key)
-                        && !AppsOverlay.hasVisible(OverlayWidgetService.this)) {
-                    show = false;
-                }
+                boolean show = active && (pinned || state.launcher)
+                        && (!state.appList || (apps && pinned))
+                        && (!apps || AppsOverlay.hasVisible(OverlayWidgetService.this));
                 if (show) {
                     boolean created = ensure(spec);
                     if (WidgetsCommon.SIZE_OUTSIDE_TEMP.equals(spec.key)
@@ -149,6 +150,7 @@ public final class OverlayWidgetService extends Service {
                     }
                     // Retry climate reads even if the ECU emitted no event during boot.
                     if (render || created || WidgetsCommon.SIZE_TEMP.equals(spec.key)
+                            || (rangeSampled && WidgetsCommon.SIZE_REAL_RANGE.equals(spec.key))
                             || (clockTick && (WidgetsCommon.SIZE_CLOCK.equals(spec.key)
                             || WidgetsCommon.SIZE_CLOCK_LARGE.equals(spec.key)))) {
                         update(spec);
@@ -377,7 +379,7 @@ public final class OverlayWidgetService extends Service {
             lp.gravity = Gravity.TOP | Gravity.START;
             lp.x = Prefs.overlayX(this, spec.key, spec.defaultX);
             lp.y = Prefs.overlayY(this, spec.key, spec.defaultY);
-            if (glass) {
+            if (glass || apps || WidgetsCommon.SIZE_REAL_RANGE.equals(spec.key)) {
                 lp.x = Math.max(0, Math.min(metrics.widthPixels - width, lp.x));
                 lp.y = Math.max(0, Math.min(metrics.heightPixels - height, lp.y));
             }
@@ -770,6 +772,7 @@ public final class OverlayWidgetService extends Service {
                     WidgetsCommon.SIZE_WINDSHIELD_HEAT,
                     WidgetsCommon.SIZE_WHEEL_HEAT,
                     WidgetsCommon.SIZE_BATTERY_RANGE,
+                    WidgetsCommon.SIZE_REAL_RANGE,
                     WidgetsCommon.SIZE_WIPERS,
                     WidgetsCommon.SIZE_POWER_OFF,
                     WidgetsCommon.SIZE_LOCK,

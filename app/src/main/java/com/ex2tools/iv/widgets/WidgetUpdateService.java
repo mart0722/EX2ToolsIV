@@ -18,6 +18,7 @@ import com.ex2tools.iv.LogStore;
 import com.ex2tools.iv.NotificationHelper;
 import com.ex2tools.iv.Prefs;
 import com.ex2tools.iv.R;
+import com.ex2tools.iv.car.RangeModel;
 import com.ex2tools.iv.car.Telemetry;
 import com.ex2tools.iv.state.VehicleState;
 
@@ -55,6 +56,7 @@ public final class WidgetUpdateService extends Service {
             RecircWidgetProvider.class,
             SpeedWidgetProvider.class,
             BatteryRangeWidgetProvider.class,
+            RealRangeWidgetProvider.class,
             WipersWidgetProvider.class,
             PowerOffWidgetProvider.class,
             LockWidgetProvider.class
@@ -219,7 +221,7 @@ public final class WidgetUpdateService extends Service {
             WidgetsCommon.checkWheelPending(this);
         }
         // Модель запаса хода: накапливаем дельты SOC/одометра (сама себя троттлит).
-        com.ex2tools.iv.car.RangeModel.sample(this);
+        RangeModel.sample(this);
 
         AppWidgetManager awm = AppWidgetManager.getInstance(this);
         int[] driveRegenIds = ids(awm, DriveRegenWidgetProvider.class);
@@ -240,6 +242,7 @@ public final class WidgetUpdateService extends Service {
         int[] heatingIds = ids(awm, HeatingTestWidgetProvider.class);
         int[] speedIds = ids(awm, SpeedWidgetProvider.class);
         int[] batteryRangeIds = ids(awm, BatteryRangeWidgetProvider.class);
+        int[] realRangeIds = ids(awm, RealRangeWidgetProvider.class);
         int[] lockIds = ids(awm, LockWidgetProvider.class);
 
         boolean needDrive = driveRegenIds.length > 0 || driveVerticalIds.length > 0;
@@ -306,7 +309,8 @@ public final class WidgetUpdateService extends Service {
             SpeedWidgetProvider.update(this, awm, speedIds);
             any = true;
         }
-        float learnedKm = com.ex2tools.iv.car.RangeModel.estimateKm(this);
+        float learnedKm = needBatteryRange || realRangeIds.length > 0
+                ? RangeModel.estimateKm(this) : Float.NaN;
         float displayRange = Float.isNaN(learnedKm) ? rangeKm : learnedKm;
         Float energyKwh = batteryPercent == null ? null
                 : batteryPercent * com.ex2tools.iv.car.CarProps.CAPACITY_KWH / 100f;
@@ -314,6 +318,7 @@ public final class WidgetUpdateService extends Service {
         any |= update(awm, batteryRangeIds,
                 c -> WidgetsRenderer.batteryRange(c, soc,
                         Float.isNaN(displayRange) ? null : displayRange, energyKwh));
+        any |= update(awm, realRangeIds, c -> WidgetsRenderer.realRange(c, learnedKm));
         any |= update(awm, ids(awm, WipersWidgetProvider.class), WidgetsRenderer::wipers);
         any |= update(awm, ids(awm, PowerOffWidgetProvider.class), WidgetsRenderer::powerOff);
         any |= update(awm, lockIds, WidgetsRenderer::lock);

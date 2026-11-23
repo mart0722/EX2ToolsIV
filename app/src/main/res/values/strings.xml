@@ -358,6 +358,10 @@
     <string name="widgets_size_lock">Блокировка экрана</string>
     <string name="widget_name_battery_range">АКБ и запас хода</string>
     <string name="widget_battery_range_desc">Заряд батареи и запас хода</string>
+    <string name="widget_name_real_range">Реальный запас хода</string>
+    <string name="widget_real_range_desc">Оценка остатка километров по фактическому расходу</string>
+    <string name="widget_real_range_title">По расходу</string>
+    <string name="widget_real_range_missing">— км</string>
     <string name="widget_name_lock">Блокировка экрана</string>
     <string name="widget_lock_desc">Чёрный экран с часами, зарядом и температурой</string>
     <string name="wg_lock_label">Блокировка экрана</string>
@@ -570,7 +574,9 @@
     <string name="apps_filter_system">Системные</string>
     <string name="apps_install_usb">Установить с USB</string>
     <string name="apps_install_qr">Установить по QR</string>
-    <string name="apps_usb_hint">Выбрать APK с флешки</string>\n    <string name="apps_qr_hint">Показать QR для телефона</string>\n    <string name="apps_count_fmt">Приложений: %1$d</string>
+    <string name="apps_usb_hint">Выбрать APK с флешки</string>
+    <string name="apps_qr_hint">Показать QR для телефона</string>
+    <string name="apps_count_fmt">Приложений: %1$d</string>
     <string name="apps_system_badge">Системное</string>
     <string name="apps_uninstall">Удалить</string>
     <string name="apps_loading_short">Загрузка…</string>

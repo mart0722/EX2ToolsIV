@@ -437,6 +437,23 @@ public final class WidgetsRenderer {
         return v;
     }
 
+    static RemoteViews realRange(Context c, float rangeKm) {
+        RemoteViews views = new RemoteViews(c.getPackageName(), R.layout.widget_real_range);
+        bg(views, c);
+        titles(views, c, R.id.widget_title);
+        Context theme = OverlayWidgetViews.themeContext(c);
+        views.setTextColor(R.id.widget_title, theme.getColor(R.color.wg_text2));
+        views.setTextColor(R.id.tv_real_range, theme.getColor(R.color.wg_text));
+        views.setTextViewText(R.id.tv_real_range, realRangeText(c, rangeKm));
+        return views;
+    }
+
+    static String realRangeText(Context c, float rangeKm) {
+        return Float.isFinite(rangeKm)
+                ? c.getString(R.string.widget_battery_range_est, String.valueOf(Math.round(rangeKm)))
+                : c.getString(R.string.widget_real_range_missing);
+    }
+
     private static void titles(RemoteViews v, Context c, int... titleIds) {
         int visibility = Prefs.widgetTitles(c) ? View.VISIBLE : View.GONE;
         for (int id : titleIds) v.setViewVisibility(id, visibility);

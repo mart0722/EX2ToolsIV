@@ -66,7 +66,8 @@ final class WidgetGrid {
             FOOTPRINTS.put(button, cells(1, 1));
         }
         for (int readout : new int[]{R.layout.widget_clock_classic_date,
-                R.layout.widget_clock_condensed_date, R.layout.widget_battery_range}) {
+                R.layout.widget_clock_condensed_date, R.layout.widget_battery_range,
+                R.layout.widget_real_range}) {
             FOOTPRINTS.put(readout, cells(2, 1));
         }
         FOOTPRINTS.put(R.layout.widget_speed, cells(2, 2));
@@ -154,6 +155,9 @@ final class WidgetGrid {
             textSize(views, scale, 22, R.id.tv_battery_range_percent);
             textSize(views, scale, 20, R.id.tv_battery_range_km);
             textSize(views, scale, 12, R.id.tv_battery_range_energy);
+        } else if (layout == R.layout.widget_real_range) {
+            textSize(views, scale, 30, R.id.tv_real_range);
+            textSize(views, scale, 12, R.id.widget_title);
         } else if (layout == R.layout.widget_outside_temp
                 || layout == R.layout.widget_outside_temp_wide) {
             textSize(views, scale, layout == R.layout.widget_outside_temp ? 18 : 36,
