@@ -473,6 +473,14 @@ public final class Prefs {
         get(c).edit().putInt("speed_mode", mode == 1 ? 1 : 0).apply();
     }
 
+    public static int overlaySpeedCells(Context c) {
+        return Math.max(2, Math.min(4, get(c).getInt("overlay_speed_cells", 2)));
+    }
+
+    public static void setOverlaySpeedCells(Context c, int cells) {
+        get(c).edit().putInt("overlay_speed_cells", Math.max(2, Math.min(4, cells))).apply();
+    }
+
     public static boolean speedBackground(Context c) {
         return get(c).getBoolean("speed_background", true);
     }

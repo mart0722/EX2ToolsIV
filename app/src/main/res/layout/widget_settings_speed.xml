@@ -6,6 +6,54 @@
     android:layout_height="wrap_content"
     android:orientation="vertical">
 
+    <LinearLayout
+        android:id="@+id/widgetSpeedSizeOptions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            style="@style/Text.EX2.Section"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            android:text="@string/widgets_speed_cells" />
+
+        <com.ex2tools.iv.ui.FlymeSegmentedGroup
+            android:id="@+id/widgetSpeedSizeGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/widgetSpeed2x2"
+                style="@style/Widget.EX2.Toggle"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:minWidth="0dp"
+                android:text="@string/widgets_speed_2x2" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/widgetSpeed3x3"
+                style="@style/Widget.EX2.Toggle"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:minWidth="0dp"
+                android:text="@string/widgets_speed_3x3" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/widgetSpeed4x4"
+                style="@style/Widget.EX2.Toggle"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:minWidth="0dp"
+                android:text="@string/widgets_speed_4x4" />
+        </com.ex2tools.iv.ui.FlymeSegmentedGroup>
+    </LinearLayout>
+
     <TextView
         style="@style/Text.EX2.Section"
         android:layout_width="match_parent"

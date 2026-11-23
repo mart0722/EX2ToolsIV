@@ -356,6 +356,20 @@
             </intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_info_speed" />
         </receiver>
+        <receiver android:name=".widgets.SpeedWidgetProvider$ThreeByThree" android:exported="true"
+            android:label="@string/widget_name_speed_3x3">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_info_speed_3x3" />
+        </receiver>
+        <receiver android:name=".widgets.SpeedWidgetProvider$FourByFour" android:exported="true"
+            android:label="@string/widget_name_speed_4x4">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_info_speed_4x4" />
+        </receiver>
         <receiver android:name=".widgets.BatteryRangeWidgetProvider" android:exported="true" android:label="@string/widget_name_battery_range">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />

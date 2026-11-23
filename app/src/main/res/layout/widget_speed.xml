@@ -45,13 +45,24 @@
         android:scaleType="fitCenter"
         android:visibility="gone" />
 
-    <!-- Прозрачная зона внизу по центру: тап по пробегу открывает подтверждение сброса. -->
-    <TextView
-        android:id="@+id/speed_trip_tap"
-        android:layout_width="150dp"
-        android:layout_height="40dp"
-        android:layout_gravity="bottom|center_horizontal"
-        android:background="@android:color/transparent"
-        android:text=""
-        android:visibility="gone" />
+    <!-- Зона сброса пробега остаётся над показанием при любом размере плитки. -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="2" />
+
+        <TextView
+            android:id="@+id/speed_trip_tap"
+            android:layout_width="150dp"
+            android:layout_height="0dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_weight="1"
+            android:background="@android:color/transparent"
+            android:visibility="gone" />
+    </LinearLayout>
 </FrameLayout>
