@@ -16,37 +16,46 @@ import com.ex2tools.iv.App;
 import com.ex2tools.iv.LogStore;
 import com.ex2tools.iv.Prefs;
 import com.ex2tools.iv.R;
+import com.ex2tools.iv.apps.SteeringPatch;
 
 /** Button handling runs independently of speech recognition and microphone access. */
 public final class SteeringKeysService extends Service {
     private final Handler main = new Handler(Looper.getMainLooper());
-    private SteeringClimate climate;
+    private SteeringMode mode;
     private long lastTap;
     private boolean registered;
     private final BroadcastReceiver keys = new BroadcastReceiver() {
         @Override public void onReceive(Context c, Intent i) {
-            if (!Prefs.steeringClimate(c) || climate == null || i == null) return;
+            if (!Prefs.steeringClimate(c) || mode == null || i == null) return;
             if (VoiceService.ACTION_ECARX_KEY.equals(i.getAction())) {
                 if (i.getIntExtra("ecarx.extra.ECARX_KEY_ACTION_TYPE", -1) != 0) return;
                 long now = android.os.SystemClock.elapsedRealtime();
                 if (now - lastTap < 100) return;
                 lastTap = now;
-                climate.tap(SteeringKeysService.this::voice);
+                mode.tap(SteeringKeysService.this::voice);
             } else if ("com.ex2tools.iv.CLIMATE_STEERING_KEY".equals(i.getAction())) {
-                climate.key(i.getIntExtra("key", 0));
+                mode.key(i.getIntExtra("key", 0));
             }
         }
     };
     private final Runnable keepAlive = new Runnable() {
         @Override public void run() {
             if (!Prefs.steeringClimate(SteeringKeysService.this)) { stopSelf(); return; }
-            try {
-                startForegroundService(new Intent().setComponent(new ComponentName(
-                        "com.flyme.auto.keyserver", "com.flyme.auto.keyserver.service.AutoKeyService")));
-            } catch (Throwable t) { LogStore.add(SteeringKeysService.this, "steering keyserver: " + t); }
+            startKeyServer(SteeringKeysService.this);
             main.postDelayed(this, 15000);
         }
     };
+
+    public static boolean startKeyServer(Context c) {
+        try {
+            return c.startForegroundService(new Intent().setComponent(new ComponentName(
+                    SteeringPatch.PACKAGE, "com.flyme.auto.keyserver.service.AutoKeyService"))) != null;
+        } catch (RuntimeException e) {
+            LogStore.add(c, "steering keyserver: " + e);
+            return false;
+        }
+    }
+
     public static void sync(Context c) {
         Intent i = new Intent(c, SteeringKeysService.class);
         if (Prefs.steeringClimate(c)) {
@@ -58,8 +67,8 @@ public final class SteeringKeysService extends Service {
         super.onCreate();
         startForeground(17041, new NotificationCompat.Builder(this, App.CH_SERVICE)
                 .setSmallIcon(R.drawable.ic_voice).setContentTitle(getString(R.string.steering_title))
-                .setContentText(getString(R.string.steering_climate_hint)).setOngoing(true).build());
-        climate = new SteeringClimate(this, main, this::voice);
+                .setContentText(getString(R.string.steering_mode_hint)).setOngoing(true).build());
+        mode = new SteeringMode(this, main, this::voice);
         IntentFilter filter = new IntentFilter(VoiceService.ACTION_ECARX_KEY);
         filter.addAction("com.ex2tools.iv.CLIMATE_STEERING_KEY");
         filter.addCategory(Intent.CATEGORY_DEFAULT);
@@ -80,7 +89,7 @@ public final class SteeringKeysService extends Service {
         return START_STICKY;
     }
     @Override public void onDestroy() {
-        if (climate != null) climate.close();
+        if (mode != null) mode.close();
         main.removeCallbacksAndMessages(null);
         if (registered) unregisterReceiver(keys);
         stopForeground(true);
