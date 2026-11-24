@@ -20,9 +20,9 @@ final class SpeedWidgetRenderer {
     private SpeedWidgetRenderer() {
     }
 
-    static RemoteViews build(Context c, int appWidgetId, float kmh) {
-        WidgetGrid.Slot slot = WidgetGrid.appWidgetSlot(c, AppWidgetManager.getInstance(c),
-                appWidgetId, R.layout.widget_speed);
+    static RemoteViews build(Context c, AppWidgetManager manager, int appWidgetId, float kmh, int cells) {
+        WidgetGrid.Slot slot = WidgetGrid.appWidgetSlot(c, manager, appWidgetId,
+                WidgetGrid.cells(cells, cells));
         RemoteViews views = new RemoteViews(c.getPackageName(), R.layout.widget_speed);
         views.setViewVisibility(R.id.speed_digital, View.GONE);
         views.setViewVisibility(R.id.speed_gauge, View.VISIBLE);

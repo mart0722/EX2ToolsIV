@@ -299,6 +299,20 @@ final class WidgetGrid {
     }
 
     static Slot appWidgetSlot(Context context, AppWidgetManager manager, int id, int layout) {
+        AppWidgetProviderInfo provider = manager.getAppWidgetInfo(id);
+        int baseWidth = provider == null ? 0 : provider.minWidth;
+        int baseHeight = provider == null ? 0 : provider.minHeight;
+        if (Build.VERSION.SDK_INT >= 31 && provider != null
+                && provider.targetCellWidth > 0 && provider.targetCellHeight > 0) {
+            baseWidth = provider.targetCellWidth * UNIT_DP;
+            baseHeight = provider.targetCellHeight * UNIT_DP;
+        }
+        Size base = baseWidth > 0 && baseHeight > 0
+                ? new Size(baseWidth, baseHeight) : size(context, layout);
+        return appWidgetSlot(context, manager, id, base);
+    }
+
+    static Slot appWidgetSlot(Context context, AppWidgetManager manager, int id, Size base) {
         boolean landscape = context.getResources().getConfiguration().orientation
                 == Configuration.ORIENTATION_LANDSCAPE;
         Bundle options = manager.getAppWidgetOptions(id);
@@ -321,16 +335,6 @@ final class WidgetGrid {
         }
         if (width <= 0 || height <= 0) return new Slot(1f, 0, 0, 0, 0);
 
-        AppWidgetProviderInfo provider = manager.getAppWidgetInfo(id);
-        int baseWidth = provider == null ? 0 : provider.minWidth;
-        int baseHeight = provider == null ? 0 : provider.minHeight;
-        if (Build.VERSION.SDK_INT >= 31 && provider != null
-                && provider.targetCellWidth > 0 && provider.targetCellHeight > 0) {
-            baseWidth = provider.targetCellWidth * UNIT_DP;
-            baseHeight = provider.targetCellHeight * UNIT_DP;
-        }
-        Size base = baseWidth > 0 && baseHeight > 0
-                ? new Size(baseWidth, baseHeight) : size(context, layout);
         float fit = Math.min(width / (float) base.getWidth(),
                 height / (float) base.getHeight());
         float scale = Math.max(0.5f, Math.min(2.5f, fit));

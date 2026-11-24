@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            style="@style/Text.EX2.Title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/steering_title" />
+
+        <TextView
+            style="@style/Text.EX2.Section"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="@string/steering_patch_title" />
+
+        <TextView
+            android:id="@+id/steeringPatchStatus"
+            style="@style/Text.EX2.Caption"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:accessibilityLiveRegion="polite"
+            android:text="@string/steering_patch_checking" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/steeringInstallPatch"
+                style="@style/Widget.EX2.SecondaryButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:layout_weight="1"
+                android:alpha="0.4"
+                android:enabled="false"
+                android:minHeight="56dp"
+                android:text="@string/steering_patch_install" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/steeringRestoreOriginal"
+                style="@style/Widget.EX2.SecondaryButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:alpha="0.4"
+                android:enabled="false"
+                android:minHeight="56dp"
+                android:text="@string/steering_patch_restore" />
+        </LinearLayout>
+
+        <com.ex2tools.iv.ui.FlymeSwitchRow
+            android:id="@+id/steeringClimate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/steering_mode"
+            app:rowDescription="@string/steering_mode_hint" />
+
+        <TextView
+            style="@style/Text.EX2.Caption"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/steering_help" />
+
+        <TextView
+            style="@style/Text.EX2.Section"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="@string/steering_assignments" />
+
+        <LinearLayout
+            android:id="@+id/steeringAssignments"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:orientation="vertical" />
+    </LinearLayout>
+</ScrollView>

@@ -3,8 +3,6 @@ package com.ex2tools.iv.ui;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.Context;
-import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -36,6 +34,7 @@ import com.ex2tools.iv.state.VehicleState;
 import com.ex2tools.iv.widgets.ClockWidgetProvider;
 import com.ex2tools.iv.widgets.OverlayWidgetService;
 import com.ex2tools.iv.widgets.SpeedWidgetProvider;
+import com.ex2tools.iv.widgets.StockLauncherCards;
 import com.ex2tools.iv.widgets.WidgetModes;
 import com.ex2tools.iv.widgets.WidgetCatalog;
 import com.ex2tools.iv.widgets.WidgetIconSizes;
@@ -84,6 +83,7 @@ public final class WidgetsFragment extends Fragment {
     private FlymeSegmentedGroup fontGroup;
     private FlymeSegmentedGroup colorGroup;
     private FlymeSwitchRow date;
+    private FlymeSwitchRow clockSeconds;
     private TextClock clockPreview;
     private TextView clockDatePreview;
 
@@ -100,6 +100,7 @@ public final class WidgetsFragment extends Fragment {
     private View powerSettings;
     private int rangeRefresh;
     private FlymeSwitchRow speedBackground;
+    private FlymeSegmentedGroup speedSizeGroup;
     private FlymeSegmentedGroup speedModeGroup;
     private FlymeSegmentedGroup speedColorGroup;
     private View speedReset;
@@ -150,6 +151,7 @@ public final class WidgetsFragment extends Fragment {
         fontGroup = view.findViewById(R.id.clockFontGroup);
         colorGroup = view.findViewById(R.id.clockColorGroup);
         date = view.findViewById(R.id.clockDate);
+        clockSeconds = view.findViewById(R.id.clockSeconds);
         clockPreview = view.findViewById(R.id.clockPreview);
         clockDatePreview = view.findViewById(R.id.clockDatePreview);
         clockSettings = view.findViewById(R.id.widgetSettingsClock);
@@ -166,6 +168,7 @@ public final class WidgetsFragment extends Fragment {
         standardList = view.findViewById(R.id.widgetStandardList);
         standardEmpty = view.findViewById(R.id.widgetStandardEmpty);
         speedBackground = view.findViewById(R.id.widgetSpeedBackground);
+        speedSizeGroup = view.findViewById(R.id.widgetSpeedSizeGroup);
         speedModeGroup = view.findViewById(R.id.widgetSpeedModeGroup);
         speedColorGroup = view.findViewById(R.id.widgetSpeedColorGroup);
         speedReset = view.findViewById(R.id.widgetSpeedReset);
@@ -441,7 +444,11 @@ public final class WidgetsFragment extends Fragment {
         if (settings == null) return;
         if (settings.getParent() instanceof ViewGroup oldParent) oldParent.removeView(settings);
         body.addView(settings);
-        if (settings == speedSettings) speedReset.setVisibility(standard ? View.GONE : View.VISIBLE);
+        if (settings == speedSettings) {
+            int overlayVisibility = standard ? View.GONE : View.VISIBLE;
+            speedSettings.findViewById(R.id.widgetSpeedSizeOptions).setVisibility(overlayVisibility);
+            speedReset.setVisibility(overlayVisibility);
+        }
         if (settings == rangeSettings) refreshRangeInfo();
     }
 
@@ -609,20 +616,8 @@ public final class WidgetsFragment extends Fragment {
     }
 
     private void setStockCardsHidden(Context context, boolean hidden) {
-        Intent intent = new Intent("com.flyme.auto.launcher.action.TOGGLE_AICY_WIDGET")
-                .setPackage(WidgetModes.STOCK_LAUNCHER)
-                .putExtra("is_hide", hidden);
-        try {
-            context.getPackageManager().getPackageInfo(WidgetModes.STOCK_LAUNCHER, 0);
-            context.sendOrderedBroadcast(intent, null);
-            Toast.makeText(context, R.string.widgets_stock_cards_sent, Toast.LENGTH_SHORT).show();
-        } catch (PackageManager.NameNotFoundException e) {
-            Toast.makeText(context, R.string.widgets_stock_cards_launcher_missing,
-                    Toast.LENGTH_SHORT).show();
-        } catch (SecurityException e) {
-            LogStore.add(context, "stock launcher cards command failed: " + e);
-            Toast.makeText(context, R.string.widgets_stock_cards_failed, Toast.LENGTH_SHORT).show();
-        }
+        Toast.makeText(context, StockLauncherCards.setHidden(context, hidden), Toast.LENGTH_SHORT)
+                .show();
     }
 
     private void updateNeighborHint(Prefs.OverlayPlacement placement) {
@@ -631,6 +626,14 @@ public final class WidgetsFragment extends Fragment {
     }
 
     private void setupSpeedControls() {
+        speedSizeGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+            if (!isChecked || binding) return;
+            int cells = checkedId == R.id.widgetSpeed4x4 ? 4
+                    : checkedId == R.id.widgetSpeed3x3 ? 3 : 2;
+            Context c = requireContext();
+            Prefs.setOverlaySpeedCells(c, cells);
+            OverlayWidgetService.restart(c);
+        });
         speedModeGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
             if (!isChecked || binding) return;
             Prefs.setSpeedMode(requireContext(), checkedId == R.id.widgetSpeedAnalog ? 1 : 0);
@@ -756,6 +759,16 @@ public final class WidgetsFragment extends Fragment {
             if (usesGlass(context)) OverlayWidgetService.restart(context);
             else OverlayWidgetService.requestUpdate(context);
             WidgetUpdateService.refreshOpacity(context);
+        });
+
+        clockSeconds.setChecked(Prefs.clockSeconds(c));
+        clockSeconds.setOnCheckedChangeListener((button, checked) -> {
+            if (binding) return;
+            Context context = requireContext();
+            Prefs.setClockSeconds(context, checked);
+            updateClockPreview();
+            ClockWidgetProvider.refreshAll(context);
+            OverlayWidgetService.requestUpdate(context);
         });
     }
 
@@ -1010,6 +1023,12 @@ public final class WidgetsFragment extends Fragment {
         fontGroup.check(Prefs.clockFont(c) == 1 ? R.id.clockFontCondensed : R.id.clockFontClassic);
         colorGroup.check(colorButton(Prefs.clockColor(c)));
         date.setChecked(Prefs.clockDate(c));
+        clockSeconds.setChecked(Prefs.clockSeconds(c));
+        speedSizeGroup.check(switch (Prefs.overlaySpeedCells(c)) {
+            case 4 -> R.id.widgetSpeed4x4;
+            case 3 -> R.id.widgetSpeed3x3;
+            default -> R.id.widgetSpeed2x2;
+        });
         speedModeGroup.check(Prefs.speedMode(c) == 1
                 ? R.id.widgetSpeedAnalog : R.id.widgetSpeedDigital);
         speedColorGroup.check(Prefs.speedColor(c) == 1 ? R.id.widgetSpeedColorBlack
@@ -1147,6 +1166,7 @@ public final class WidgetsFragment extends Fragment {
     private void updateClockPreview() {
         if (clockPreview == null || !isAdded()) return;
         Context c = requireContext();
+        ClockWidgetProvider.applyTimeFormat(clockPreview);
         Typeface typeface = Prefs.clockFont(c) == 1
                 ? Typeface.create("sans-serif-condensed", Typeface.NORMAL)
                 : Typeface.SERIF;

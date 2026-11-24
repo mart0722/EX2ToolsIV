@@ -465,12 +465,28 @@ public final class Prefs {
         get(c).edit().putString("widget_mode_launcher", pkg == null ? "" : pkg).apply();
     }
 
+    public static boolean stockLauncherCardsHidden(Context c) {
+        return get(c).getBoolean("stock_launcher_cards_hidden", false);
+    }
+
+    public static void setStockLauncherCardsHidden(Context c, boolean hidden) {
+        get(c).edit().putBoolean("stock_launcher_cards_hidden", hidden).apply();
+    }
+
     public static int speedMode(Context c) {
         return get(c).getInt("speed_mode", 0) == 1 ? 1 : 0;
     }
 
     public static void setSpeedMode(Context c, int mode) {
         get(c).edit().putInt("speed_mode", mode == 1 ? 1 : 0).apply();
+    }
+
+    public static int overlaySpeedCells(Context c) {
+        return Math.max(2, Math.min(4, get(c).getInt("overlay_speed_cells", 2)));
+    }
+
+    public static void setOverlaySpeedCells(Context c, int cells) {
+        get(c).edit().putInt("overlay_speed_cells", Math.max(2, Math.min(4, cells))).apply();
     }
 
     public static boolean speedBackground(Context c) {
@@ -908,6 +924,14 @@ public final class Prefs {
 
     public static void setClockDate(Context c, boolean value) {
         get(c).edit().putBoolean("clock_date", value).apply();
+    }
+
+    public static boolean clockSeconds(Context c) {
+        return get(c).getBoolean("clock_seconds", false);
+    }
+
+    public static void setClockSeconds(Context c, boolean value) {
+        get(c).edit().putBoolean("clock_seconds", value).apply();
     }
 
     public static boolean voiceEnabled(Context c) {
