@@ -40,6 +40,7 @@ import com.ex2tools.iv.ui.SoundsFragment;
 import com.ex2tools.iv.ui.StatusBarFragment;
 import com.ex2tools.iv.ui.VoiceFragment;
 import com.ex2tools.iv.ui.WidgetsFragment;
+import com.ex2tools.iv.widgets.StockLauncherCards;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -195,6 +196,12 @@ public final class MainActivity extends AppCompatActivity {
     public void openClimate() {
         if (!Prefs.climateEnabled(this)) return;
         show(10);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        StockLauncherCards.restoreOnStartup(this);
     }
 
     @Override
