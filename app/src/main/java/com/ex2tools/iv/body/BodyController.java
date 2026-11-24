@@ -17,8 +17,8 @@ public final class BodyController {
     public enum PowerOffResult { SENT, NOT_PARKED, UNAVAILABLE }
 
     enum WipersOnLockResult {
-        SENT, PARK_NOT_CONFIRMED, SPEED_UNAVAILABLE, VEHICLE_MOVING,
-        POSITION_UNAVAILABLE, ALREADY_RAISED, IGNITION_UNAVAILABLE, IGNITION_NOT_POWERED,
+        SENT, SENT_WITHOUT_POSITION, PARK_NOT_CONFIRMED, SPEED_UNAVAILABLE, VEHICLE_MOVING,
+        ALREADY_RAISED, IGNITION_UNAVAILABLE, IGNITION_NOT_POWERED,
         SIGNAL_EXPIRED, WRITE_REJECTED
     }
 
@@ -105,13 +105,15 @@ public final class BodyController {
         if (speed == null || !Float.isFinite(speed.floatValue())) return WipersOnLockResult.SPEED_UNAVAILABLE;
         if (speed.floatValue() != 0f) return WipersOnLockResult.VEHICLE_MOVING;
         Boolean raised = wiperServicePosition();
-        if (raised == null) return WipersOnLockResult.POSITION_UNAVAILABLE;
-        if (raised) return WipersOnLockResult.ALREADY_RAISED;
-        Boolean powered = Telemetry.decodeIgnitionOn(availableProperty(CarProps.IGNITION_STATE_VENDOR));
+        if (Boolean.TRUE.equals(raised)) return WipersOnLockResult.ALREADY_RAISED;
+        Boolean powered = Telemetry.ignitionOn();
         if (powered == null) return WipersOnLockResult.IGNITION_UNAVAILABLE;
         if (!powered) return WipersOnLockResult.IGNITION_NOT_POWERED;
         if (SystemClock.elapsedRealtimeNanos() > deadlineNs) return WipersOnLockResult.SIGNAL_EXPIRED;
-        return setWiperServicePosition(true) ? WipersOnLockResult.SENT : WipersOnLockResult.WRITE_REJECTED;
+        // Flyme maps true to the explicit service-position request (1). The current
+        // position is only needed to skip a redundant request.
+        if (!setWiperServicePosition(true)) return WipersOnLockResult.WRITE_REJECTED;
+        return raised == null ? WipersOnLockResult.SENT_WITHOUT_POSITION : WipersOnLockResult.SENT;
     }
 
     private boolean setWiperServicePosition(boolean active) {
