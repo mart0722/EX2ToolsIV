@@ -453,7 +453,7 @@ public final class WidgetsCommon {
         return result != null && result.ok();
     }
 
-    public static void setSeatHeat(Context c, int area, int level) {
+    public static com.ex2tools.iv.vehicle.CommandDispatcher.Result setSeatHeat(Context c, int area, int level) {
         int value = Math.max(0, Math.min(3, level));
         if (area == 4) {
             pendingSeatPassenger = value;
@@ -463,7 +463,7 @@ public final class WidgetsCommon {
             pendingSeatDriverAt = android.os.SystemClock.elapsedRealtime();
         }
         Prefs.setSavedSeatHeat(c, area, value);
-        ClimateController.get().setSeatHeat(area, value);
+        return ClimateController.get().setSeatHeat(area, value);
     }
 
     public static void stepVent(int direction) {
@@ -574,10 +574,10 @@ public final class WidgetsCommon {
         LogStore.add(c, "wheel heat: retry in D");
     }
 
-    public static void cycleSeat(Context c, int area) {
+    public static com.ex2tools.iv.vehicle.CommandDispatcher.Result cycleSeat(Context c, int area) {
         Integer current = readSeatHeat(area);
         int value = current == null ? 0 : Math.max(0, Math.min(3, current));
-        setSeatHeat(c, area, (value + 1) % 4);
+        return setSeatHeat(c, area, (value + 1) % 4);
     }
 
     public static int ventLabel(int mode) {
