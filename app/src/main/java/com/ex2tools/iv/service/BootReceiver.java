@@ -10,6 +10,7 @@ import com.ex2tools.iv.Prefs;
 import com.ex2tools.iv.servicemode.ServiceModeManager;
 import com.ex2tools.iv.screenshot.ScreenshotButtonService;
 import com.ex2tools.iv.status.StatusIconService;
+import com.ex2tools.iv.widgets.StockLauncherCards;
 
 public final class BootReceiver extends BroadcastReceiver {
 
@@ -17,6 +18,9 @@ public final class BootReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         String action = intent == null ? null : intent.getAction();
         LogStore.add(context, "boot receiver: " + action);
+
+        boolean userUnlocked = isUserUnlocked(context);
+        if (userUnlocked) StockLauncherCards.restoreOnStartup(context);
 
         ServiceModeManager.onBoot(context);
         if (Prefs.ttl65(context)) {
@@ -37,7 +41,7 @@ public final class BootReceiver extends BroadcastReceiver {
         StatusIconService.sync(context);
         ScreenshotButtonService.sync(context);
         com.ex2tools.iv.tasks.TaskManagerButtonService.sync(context);
-        if (isUserUnlocked(context)) {
+        if (userUnlocked) {
             com.ex2tools.iv.body.WipersOnLockService.sync(context);
             com.ex2tools.iv.widgets.WidgetUpdateService.sync(context);
             com.ex2tools.iv.widgets.OverlayWidgetService.sync(context);

@@ -465,6 +465,14 @@ public final class Prefs {
         get(c).edit().putString("widget_mode_launcher", pkg == null ? "" : pkg).apply();
     }
 
+    public static boolean stockLauncherCardsHidden(Context c) {
+        return get(c).getBoolean("stock_launcher_cards_hidden", false);
+    }
+
+    public static void setStockLauncherCardsHidden(Context c, boolean hidden) {
+        get(c).edit().putBoolean("stock_launcher_cards_hidden", hidden).apply();
+    }
+
     public static int speedMode(Context c) {
         return get(c).getInt("speed_mode", 0) == 1 ? 1 : 0;
     }

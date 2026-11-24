@@ -3,8 +3,6 @@ package com.ex2tools.iv.ui;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.Context;
-import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -36,6 +34,7 @@ import com.ex2tools.iv.state.VehicleState;
 import com.ex2tools.iv.widgets.ClockWidgetProvider;
 import com.ex2tools.iv.widgets.OverlayWidgetService;
 import com.ex2tools.iv.widgets.SpeedWidgetProvider;
+import com.ex2tools.iv.widgets.StockLauncherCards;
 import com.ex2tools.iv.widgets.WidgetModes;
 import com.ex2tools.iv.widgets.WidgetCatalog;
 import com.ex2tools.iv.widgets.WidgetIconSizes;
@@ -617,20 +616,8 @@ public final class WidgetsFragment extends Fragment {
     }
 
     private void setStockCardsHidden(Context context, boolean hidden) {
-        Intent intent = new Intent("com.flyme.auto.launcher.action.TOGGLE_AICY_WIDGET")
-                .setPackage(WidgetModes.STOCK_LAUNCHER)
-                .putExtra("is_hide", hidden);
-        try {
-            context.getPackageManager().getPackageInfo(WidgetModes.STOCK_LAUNCHER, 0);
-            context.sendOrderedBroadcast(intent, null);
-            Toast.makeText(context, R.string.widgets_stock_cards_sent, Toast.LENGTH_SHORT).show();
-        } catch (PackageManager.NameNotFoundException e) {
-            Toast.makeText(context, R.string.widgets_stock_cards_launcher_missing,
-                    Toast.LENGTH_SHORT).show();
-        } catch (SecurityException e) {
-            LogStore.add(context, "stock launcher cards command failed: " + e);
-            Toast.makeText(context, R.string.widgets_stock_cards_failed, Toast.LENGTH_SHORT).show();
-        }
+        Toast.makeText(context, StockLauncherCards.setHidden(context, hidden), Toast.LENGTH_SHORT)
+                .show();
     }
 
     private void updateNeighborHint(Prefs.OverlayPlacement placement) {
