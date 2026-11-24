@@ -6,6 +6,7 @@ import android.os.SystemClock;
 import android.util.Log;
 
 import com.ex2tools.iv.car.CarProps;
+import com.ex2tools.iv.car.Telemetry;
 import com.ex2tools.iv.vehicle.CommandDispatcher;
 import com.ex2tools.iv.vehicle.PropertySpec;
 import com.ex2tools.iv.vehicle.VhalGateway;
@@ -106,13 +107,8 @@ public final class BodyController {
         Boolean raised = wiperServicePosition();
         if (raised == null) return WipersOnLockResult.POSITION_UNAVAILABLE;
         if (raised) return WipersOnLockResult.ALREADY_RAISED;
-        CarPropertyValue<?> ignition = availableProperty(CarProps.IGNITION_STATE_VENDOR);
-        if (ignition == null || !(ignition.getValue() instanceof Integer state)) {
-            return WipersOnLockResult.IGNITION_UNAVAILABLE;
-        }
-        // Flyme maps raw OFF/ACC/ON to 2/3/4 when it returns the Android property ID.
-        boolean powered = ignition.getPropertyId() == CarProps.IGNITION_STATE
-                ? state == 4 || state == 5 : state == 2 || state == 4;
+        Boolean powered = Telemetry.decodeIgnitionOn(availableProperty(CarProps.IGNITION_STATE_VENDOR));
+        if (powered == null) return WipersOnLockResult.IGNITION_UNAVAILABLE;
         if (!powered) return WipersOnLockResult.IGNITION_NOT_POWERED;
         if (SystemClock.elapsedRealtimeNanos() > deadlineNs) return WipersOnLockResult.SIGNAL_EXPIRED;
         return setWiperServicePosition(true) ? WipersOnLockResult.SENT : WipersOnLockResult.WRITE_REJECTED;

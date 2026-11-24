@@ -81,7 +81,7 @@ public final class Telemetry {
                 : decodeIgnitionOn(gateway.readValue(CarProps.IGNITION_STATE, 0));
     }
 
-    private static Boolean decodeIgnitionOn(CarPropertyValue<?> value) {
+    public static Boolean decodeIgnitionOn(CarPropertyValue<?> value) {
         if (value == null || value.getStatus() != CarPropertyValue.STATUS_AVAILABLE
                 || !(value.getValue() instanceof Integer state)) {
             return null;
