@@ -9,7 +9,9 @@ import android.content.Intent;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
+import android.os.Process;
 import android.os.SystemClock;
+import android.util.Log;
 
 import androidx.core.content.ContextCompat;
 
@@ -21,17 +23,19 @@ import com.ex2tools.iv.servicemode.ServiceModeManager;
 import com.ex2tools.iv.vehicle.VhalGateway;
 
 public final class WipersOnLockService extends Service {
+    private static final String TAG = "WipersOnLock";
     private static final int IDLE = 0;
     private static final int LOCK = 1;
     private static final int UNLOCK = 3;
     private static final long MAX_EVENT_AGE_NS = 150_000_000L;
+    private static final long DUPLICATE_LOCK_GAP_NS = 1_000_000_000L;
 
     private final VhalGateway gateway = VhalGateway.get();
     private HandlerThread eventThread;
     private Handler handler;
     private Car connection;
     private CarPropertyManager manager;
-    private boolean lockHandled;
+    private long lastLockNs = -1L;
     private long listenFromNs;
     private long lastRequestNs;
     private volatile boolean stopping;
@@ -49,16 +53,16 @@ public final class WipersOnLockService extends Service {
                         listenFromNs = SystemClock.elapsedRealtimeNanos();
                         if (current.registerCallback(callback, CarProps.ALL_DOORS_LOCK_REQUEST, 0f)) {
                             manager = current;
-                            LogStore.add(WipersOnLockService.this, "wipers on lock: subscribed");
+                            log("subscribed pid=" + Process.myPid());
                             return;
                         }
                     }
                 } catch (LinkageError e) {
-                    LogStore.add(WipersOnLockService.this, "wipers on lock unsupported: " + e);
+                    log("unsupported: " + e);
                     stopSelf();
                     return;
                 } catch (RuntimeException e) {
-                    LogStore.add(WipersOnLockService.this, "wipers on lock subscription: " + e);
+                    log("subscription failed: " + e);
                 }
             }
             handler.postDelayed(this, 2000L);
@@ -79,32 +83,52 @@ public final class WipersOnLockService extends Service {
 
                 @Override
                 public void onErrorEvent(int propertyId, int areaId) {
+                    if (!stopping && propertyId == CarProps.ALL_DOORS_LOCK_REQUEST) {
+                        log("property error area=" + areaId);
+                    }
                 }
             };
 
     private void handleRequest(int request, long timestamp) {
         if (request != IDLE && request != LOCK && request != UNLOCK) return;
         long age = SystemClock.elapsedRealtimeNanos() - timestamp;
-        if (timestamp < listenFromNs || timestamp <= lastRequestNs || age < 0L) return;
+        if (timestamp < listenFromNs || timestamp <= lastRequestNs || age < 0L) {
+            if (request == LOCK) {
+                log("ignored lock timestamp, age=" + age / 1_000_000L + " ms");
+            }
+            return;
+        }
         lastRequestNs = timestamp;
 
         // The request returns to neutral after each pulse. That transition can arrive
         // after the actuation window and still ends the current pulse.
         if (request == IDLE || request == UNLOCK) {
-            lockHandled = false;
+            if (lastLockNs >= 0L) log("pulse reset by request=" + request);
+            lastLockNs = -1L;
             return;
         }
         if (age > MAX_EVENT_AGE_NS) {
-            LogStore.add(this, "wipers on lock: stale signal age=" + age / 1_000_000L + " ms");
+            log("stale signal age=" + age / 1_000_000L + " ms");
             return;
         }
-        if (lockHandled || !enabled(this)) return;
-        lockHandled = true;
+        if (!enabled(this)) return;
+        // A missing neutral event must not block a later lock. Consecutive reports
+        // still count as one pulse while they arrive within the gap.
+        long previousLockNs = lastLockNs;
+        lastLockNs = timestamp;
+        if (previousLockNs >= 0L && timestamp - previousLockNs < DUPLICATE_LOCK_GAP_NS) {
+            log("skipped duplicate lock, age=" + age / 1_000_000L + " ms");
+            return;
+        }
         BodyController.WipersOnLockResult result =
                 BodyController.get().raiseWipersOnLock(timestamp + MAX_EVENT_AGE_NS);
         long elapsed = (SystemClock.elapsedRealtimeNanos() - timestamp) / 1_000_000L;
-        LogStore.add(this, "wipers on lock: " + result
-                + ", received=" + age / 1_000_000L + " ms, completed=" + elapsed + " ms");
+        log(result + ", received=" + age / 1_000_000L + " ms, completed=" + elapsed + " ms");
+    }
+
+    private void log(String message) {
+        Log.i(TAG, message);
+        LogStore.add(this, "wipers on lock: " + message);
     }
 
     private static boolean enabled(Context context) {
@@ -130,6 +154,7 @@ public final class WipersOnLockService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        log("service created pid=" + Process.myPid());
         eventThread = new HandlerThread("ex2-wipers-on-lock");
         eventThread.start();
         handler = new Handler(eventThread.getLooper());
@@ -138,6 +163,7 @@ public final class WipersOnLockService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         startForeground(NotificationHelper.ID_WIPERS_ON_LOCK, NotificationHelper.wipersOnLock(this));
+        if (intent == null) log("sticky restart pid=" + Process.myPid());
         if (!enabled(this)) {
             stopSelf();
             return START_NOT_STICKY;
@@ -150,6 +176,7 @@ public final class WipersOnLockService extends Service {
     @Override
     public void onDestroy() {
         stopping = true;
+        log("service destroyed pid=" + Process.myPid());
         handler.removeCallbacksAndMessages(null);
         handler.post(() -> {
             try {
