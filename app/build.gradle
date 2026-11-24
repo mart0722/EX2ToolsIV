@@ -7,6 +7,20 @@ def platformStorePassword = project.findProperty('EX2_STORE_PASSWORD') ?: System
 def platformKeyAlias = project.findProperty('EX2_KEY_ALIAS') ?: System.getenv('EX2_KEY_ALIAS') ?: 'platform'
 def platformKeyPassword = project.findProperty('EX2_KEY_PASSWORD') ?: System.getenv('EX2_KEY_PASSWORD') ?: ''
 
+def steeringPatchApk = rootProject.file('build/steering/GeelyAutoKeyServer-climate.apk')
+def steeringOriginalApk = rootProject.file('build/steering-backup/GeelyAutoKeyServer-original.apk')
+def steeringAssets = layout.buildDirectory.dir('generated/steeringPatchAssets')
+def prepareSteeringPatchAssets = tasks.register('prepareSteeringPatchAssets') {
+    inputs.files(steeringPatchApk, steeringOriginalApk)
+    outputs.dir(steeringAssets)
+    doLast {
+        project.sync {
+            from([steeringPatchApk, steeringOriginalApk]) { into 'steering' }
+            into steeringAssets.get().asFile
+        }
+    }
+}
+
 android {
     namespace 'com.ex2tools.iv'
     compileSdk 34
@@ -60,6 +74,12 @@ android {
         abortOnError false
         checkReleaseBuilds false
     }
+
+    sourceSets.main.assets.srcDir(steeringAssets)
+}
+
+tasks.matching { it.name == 'preBuild' }.configureEach {
+    dependsOn(prepareSteeringPatchAssets)
 }
 
 dependencies {

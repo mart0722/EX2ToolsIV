@@ -170,6 +170,11 @@ public final class AppsRepository {
     }
 
     public static void install(Context context, File apk, ApkInfo info) throws Exception {
+        install(context, apk, info, "install");
+        apk.delete();
+    }
+
+    public static void install(Context context, File apk, ApkInfo info, String mode) throws Exception {
         Context c = context.getApplicationContext();
         PackageManager pm = c.getPackageManager();
         PackageInstaller installer = pm.getPackageInstaller();
@@ -182,8 +187,8 @@ public final class AppsRepository {
         }
 
         int sessionId = installer.createSession(params);
-        PackageInstaller.Session session = installer.openSession(sessionId);
-        try {
+        boolean committed = false;
+        try (PackageInstaller.Session session = installer.openSession(sessionId)) {
             try (InputStream in = new FileInputStream(apk);
                  OutputStream out = session.openWrite("base.apk", 0, apk.length())) {
                 byte[] buffer = new byte[64 * 1024];
@@ -197,15 +202,22 @@ public final class AppsRepository {
 
             Intent result = new Intent(c, InstallResultReceiver.class)
                     .setAction(Actions.APP_INSTALL_RESULT)
+                    .setData(android.net.Uri.fromParts("install-session", String.valueOf(sessionId), null))
                     .putExtra(Actions.EXTRA_PACKAGE, info.packageName)
-                    .putExtra(Actions.EXTRA_MODE, "install");
+                    .putExtra(Actions.EXTRA_MODE, mode);
             PendingIntent pending = PendingIntent.getBroadcast(c, nextRequestCode(), result,
                     pendingFlags());
             session.commit(pending.getIntentSender());
+            committed = true;
             LogStore.add(c, "install requested: " + info.packageName + " v" + info.versionCode);
-            if (apk.exists()) apk.delete();
         } finally {
-            session.close();
+            if (!committed) {
+                try {
+                    installer.abandonSession(sessionId);
+                } catch (RuntimeException e) {
+                    LogStore.add(c, "installer abandon failed: " + e);
+                }
+            }
         }
     }
 

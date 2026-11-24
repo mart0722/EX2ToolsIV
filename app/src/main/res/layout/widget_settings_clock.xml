@@ -14,6 +14,14 @@
         android:textColor="@color/flyme_label_level1"
         android:textSize="22sp" />
 
+    <com.ex2tools.iv.ui.FlymeSwitchRow
+        android:id="@+id/clockSeconds"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/widgets_clock_seconds"
+        android:textColor="@color/flyme_label_level1"
+        android:textSize="22sp" />
+
     <TextView
         style="@style/Text.EX2.Section"
         android:layout_width="match_parent"
@@ -111,6 +119,7 @@
             android:format24Hour="HH:mm"
             android:gravity="center"
             android:includeFontPadding="false"
+            android:maxLines="1"
             android:textColor="@color/clock_text"
             android:textSize="48sp"
             android:textStyle="bold" />

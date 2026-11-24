@@ -6,8 +6,10 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.TypedValue;
 import android.widget.RemoteViews;
+import android.widget.TextClock;
 
 import androidx.core.content.ContextCompat;
 
@@ -21,6 +23,7 @@ import java.util.Locale;
 public class ClockWidgetProvider extends AppWidgetProvider {
 
     static final float GLASS_DATE_TEXT_SP = 13f;
+    static final float TIME_TEXT_SP = 42f;
     static final float LARGE_TIME_TEXT_SP = 72f;
     static final float LARGE_DATE_TEXT_SP = 20f;
 
@@ -58,6 +61,7 @@ public class ClockWidgetProvider extends AppWidgetProvider {
         int font = Prefs.clockFont(context);
         int color = color(context);
         boolean date = forceDate || Prefs.clockDate(context);
+        String timeFormat = timeFormat(context);
         int layout;
         if (date) {
             layout = font == 1
@@ -72,6 +76,8 @@ public class ClockWidgetProvider extends AppWidgetProvider {
             int background = WidgetsCommon.bgDrawableResForPct(context);
             views.setInt(R.id.widget_bg_layer, "setBackgroundResource", background);
             views.setTextColor(R.id.clockTime, color);
+            views.setCharSequence(R.id.clockTime, "setFormat12Hour", timeFormat);
+            views.setCharSequence(R.id.clockTime, "setFormat24Hour", timeFormat);
             if (date) {
                 views.setTextColor(R.id.clockDate, color);
                 views.setTextViewText(R.id.clockDate, dateText);
@@ -79,7 +85,7 @@ public class ClockWidgetProvider extends AppWidgetProvider {
             WidgetGrid.Slot slot = WidgetGrid.appWidgetSlot(context, manager, id,
                     large ? R.layout.widget_clock_large : layout);
             views.setTextViewTextSize(R.id.clockTime, TypedValue.COMPLEX_UNIT_SP,
-                    (large ? LARGE_TIME_TEXT_SP : 42f) * slot.scale());
+                    (large ? LARGE_TIME_TEXT_SP : TIME_TEXT_SP) * slot.scale());
             if (date) {
                 float dateSp = large ? LARGE_DATE_TEXT_SP
                         : (WidgetAppearance.usesGlass(context) ? GLASS_DATE_TEXT_SP : 18f);
@@ -88,6 +94,18 @@ public class ClockWidgetProvider extends AppWidgetProvider {
             }
             manager.updateAppWidget(id, slot.wrap(context, views));
         }
+    }
+
+    public static void applyTimeFormat(TextClock clock) {
+        String format = timeFormat(clock.getContext());
+        if (TextUtils.equals(format, clock.getFormat12Hour())
+                && TextUtils.equals(format, clock.getFormat24Hour())) return;
+        clock.setFormat12Hour(format);
+        clock.setFormat24Hour(format);
+    }
+
+    private static String timeFormat(Context context) {
+        return Prefs.clockSeconds(context) ? "HH:mm:ss" : "HH:mm";
     }
 
     static String dateText() {

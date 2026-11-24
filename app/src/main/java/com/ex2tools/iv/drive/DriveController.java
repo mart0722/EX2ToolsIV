@@ -65,6 +65,13 @@ public final class DriveController {
         return setDrive(step(DRIVE_ORDER, base, direction));
     }
 
+    public CommandDispatcher.Result cycleDrive(Context context) {
+        int next = nextInCycle(DRIVE_ORDER, freshDrive(), Prefs.drive(context));
+        CommandDispatcher.Result result = setDrive(next);
+        if (result.ok()) Prefs.setDrive(context, next);
+        return result;
+    }
+
     public CommandDispatcher.Result setRegen(int mode) {
         if (mode != CarProps.REGEN_WEAK
                 && mode != CarProps.REGEN_MEDIUM
@@ -78,6 +85,13 @@ public final class DriveController {
         Integer current = currentRegen();
         int base = current == null ? CarProps.REGEN_MEDIUM : current;
         return setRegen(step(REGEN_ORDER, base, direction));
+    }
+
+    public CommandDispatcher.Result cycleRegen(Context context) {
+        int next = nextInCycle(REGEN_ORDER, freshRegen(), Prefs.regen(context));
+        CommandDispatcher.Result result = setRegen(next);
+        if (result.ok()) Prefs.setRegen(context, next);
+        return result;
     }
 
     /** Фактический режим движения (из VehicleState, иначе прямое чтение). */
@@ -185,6 +199,14 @@ public final class DriveController {
         }
         if (index < 0) index = order.length / 2;
         return order[Math.max(0, Math.min(order.length - 1, index + direction))];
+    }
+
+    private static int nextInCycle(int[] order, Integer current, int saved) {
+        int base = current == null ? saved : current;
+        for (int i = 0; i < order.length; i++) {
+            if (order[i] == base) return order[(i + 1) % order.length];
+        }
+        return order[0];
     }
 
     /** Результат применения: что отправили, что прочитали, совпало ли. */
