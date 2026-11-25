@@ -26,7 +26,7 @@
             android:autoSizeMinTextSize="12sp"
             android:autoSizeStepGranularity="2sp"
             android:autoSizeTextType="uniform"
-            android:fontFamily="sans-serif-medium"
+            android:fontFamily="sans-serif-light"
             android:format12Hour="HH:mm"
             android:format24Hour="HH:mm"
             android:gravity="center"

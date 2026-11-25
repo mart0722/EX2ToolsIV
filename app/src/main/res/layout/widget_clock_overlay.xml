@@ -33,7 +33,7 @@
             android:maxLines="1"
             android:textColor="@color/wg_text"
             android:textSize="42sp"
-            android:fontFamily="sans-serif-medium" />
+            android:fontFamily="sans-serif-light" />
 
         <TextView
             android:id="@+id/clockDate"
