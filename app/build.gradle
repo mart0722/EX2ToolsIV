@@ -7,15 +7,23 @@ def platformStorePassword = project.findProperty('EX2_STORE_PASSWORD') ?: System
 def platformKeyAlias = project.findProperty('EX2_KEY_ALIAS') ?: System.getenv('EX2_KEY_ALIAS') ?: 'platform'
 def platformKeyPassword = project.findProperty('EX2_KEY_PASSWORD') ?: System.getenv('EX2_KEY_PASSWORD') ?: ''
 
-def steeringPatchApk = rootProject.file('build/steering/GeelyAutoKeyServer-climate.apk')
-def steeringOriginalApk = rootProject.file('build/steering-backup/GeelyAutoKeyServer-original.apk')
+def steeringPatchDir = rootProject.file('build/steering')
+def steeringOriginalDir = rootProject.file('build/steering-backup')
 def steeringAssets = layout.buildDirectory.dir('generated/steeringPatchAssets')
 def prepareSteeringPatchAssets = tasks.register('prepareSteeringPatchAssets') {
-    inputs.files(steeringPatchApk, steeringOriginalApk)
+    inputs.files(fileTree(steeringPatchDir) { include '*.apk' },
+            fileTree(steeringOriginalDir) { include '*.apk' })
     outputs.dir(steeringAssets)
     doLast {
         project.sync {
-            from([steeringPatchApk, steeringOriginalApk]) { into 'steering' }
+            from(steeringPatchDir) {
+                include '*.apk'
+                into 'steering'
+            }
+            from(steeringOriginalDir) {
+                include '*.apk'
+                into 'steering'
+            }
             into steeringAssets.get().asFile
         }
     }
@@ -30,8 +38,8 @@ android {
         applicationId 'com.ex2tools.iv'
         minSdk 28
         targetSdk 29
-        versionCode 119
-        versionName '2.2.2'
+        versionCode 120
+        versionName '2.3.0'
         resConfigs 'ru'
         ndk {
             abiFilters 'arm64-v8a'

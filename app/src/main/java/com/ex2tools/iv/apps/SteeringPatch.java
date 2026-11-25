@@ -20,18 +20,49 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Locale;
 
+/**
+ * Installs/restores the patched GeelyAutoKeyServer.
+ *
+ * Patches are full keyserver APKs, so each supported keyserver build needs its
+ * own pair. Selection is by installed versionCode + SHA-256 of the installed
+ * APK, never by firmware name alone. The original APK is backed up before the
+ * first install; an optional bundled original can be used for offline restore.
+ */
 public final class SteeringPatch {
     public static final String PACKAGE = "com.flyme.auto.keyserver";
     static final String INSTALL = "steering_patch_install";
     static final String RESTORE = "steering_patch_restore";
 
-    private static final long VERSION = 26052410L;
-    private static final String ORIGINAL_NAME = "GeelyAutoKeyServer-original.apk";
-    private static final String PATCH_NAME = "GeelyAutoKeyServer-climate.apk";
-    private static final String ORIGINAL_HASH = "62b94ffa72e5e4bb81fce4882750530089cab94fcb286c1fcea288f71781fa73";
-    private static final String PATCH_HASH = "ce2261a1eb5efd2829fff337332da148240c1daf73868d78cf18982052b7afa4";
+    private static final String ASSET_DIR = "steering";
+    private static final String BACKUP_PREFIX = "GeelyAutoKeyServer-original-";
 
-    private SteeringPatch() {}
+    private record Patch(long version, String originalAsset, String originalHash,
+                         String patchAsset, String patchHash) {
+        boolean hasPatch() {
+            return patchHash != null && !patchHash.isEmpty();
+        }
+    }
+
+    private record Installed(long version, File apk) {
+    }
+
+    private static final Patch[] PATCHES = {
+            // IHU629G 1114 (and 1111 if its keyserver APK is identical).
+            new Patch(26030420L,
+                    "GeelyAutoKeyServer-26030420-586cd35d-original.apk",
+                    "586CD35D9C7DE0BBADDED94B4F9378FDB720CC78DBB544626A041F6D70FACFBA",
+                    "GeelyAutoKeyServer-26030420-586cd35d-climate.apk",
+                    "58493A9F5A76A94FC29CA02593B59F66FCDFE6E4C6CCE989A689F6244DC72E3C"),
+            // IHU629G 1121 (patch supplied by nicola1223).
+            new Patch(26052410L,
+                    "GeelyAutoKeyServer-26052410-62b94ffa-original.apk",
+                    "62B94FFA72E5E4BB81FCE4882750530089CAB94FCB286C1FCEA288F71781FA73",
+                    "GeelyAutoKeyServer-26052410-62b94ffa-climate.apk",
+                    "CE2261A1EB5EFD2829FFF337332DA148240C1DAF73868D78CF18982052B7AFA4")
+    };
+
+    private SteeringPatch() {
+    }
 
     public record State(int message, boolean canInstall, boolean canRestore, boolean patched) {
         public boolean busy() {
@@ -44,18 +75,27 @@ public final class SteeringPatch {
             if (hasPendingInstall(context)) {
                 return new State(R.string.steering_patch_busy, false, false, false);
             }
-            File installedApk = findInstalledApk(context);
-            String hash = installedApk == null ? "" : sha256(installedApk);
-            if (ORIGINAL_HASH.equals(hash)) {
-                boolean hasPatch = hasAsset(context, PATCH_NAME);
+            Installed installed = findInstalled(context);
+            if (installed == null) {
+                return new State(R.string.steering_patch_service_missing, false, false, false);
+            }
+            String hash = sha256(installed.apk());
+
+            Patch original = findOriginal(installed.version(), hash);
+            if (original != null) {
+                boolean hasPatch = original.hasPatch() && hasAsset(context, original.patchAsset());
                 return new State(hasPatch ? R.string.steering_patch_stock
                         : R.string.steering_patch_missing_asset, hasPatch, false, false);
             }
-            if (PATCH_HASH.equals(hash)) {
-                boolean canRestore = hasBackup(context) || hasAsset(context, ORIGINAL_NAME);
+
+            Patch patched = findPatched(installed.version(), hash);
+            if (patched != null) {
+                boolean canRestore = hasBackup(context, patched)
+                        || hasAsset(context, patched.originalAsset());
                 return new State(canRestore ? R.string.steering_patch_installed
                         : R.string.steering_patch_missing_backup, false, canRestore, true);
             }
+
             return new State(R.string.steering_patch_unsupported, false, false, false);
         } catch (PackageManager.NameNotFoundException e) {
             return new State(R.string.steering_patch_service_missing, false, false, false);
@@ -67,83 +107,126 @@ public final class SteeringPatch {
 
     public static synchronized void change(Context context, boolean install) throws Exception {
         if (hasPendingInstall(context)) throw new IOException("Keyserver install already pending");
-        File installedApk = findInstalledApk(context);
-        String expectedInstalled = install ? ORIGINAL_HASH : PATCH_HASH;
-        if (installedApk == null || !expectedInstalled.equals(sha256(installedApk))) {
-            throw new IOException("Unexpected installed keyserver APK");
-        }
 
-        AtomicFile backup = backupFile(context);
-        if (!hasBackup(context)) {
-            try (InputStream original = install ? new FileInputStream(installedApk)
-                    : openAsset(context, ORIGINAL_NAME)) {
-                saveBackup(backup, original);
-            }
-        }
+        Installed installed = findInstalled(context);
+        if (installed == null) throw new IOException("Keyserver APK unavailable");
+        String currentHash = sha256(installed.apk());
 
-        File replacement = install ? File.createTempFile("keyserver-patch-", ".apk", context.getCacheDir())
-                : backup.getBaseFile();
-        try {
-            if (install) {
-                try (InputStream in = openAsset(context, PATCH_NAME);
-                     OutputStream out = new FileOutputStream(replacement)) {
-                    copy(in, out, null);
-                }
+        Patch patch = install ? findOriginal(installed.version(), currentHash)
+                : findPatched(installed.version(), currentHash);
+        if (patch == null) throw new IOException("Unexpected installed keyserver APK");
+
+        AtomicFile backup = backupFile(context, patch);
+        File replacement;
+        boolean temporary = false;
+        if (install) {
+            if (!patch.hasPatch() || !hasAsset(context, patch.patchAsset())) {
+                throw new IOException("Patch APK is not bundled");
             }
-            if (!(install ? PATCH_HASH : ORIGINAL_HASH).equals(sha256(replacement))) {
+            if (!hasBackup(context, patch)) {
+                saveBackup(context, patch, installed.apk());
+            }
+            replacement = File.createTempFile("keyserver-patch-", ".apk", context.getCacheDir());
+            temporary = true;
+            copyAsset(context, patch.patchAsset(), replacement);
+            if (!patch.patchHash().equalsIgnoreCase(sha256(replacement))) {
                 throw new IOException("Unexpected replacement APK checksum");
             }
+        } else {
+            if (hasBackup(context, patch)) {
+                replacement = backup.getBaseFile();
+            } else if (hasAsset(context, patch.originalAsset())) {
+                replacement = File.createTempFile("keyserver-original-", ".apk", context.getCacheDir());
+                temporary = true;
+                copyAsset(context, patch.originalAsset(), replacement);
+            } else {
+                throw new IOException("Original keyserver backup is missing");
+            }
+            if (!patch.originalHash().equalsIgnoreCase(sha256(replacement))) {
+                throw new IOException("Unexpected original APK checksum");
+            }
+        }
+
+        try {
             ApkInfo info = AppsRepository.inspect(context, replacement);
-            if (!PACKAGE.equals(info.packageName) || info.versionCode != VERSION
-                    || !info.installed || info.installedVersionCode != VERSION
-                    || "—".equals(info.signer) || !info.signer.equals(info.installedSigner)) {
+            if (!PACKAGE.equals(info.packageName) || info.versionCode != patch.version()
+                    || !info.installed || info.installedVersionCode != patch.version()
+                    || "?".equals(info.signer) || !info.signer.equals(info.installedSigner)) {
                 throw new IOException("Unexpected keyserver package, version or certificate");
             }
-            File current = findInstalledApk(context);
-            if (!installedApk.equals(current) || !expectedInstalled.equals(sha256(current))) {
+
+            Installed current = findInstalled(context);
+            if (current == null || !installed.apk().equals(current.apk())
+                    || !currentHash.equalsIgnoreCase(sha256(current.apk()))) {
                 throw new IOException("The keyserver APK changed while preparing installation");
             }
+
             AppsRepository.install(context, replacement, info, install ? INSTALL : RESTORE);
         } finally {
-            if (install) replacement.delete();
+            if (temporary) replacement.delete();
         }
+    }
+
+    private static Patch findOriginal(long version, String hash) {
+        for (Patch patch : PATCHES) {
+            if (patch.version() == version && patch.originalHash().equalsIgnoreCase(hash)) {
+                return patch;
+            }
+        }
+        return null;
+    }
+
+    private static Patch findPatched(long version, String hash) {
+        for (Patch patch : PATCHES) {
+            if (patch.version() == version && patch.hasPatch()
+                    && patch.patchHash().equalsIgnoreCase(hash)) {
+                return patch;
+            }
+        }
+        return null;
     }
 
     private static boolean hasPendingInstall(Context context) {
         PackageInstaller installer = context.getPackageManager().getPackageInstaller();
         for (PackageInstaller.SessionInfo session : installer.getMySessions()) {
-            if (PACKAGE.equals(session.getAppPackageName()) && (session.isActive() || session.isSealed())) {
+            if (PACKAGE.equals(session.getAppPackageName())
+                    && (session.isActive() || session.isSealed())) {
                 return true;
             }
         }
         return false;
     }
 
-    private static File findInstalledApk(Context context) throws PackageManager.NameNotFoundException {
+    private static Installed findInstalled(Context context) throws PackageManager.NameNotFoundException {
         PackageInfo info = context.getPackageManager().getPackageInfo(PACKAGE, 0);
         ApplicationInfo app = info.applicationInfo;
-        if (info.getLongVersionCode() != VERSION || app == null || app.sourceDir == null
+        if (app == null || app.sourceDir == null
                 || (app.splitSourceDirs != null && app.splitSourceDirs.length > 0)) {
             return null;
         }
-        return new File(app.sourceDir);
+        return new Installed(info.getLongVersionCode(), new File(app.sourceDir));
     }
 
-    private static AtomicFile backupFile(Context context) {
-        return new AtomicFile(new File(context.getFilesDir(), ORIGINAL_NAME));
+    private static AtomicFile backupFile(Context context, Patch patch) {
+        String name = BACKUP_PREFIX + patch.version() + "-"
+                + patch.originalHash().substring(0, 8).toLowerCase(Locale.ROOT) + ".apk";
+        return new AtomicFile(new File(context.getFilesDir(), name));
     }
 
-    private static boolean hasBackup(Context context) throws IOException {
-        File file = backupFile(context).getBaseFile();
-        return file.isFile() && ORIGINAL_HASH.equals(sha256(file));
+    private static boolean hasBackup(Context context, Patch patch) throws IOException {
+        File file = backupFile(context, patch).getBaseFile();
+        return file.isFile() && patch.originalHash().equalsIgnoreCase(sha256(file));
     }
 
-    private static void saveBackup(AtomicFile backup, InputStream original) throws IOException {
+    private static void saveBackup(Context context, Patch patch, File installed) throws IOException {
+        AtomicFile backup = backupFile(context, patch);
         FileOutputStream out = backup.startWrite();
         try {
             MessageDigest digest = newDigest();
-            copy(original, out, digest);
-            if (!ORIGINAL_HASH.equals(hex(digest.digest()))) {
+            try (InputStream original = new FileInputStream(installed)) {
+                copy(original, out, digest);
+            }
+            if (!patch.originalHash().equalsIgnoreCase(hex(digest.digest()))) {
                 throw new IOException("Original APK checksum does not match");
             }
             out.getFD().sync();
@@ -152,7 +235,7 @@ public final class SteeringPatch {
             throw e;
         }
         backup.finishWrite(out);
-        if (!ORIGINAL_HASH.equals(sha256(backup.getBaseFile()))) {
+        if (!hasBackup(context, patch)) {
             throw new IOException("Original APK backup could not be verified");
         }
     }
@@ -166,7 +249,14 @@ public final class SteeringPatch {
     }
 
     private static InputStream openAsset(Context context, String name) throws IOException {
-        return context.getAssets().open("steering/" + name);
+        return context.getAssets().open(ASSET_DIR + "/" + name);
+    }
+
+    private static void copyAsset(Context context, String name, File target) throws IOException {
+        try (InputStream in = openAsset(context, name);
+             OutputStream out = new FileOutputStream(target)) {
+            copy(in, out, null);
+        }
     }
 
     private static String sha256(File file) throws IOException {
