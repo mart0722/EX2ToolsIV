@@ -115,6 +115,26 @@
                             android:text="@string/widgets_climate_icons_thin" />
 
                         <com.google.android.material.button.MaterialButton
+                            android:id="@+id/widgetClimateIconChrome"
+                            style="@style/Widget.EX2.Toggle"
+                            android:layout_width="0dp"
+                            android:layout_height="56dp"
+                            android:layout_weight="1"
+                            android:minWidth="0dp"
+                            android:paddingStart="2dp"
+                            android:paddingEnd="2dp"
+                            android:textSize="14sp"
+                            android:text="@string/widgets_climate_icons_chrome" />
+                    </com.ex2tools.iv.ui.FlymeSegmentedGroup>
+
+                    <com.ex2tools.iv.ui.FlymeSegmentedGroup
+                        android:id="@+id/widgetClimateIconChromeWeight"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:visibility="gone">
+
+                        <com.google.android.material.button.MaterialButton
                             android:id="@+id/widgetClimateIconChromeThin"
                             style="@style/Widget.EX2.Toggle"
                             android:layout_width="0dp"
@@ -127,7 +147,7 @@
                             android:text="@string/widgets_climate_icons_chrome_thin" />
 
                         <com.google.android.material.button.MaterialButton
-                            android:id="@+id/widgetClimateIconChrome"
+                            android:id="@+id/widgetClimateIconChromeBold"
                             style="@style/Widget.EX2.Toggle"
                             android:layout_width="0dp"
                             android:layout_height="56dp"
@@ -136,7 +156,7 @@
                             android:paddingStart="2dp"
                             android:paddingEnd="2dp"
                             android:textSize="14sp"
-                            android:text="@string/widgets_climate_icons_chrome" />
+                            android:text="@string/widgets_climate_icons_chrome_bold" />
                     </com.ex2tools.iv.ui.FlymeSegmentedGroup>
 
                     <com.ex2tools.iv.ui.FlymeSwitchRow

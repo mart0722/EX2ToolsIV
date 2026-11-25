@@ -871,8 +871,9 @@
     <string name="widgets_climate_icons_title">Стиль виджетов</string>
     <string name="widgets_climate_icons_standard">Стандарт</string>
     <string name="widgets_climate_icons_thin">Тонкие</string>
-    <string name="widgets_climate_icons_chrome_thin">Хром</string>
-    <string name="widgets_climate_icons_chrome">Хром жирный</string>
+    <string name="widgets_climate_icons_chrome">Хром</string>
+    <string name="widgets_climate_icons_chrome_thin">Тонкий</string>
+    <string name="widgets_climate_icons_chrome_bold">Жирный</string>
     <string name="widgets_vent_settings">Настройки обдува</string>
     <string name="widgets_global_size">Общий размер виджетов</string>
     <string name="widgets_glass_scale">Размер виджетов</string>
