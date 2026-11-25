@@ -152,6 +152,15 @@ final class WidgetAppearance {
         };
     }
 
+    static int regenIconTint(Context c, boolean active) {
+        if (active) return c.getColor(R.color.wg_glass_green_ink);
+        return usesGlass(c) ? Color.TRANSPARENT : c.getColor(R.color.wg_text);
+    }
+
+    static int regenIconAlpha(boolean active) {
+        return active ? 255 : 200;
+    }
+
     static int chipTextColor(Context c, boolean active, int accent) {
         if (!active || !usesGlass(c)) return c.getColor(R.color.wg_text);
         return c.getColor(switch (accent) {
