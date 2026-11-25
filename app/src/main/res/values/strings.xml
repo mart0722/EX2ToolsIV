@@ -415,7 +415,7 @@
     <string name="widgets_clock_color">Цвет</string>
     <string name="widgets_clock_hint">Добавляйте виджеты долгим нажатием на рабочем столе → Виджеты</string>
     <string name="widgets_percent_fmt">%1$d%%</string>
-    <string name="widget_clock_font_classic">Классический</string>
+    <string name="widget_clock_font_classic">Как на блокировке</string>
     <string name="widget_clock_font_condensed">Узкий</string>
     <string name="widget_clock_color_auto">Авто</string>
     <string name="widget_clock_color_white">Белый</string>

@@ -1186,7 +1186,7 @@ public final class WidgetsFragment extends Fragment {
         ClockWidgetProvider.applyTimeFormat(clockPreview);
         Typeface typeface = Prefs.clockFont(c) == 1
                 ? Typeface.create("sans-serif-condensed", Typeface.NORMAL)
-                : Typeface.SERIF;
+                : Typeface.create("sans-serif-light", Typeface.NORMAL);
         clockPreview.setTypeface(typeface);
         int color;
         switch (Prefs.clockColor(c)) {
@@ -1202,7 +1202,10 @@ public final class WidgetsFragment extends Fragment {
         }
         clockPreview.setTextColor(color);
         if (clockDatePreview != null) {
-            clockDatePreview.setTypeface(typeface);
+            Typeface dateTypeface = Prefs.clockFont(c) == 1
+                    ? Typeface.create("sans-serif-condensed", Typeface.NORMAL)
+                    : Typeface.create("sans-serif", Typeface.NORMAL);
+            clockDatePreview.setTypeface(dateTypeface);
             clockDatePreview.setTextColor(color);
             clockDatePreview.setText(dateText());
             clockDatePreview.setVisibility(Prefs.clockDate(c) ? View.VISIBLE : View.GONE);

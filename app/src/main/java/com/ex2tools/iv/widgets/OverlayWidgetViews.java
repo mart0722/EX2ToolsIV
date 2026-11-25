@@ -653,7 +653,7 @@ final class OverlayWidgetViews {
                 : c.getColor(R.color.clock_text);
         String dateText = ClockWidgetProvider.dateText();
         android.graphics.Typeface typeface = android.graphics.Typeface.create(
-                Prefs.clockFont(c) == 1 ? "sans-serif-condensed" : "sans-serif-medium",
+                Prefs.clockFont(c) == 1 ? "sans-serif-condensed" : "sans-serif-light",
                 android.graphics.Typeface.NORMAL);
         TextClock time = root.findViewById(R.id.clockTime);
         ClockWidgetProvider.applyTimeFormat(time);
