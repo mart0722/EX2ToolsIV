@@ -67,13 +67,15 @@ public final class MainActivity extends AppCompatActivity {
     private static final int[] HERO_BG = {
             R.drawable.hero_overview, R.drawable.hero_settings, R.drawable.hero_status,
             R.drawable.hero_voice, R.drawable.hero_status, R.drawable.hero_sounds,
-            0, 0, 0, 0, 0
+            0, 0, R.drawable.hero_steering, 0, 0
     };
+
+    private static final int[] NAV_ORDER = {0, 1, 6, 8, 4, 2, 3, 5, 7, 9, 10};
 
     private static final int[] ICONS = {
             R.drawable.ic_dashboard, R.drawable.ic_settings, R.drawable.ic_status,
             R.drawable.ic_voice, R.drawable.ic_widgets, R.drawable.ic_widget_volume,
-            R.drawable.ic_apps, R.drawable.ic_service, R.drawable.ic_climate_wheel_heat, R.drawable.ic_info,
+            R.drawable.ic_apps, R.drawable.ic_service, R.drawable.ic_car_steering, R.drawable.ic_info,
             R.drawable.ic_tile_temp
     };
 
@@ -169,13 +171,14 @@ public final class MainActivity extends AppCompatActivity {
         navContainer.removeAllViews();
         navViews.clear();
         LayoutInflater inflater = LayoutInflater.from(this);
-        for (int i = 0; i < TITLES.length; i++) {
+        for (int i : NAV_ORDER) {
             View item = inflater.inflate(R.layout.item_nav, navContainer, false);
             ImageView icon = item.findViewById(R.id.navIcon);
             TextView label = item.findViewById(R.id.navLabel);
             icon.setImageResource(ICONS[i]);
             label.setText(TITLES[i]);
             final int index = i;
+            item.setTag(index);
             item.setOnClickListener(v -> show(index));
             applyPressAnimation(item);
             navContainer.addView(item);
@@ -359,7 +362,8 @@ public final class MainActivity extends AppCompatActivity {
         int inactive = ContextCompat.getColor(this, R.color.flyme_label_level1);
         for (int i = 0; i < navViews.size(); i++) {
             View item = navViews.get(i);
-            boolean selected = i == active;
+            Object tag = item.getTag();
+            boolean selected = tag instanceof Integer && ((Integer) tag).intValue() == active;
             item.setSelected(selected);
             View indicator = item.findViewById(R.id.navIndicator);
             if (indicator != null) {

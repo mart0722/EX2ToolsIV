@@ -26,6 +26,7 @@ final class SpeedGaugePainter {
     static final float MAX_SPEED = 160f;
     private static final int CELLS = 32;
     private static final int LABEL_EVERY = 4;
+    private static final int TICK_OFFSET = LABEL_EVERY / 2;
     private static final float START_ANGLE = 135f;
     private static final float SWEEP_ANGLE = 270f;
 
@@ -153,13 +154,22 @@ final class SpeedGaugePainter {
         float tickOuter = radius - size * 0.022f;
         float labelRadius = radius - size * 0.082f;
 
-        for (int k = 0; k <= CELLS; k += LABEL_EVERY) {
+        for (int k = TICK_OFFSET; k < CELLS; k += LABEL_EVERY) {
             double angle = Math.toRadians(START_ANGLE + (k / (float) CELLS) * SWEEP_ANGLE);
             float cos = (float) Math.cos(angle);
             float sin = (float) Math.sin(angle);
 
             canvas.drawLine(cos * tickInner, sin * tickInner,
                     cos * tickOuter, sin * tickOuter, tick);
+        }
+
+        // Labels stay on even tens while the ticks sit between them on odd
+        // tens, so the tick line no longer runs into the digits.
+        for (int k = 0; k <= CELLS; k += LABEL_EVERY) {
+            double angle = Math.toRadians(START_ANGLE + (k / (float) CELLS) * SWEEP_ANGLE);
+            float cos = (float) Math.cos(angle);
+            float sin = (float) Math.sin(angle);
+
             drawCentered(canvas, String.valueOf(Math.round((k / (float) CELLS) * MAX_SPEED)),
                     cos * labelRadius, sin * labelRadius, label);
         }
