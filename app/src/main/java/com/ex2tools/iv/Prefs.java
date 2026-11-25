@@ -179,6 +179,14 @@ public final class Prefs {
         return p.getBoolean("status_wifi", false);
     }
 
+    public static boolean wifiAutoOnBoot(Context c) {
+        return get(c).getBoolean("wifi_auto_on_boot", false);
+    }
+
+    public static void setWifiAutoOnBoot(Context c, boolean value) {
+        get(c).edit().putBoolean("wifi_auto_on_boot", value).apply();
+    }
+
     public static boolean statusBattery(Context c) {
         SharedPreferences p = get(c);
         if (p.contains("status_battery_enabled")) return p.getBoolean("status_battery_enabled", false);
@@ -401,7 +409,11 @@ public final class Prefs {
     }
 
     public static void setStatus(Context c, String key, boolean value) {
-        get(c).edit().putBoolean(key, value).apply();
+        SharedPreferences.Editor editor = get(c).edit().putBoolean(key, value);
+        if (!value && ("status_wifi_enabled".equals(key) || "status_wifi".equals(key))) {
+            editor.putBoolean("wifi_auto_on_boot", false);
+        }
+        editor.apply();
     }
 
     public static int intervalSec(Context c) {
