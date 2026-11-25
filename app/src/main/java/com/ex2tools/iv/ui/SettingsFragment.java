@@ -218,9 +218,11 @@ public final class SettingsFragment extends Fragment {
 
         switchAutoLock.setChecked(Prefs.autoLock(c));
         autoLockTimeGroup.check(autoLockButton(Prefs.autoLockTimeoutSec(c)));
+        updateAutoLockTimeVisibility(Prefs.autoLock(c));
         switchAutoLock.setOnCheckedChangeListener((b, checked) -> {
             if (binding) return;
             Prefs.setAutoLock(requireContext(), checked);
+            updateAutoLockTimeVisibility(checked);
             com.ex2tools.iv.lock.AutoLockService.sync(requireContext());
             Toast.makeText(requireContext(),
                     checked ? R.string.settings_auto_lock_on : R.string.settings_auto_lock_off,
@@ -383,9 +385,11 @@ public final class SettingsFragment extends Fragment {
         }
         if (switchAutoLock != null) {
             binding = true;
-            switchAutoLock.setChecked(Prefs.autoLock(c));
+            boolean autoLock = Prefs.autoLock(c);
+            switchAutoLock.setChecked(autoLock);
             if (autoLockTimeGroup != null) {
                 autoLockTimeGroup.check(autoLockButton(Prefs.autoLockTimeoutSec(c)));
+                updateAutoLockTimeVisibility(autoLock);
             }
             binding = false;
         }
@@ -702,6 +706,12 @@ public final class SettingsFragment extends Fragment {
                                 Toast.LENGTH_LONG).show());
             }
         }, "head-unit-reboot").start();
+    }
+
+    private void updateAutoLockTimeVisibility(boolean enabled) {
+        if (autoLockTimeGroup != null) {
+            autoLockTimeGroup.setVisibility(enabled ? View.VISIBLE : View.GONE);
+        }
     }
 
     private static int autoLockButton(int seconds) {

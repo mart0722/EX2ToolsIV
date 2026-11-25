@@ -189,7 +189,7 @@
     <string name="journal_save_failed">Не удалось сохранить журнал</string>
     <string name="info_title">Инфо</string>
     <string name="info_subtitle">О приложении</string>
-    <string name="info_description">EX2ToolsIV — локальный инструмент для головного устройства Geely EX2. Без облака, без лицензий и без автообновлений.</string>
+    <string name="info_description">EX2ToolsIV - приложение расширенных настроек для Geely EX2</string>
     <string name="info_developer">Разработчик</string>
     <string name="info_developer_value">IVMA-CODE</string>
     <string name="info_version">Версия %1$s</string>
