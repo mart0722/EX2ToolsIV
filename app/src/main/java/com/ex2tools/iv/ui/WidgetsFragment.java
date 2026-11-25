@@ -110,6 +110,7 @@ public final class WidgetsFragment extends Fragment {
     private FlymeSegmentedGroup overlayPlacement;
     private View overlayNeighborHint;
     private FlymeSegmentedGroup climateIconStyle;
+    private FlymeSegmentedGroup chromeIconWeight;
     private FlymeSegmentedGroup ventMode;
     private FlymeSwitchRow ventShowRecirc;
     private View glassScaleControls;
@@ -178,6 +179,7 @@ public final class WidgetsFragment extends Fragment {
         overlayPlacement = view.findViewById(R.id.widgetOverlayPlacement);
         overlayNeighborHint = view.findViewById(R.id.widgetOverlayNeighborHint);
         climateIconStyle = view.findViewById(R.id.widgetClimateIconStyle);
+        chromeIconWeight = view.findViewById(R.id.widgetClimateIconChromeWeight);
         widgetCardBorder = view.findViewById(R.id.widgetCardBorder);
         widgetButtonBorder = view.findViewById(R.id.widgetButtonBorder);
         widgetPowerOffWithoutConfirmation = view.findViewById(R.id.widgetPowerOffWithoutConfirmation);
@@ -227,20 +229,16 @@ public final class WidgetsFragment extends Fragment {
             Prefs.ClimateIconStyle style;
             if (checkedId == R.id.widgetClimateIconStandard) style = Prefs.ClimateIconStyle.STANDARD;
             else if (checkedId == R.id.widgetClimateIconThin) style = Prefs.ClimateIconStyle.THIN;
-            else if (checkedId == R.id.widgetClimateIconChromeThin) style = Prefs.ClimateIconStyle.CHROME_THIN;
-            else if (checkedId == R.id.widgetClimateIconChrome) style = Prefs.ClimateIconStyle.CHROME;
+            else if (checkedId == R.id.widgetClimateIconChrome) style = Prefs.preferredChromeIconStyle(context);
             else return;
-            Prefs.setClimateIconStyle(context, style);
-            updateAppearanceControls(context);
-            OverlayWidgetService.restart(context);
-            if (Boolean.FALSE.equals(showingOverlay)) renderStandardWidgets(context);
-            if (opacityPreview != null) {
-                opacityPreview.setBackgroundResource(WidgetsCommon.bgDrawableResForPct(context));
-            }
-            ClockWidgetProvider.refreshAll(context);
-            refreshSpeed();
-            VehicleState.get().requestDisplayRefresh();
-            WidgetUpdateService.sync(context);
+            applyClimateIconStyle(context, style);
+        });
+        chromeIconWeight.addOnButtonCheckedListener((group, checkedId, checked) -> {
+            if (binding || !checked) return;
+            Context context = requireContext();
+            if (!Prefs.climateIconStyle(context).isChrome()) return;
+            applyClimateIconStyle(context, checkedId == R.id.widgetClimateIconChromeBold
+                    ? Prefs.ClimateIconStyle.CHROME : Prefs.ClimateIconStyle.CHROME_THIN);
         });
         widgetCardBorder.setOnCheckedChangeListener((button, checked) -> {
             if (binding) return;
@@ -533,14 +531,34 @@ public final class WidgetsFragment extends Fragment {
         return Prefs.climateIconStyle(c) != Prefs.ClimateIconStyle.STANDARD;
     }
 
+    private void applyClimateIconStyle(Context context, Prefs.ClimateIconStyle style) {
+        Prefs.setClimateIconStyle(context, style);
+        updateAppearanceControls(context);
+        OverlayWidgetService.restart(context);
+        if (Boolean.FALSE.equals(showingOverlay)) renderStandardWidgets(context);
+        if (opacityPreview != null) {
+            opacityPreview.setBackgroundResource(WidgetsCommon.bgDrawableResForPct(context));
+        }
+        ClockWidgetProvider.refreshAll(context);
+        refreshSpeed();
+        VehicleState.get().requestDisplayRefresh();
+        WidgetUpdateService.sync(context);
+    }
+
     private void updateAppearanceControls(Context c) {
+        Prefs.ClimateIconStyle style = Prefs.climateIconStyle(c);
         TextView speedColorDefault = speedColorGroup.findViewById(R.id.widgetSpeedColorWhite);
-        speedColorDefault.setText(Prefs.climateIconStyle(c).isChrome()
+        speedColorDefault.setText(style.isChrome()
                 ? R.string.widgets_speed_color_chrome : R.string.widgets_speed_color_white);
         widgetAccentBoost.setVisibility(View.VISIBLE);
         boolean global = Prefs.widgetsGlobalSize(c);
         boolean wasBinding = binding;
         binding = true;
+        chromeIconWeight.setVisibility(style.isChrome() ? View.VISIBLE : View.GONE);
+        if (style.isChrome()) {
+            chromeIconWeight.check(style == Prefs.ClimateIconStyle.CHROME
+                    ? R.id.widgetClimateIconChromeBold : R.id.widgetClimateIconChromeThin);
+        }
         widgetGlobalSize.setChecked(global);
         binding = wasBinding;
         glassScaleControls.setVisibility(View.VISIBLE);
@@ -1047,10 +1065,8 @@ public final class WidgetsFragment extends Fragment {
         updateNeighborHint(placement);
         climateIconStyle.check(switch (Prefs.climateIconStyle(c)) {
             case STANDARD -> R.id.widgetClimateIconStandard;
-            case THIN -> R.id.widgetClimateIconThin;
-            case EXTRA_THIN -> R.id.widgetClimateIconThin;
-            case CHROME_THIN -> R.id.widgetClimateIconChromeThin;
-            case CHROME -> R.id.widgetClimateIconChrome;
+            case THIN, EXTRA_THIN -> R.id.widgetClimateIconThin;
+            case CHROME, CHROME_THIN -> R.id.widgetClimateIconChrome;
         });
         updateAppearanceControls(c);
         ventMode.check(Prefs.ventDirectionButtons(c) ? R.id.widgetVentThree : R.id.widgetVentFive);

@@ -620,8 +620,21 @@ public final class Prefs {
         };
     }
 
+    public static ClimateIconStyle preferredChromeIconStyle(Context c) {
+        boolean bold = get(c).getBoolean("climate_icon_chrome_bold",
+                climateIconStyle(c) == ClimateIconStyle.CHROME);
+        return bold ? ClimateIconStyle.CHROME : ClimateIconStyle.CHROME_THIN;
+    }
+
     public static void setClimateIconStyle(Context c, ClimateIconStyle style) {
-        get(c).edit().putString("climate_icon_style", style.name()).apply();
+        SharedPreferences prefs = get(c);
+        boolean boldChrome = style.isChrome()
+                ? style == ClimateIconStyle.CHROME
+                : preferredChromeIconStyle(c) == ClimateIconStyle.CHROME;
+        prefs.edit()
+                .putString("climate_icon_style", style.name())
+                .putBoolean("climate_icon_chrome_bold", boldChrome)
+                .apply();
     }
 
     public static final int CLIMATE_ICON_MIN_PCT = 80;
