@@ -28,6 +28,7 @@
     <color name="wg_text">#E9EFFA</color>
     <color name="wg_climate_amber">#FFD08A</color>
     <color name="wg_climate_blue">#95E4FF</color>
+    <color name="wg_regen_blue_ink">#BBEEFF</color>
     <color name="wg_climate_coral">#FFAA99</color>
     <color name="wg_climate_neutral">#F2F6FF</color>
     <color name="wg_climate_inactive">#B3C4E2</color>

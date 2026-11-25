@@ -615,14 +615,26 @@ public final class Prefs {
             // forward-compatible by using the nearest remaining style.
             case "EXTRA_THIN" -> ClimateIconStyle.THIN;
             case "CHROME_THIN" -> ClimateIconStyle.CHROME_THIN;
-            // The thick chrome style was removed; fall back to the standard look.
-            case "CHROME" -> ClimateIconStyle.STANDARD;
+            case "CHROME" -> ClimateIconStyle.CHROME;
             default -> ClimateIconStyle.STANDARD;
         };
     }
 
+    public static ClimateIconStyle preferredChromeIconStyle(Context c) {
+        boolean bold = get(c).getBoolean("climate_icon_chrome_bold",
+                climateIconStyle(c) == ClimateIconStyle.CHROME);
+        return bold ? ClimateIconStyle.CHROME : ClimateIconStyle.CHROME_THIN;
+    }
+
     public static void setClimateIconStyle(Context c, ClimateIconStyle style) {
-        get(c).edit().putString("climate_icon_style", style.name()).apply();
+        SharedPreferences prefs = get(c);
+        boolean boldChrome = style.isChrome()
+                ? style == ClimateIconStyle.CHROME
+                : preferredChromeIconStyle(c) == ClimateIconStyle.CHROME;
+        prefs.edit()
+                .putString("climate_icon_style", style.name())
+                .putBoolean("climate_icon_chrome_bold", boldChrome)
+                .apply();
     }
 
     public static final int CLIMATE_ICON_MIN_PCT = 80;

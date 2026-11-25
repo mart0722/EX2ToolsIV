@@ -363,17 +363,23 @@ final class OverlayWidgetViews {
         text(root, R.id.txt_drive_header, c.getString(R.string.wg_drive_header));
         text(root, R.id.txt_regen_header, c.getString(R.string.wg_regen_header));
         chip(c, root, R.id.chip_drive_eco, R.id.txt_drive_eco, R.string.wg_drive_eco,
-                drive != null && drive == CarProps.DRIVE_ECO, 1);
+                drive != null && drive == CarProps.DRIVE_ECO,
+                WidgetAppearance.ACCENT_GREEN);
         chip(c, root, R.id.chip_drive_comfort, R.id.txt_drive_comfort, R.string.wg_drive_comfort,
-                drive != null && drive == CarProps.DRIVE_COMFORT, 0);
+                drive != null && drive == CarProps.DRIVE_COMFORT,
+                WidgetAppearance.ACCENT_BLUE);
         chip(c, root, R.id.chip_drive_sport, R.id.txt_drive_sport, R.string.wg_drive_sport,
-                drive != null && drive == CarProps.DRIVE_SPORT, 2);
-        chip(c, root, R.id.chip_regen_low, R.id.txt_regen_low, R.string.wg_regen_low,
-                regen != null && regen == CarProps.REGEN_WEAK);
-        chip(c, root, R.id.chip_regen_mid, R.id.txt_regen_mid, R.string.wg_regen_mid,
-                regen != null && regen == CarProps.REGEN_MEDIUM);
-        chip(c, root, R.id.chip_regen_high, R.id.txt_regen_high, R.string.wg_regen_high,
-                regen != null && regen == CarProps.REGEN_STRONG);
+                drive != null && drive == CarProps.DRIVE_SPORT,
+                WidgetAppearance.ACCENT_RED);
+        regenChip(c, root, R.id.img_regen_low, R.id.chip_regen_low, R.id.txt_regen_low,
+                R.string.wg_regen_low, regen != null && regen == CarProps.REGEN_WEAK,
+                WidgetAppearance.ACCENT_GREEN);
+        regenChip(c, root, R.id.img_regen_mid, R.id.chip_regen_mid, R.id.txt_regen_mid,
+                R.string.wg_regen_mid, regen != null && regen == CarProps.REGEN_MEDIUM,
+                WidgetAppearance.ACCENT_BLUE);
+        regenChip(c, root, R.id.img_regen_high, R.id.chip_regen_high, R.id.txt_regen_high,
+                R.string.wg_regen_high, regen != null && regen == CarProps.REGEN_STRONG,
+                WidgetAppearance.ACCENT_RED);
     }
 
     private static void updateDrive(Context c, View root) {
@@ -743,11 +749,14 @@ final class OverlayWidgetViews {
         if (v instanceof ImageView) ((ImageView) v).setImageResource(res);
     }
 
-    private static void chip(Context c, View root, int chipId, int textId, int label, boolean active) {
-        chip(c, root, chipId, textId, label, active, 0);
+    private static void regenChip(Context c, View root, int iconId, int chipId, int textId,
+                                  int label, boolean active, int accent) {
+        chip(c, root, chipId, textId, label, active, accent);
+        ImageView icon = root.findViewById(iconId);
+        icon.setColorFilter(WidgetAppearance.regenIconTint(c, active, accent));
+        icon.setImageAlpha(WidgetAppearance.regenIconAlpha(active));
     }
 
-    /** accent: 0 — синий, 1 — зелёный, 2 — красный. */
     private static void chip(Context c, View root, int chipId, int textId, int label,
                              boolean active, int accent) {
         View chip = root.findViewById(chipId);
