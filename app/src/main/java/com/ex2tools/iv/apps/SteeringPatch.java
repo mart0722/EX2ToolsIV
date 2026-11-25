@@ -47,7 +47,13 @@ public final class SteeringPatch {
     }
 
     private static final Patch[] PATCHES = {
-            // IHU629G 1114 (and 1111 if its keyserver APK is identical).
+            // IHU629G 1025, and 1111 if its keyserver is the same older build.
+            new Patch(25102118L,
+                    "GeelyAutoKeyServer-25102118-8e16d841-original.apk",
+                    "8E16D841931244250FA4C0B97A9CD30AB61DE658311A5FD063C0856B5FC619E3",
+                    "GeelyAutoKeyServer-25102118-8e16d841-climate.apk",
+                    "70645B6B933546DF3C1059A4F5486C7DDE62EF29174CBA6F1BDC9E0B2B189D3C"),
+            // IHU629G 1114.
             new Patch(26030420L,
                     "GeelyAutoKeyServer-26030420-586cd35d-original.apk",
                     "586CD35D9C7DE0BBADDED94B4F9378FDB720CC78DBB544626A041F6D70FACFBA",
