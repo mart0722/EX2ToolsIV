@@ -10,6 +10,7 @@ import com.ex2tools.iv.Prefs;
 import com.ex2tools.iv.servicemode.ServiceModeManager;
 import com.ex2tools.iv.screenshot.ScreenshotButtonService;
 import com.ex2tools.iv.status.StatusIconService;
+import com.ex2tools.iv.status.WifiAutoBoot;
 import com.ex2tools.iv.widgets.StockLauncherCards;
 
 public final class BootReceiver extends BroadcastReceiver {
@@ -42,6 +43,7 @@ public final class BootReceiver extends BroadcastReceiver {
         ScreenshotButtonService.sync(context);
         com.ex2tools.iv.tasks.TaskManagerButtonService.sync(context);
         if (userUnlocked) {
+            if (isBootAction(action)) WifiAutoBoot.applyOnBoot(context);
             com.ex2tools.iv.body.WipersOnLockService.sync(context);
             com.ex2tools.iv.widgets.WidgetUpdateService.sync(context);
             com.ex2tools.iv.widgets.OverlayWidgetService.sync(context);
@@ -55,6 +57,12 @@ public final class BootReceiver extends BroadcastReceiver {
         if (Prefs.voiceEnabled(context)) {
             com.ex2tools.iv.voice.VoiceService.start(context);
         }
+    }
+
+    private static boolean isBootAction(String action) {
+        return Intent.ACTION_BOOT_COMPLETED.equals(action)
+                || Intent.ACTION_USER_UNLOCKED.equals(action)
+                || "android.intent.action.ACTION_BOOT_HU".equals(action);
     }
 
     private static boolean isUserUnlocked(Context context) {

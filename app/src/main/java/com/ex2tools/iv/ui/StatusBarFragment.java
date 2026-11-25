@@ -21,6 +21,7 @@ import com.ex2tools.iv.status.StatusIconService;
 public final class StatusBarFragment extends Fragment {
 
     private FlymeSwitchRow switchWifi;
+    private FlymeSwitchRow switchWifiAuto;
     private FlymeSwitchRow switchBattery;
     private FlymeSwitchRow switchTemp;
     private FlymeSwitchRow switchTotal;
@@ -47,6 +48,7 @@ public final class StatusBarFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         Context c = requireContext();
         switchWifi = view.findViewById(R.id.switchWifi);
+        switchWifiAuto = view.findViewById(R.id.switchWifiAuto);
         switchBattery = view.findViewById(R.id.switchBattery);
         switchTemp = view.findViewById(R.id.switchStatusTemp);
         switchTotal = view.findViewById(R.id.switchTotalKm);
@@ -56,6 +58,7 @@ public final class StatusBarFragment extends Fragment {
         brightnessLabel = view.findViewById(R.id.brightnessLabel);
 
         bind(switchWifi, "status_wifi_enabled", "wifi");
+        bindWifiAuto();
         bind(switchBattery, "status_battery_enabled", "battery");
         bind(switchTemp, "status_temp_ext_enabled", "temp");
         bind(switchTotal, "status_total_km_enabled", "total");
@@ -97,14 +100,27 @@ public final class StatusBarFragment extends Fragment {
                 StatusIconService.sync(c);
             }
             if (!checked) StatusIconService.cancelNotifications(c);
+            updateFromPrefs();
+        });
+    }
+
+    private void bindWifiAuto() {
+        switchWifiAuto.setOnCheckedChangeListener((button, checked) -> {
+            if (binding) return;
+            Context c = requireContext();
+            LogStore.add(c, "status wifi auto=" + checked);
+            Prefs.setWifiAutoOnBoot(c, checked);
         });
     }
 
     private void updateFromPrefs() {
         if (!isAdded()) return;
         Context c = requireContext();
+        boolean wifi = Prefs.statusWifi(c);
         binding = true;
-        switchWifi.setChecked(Prefs.statusWifi(c));
+        switchWifi.setChecked(wifi);
+        switchWifiAuto.setChecked(wifi && Prefs.wifiAutoOnBoot(c));
+        switchWifiAuto.setVisibility(wifi ? View.VISIBLE : View.GONE);
         switchBattery.setChecked(Prefs.statusBattery(c));
         switchTemp.setChecked(Prefs.statusTemp(c));
         switchTotal.setChecked(Prefs.statusTotalKm(c));
