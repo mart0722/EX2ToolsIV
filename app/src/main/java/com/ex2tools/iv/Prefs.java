@@ -615,8 +615,7 @@ public final class Prefs {
             // forward-compatible by using the nearest remaining style.
             case "EXTRA_THIN" -> ClimateIconStyle.THIN;
             case "CHROME_THIN" -> ClimateIconStyle.CHROME_THIN;
-            // The thick chrome style was removed; fall back to the standard look.
-            case "CHROME" -> ClimateIconStyle.STANDARD;
+            case "CHROME" -> ClimateIconStyle.CHROME;
             default -> ClimateIconStyle.STANDARD;
         };
     }
