@@ -228,7 +228,8 @@ public final class WidgetsFragment extends Fragment {
             if (checkedId == R.id.widgetClimateIconStandard) style = Prefs.ClimateIconStyle.STANDARD;
             else if (checkedId == R.id.widgetClimateIconThin) style = Prefs.ClimateIconStyle.THIN;
             else if (checkedId == R.id.widgetClimateIconChromeThin) style = Prefs.ClimateIconStyle.CHROME_THIN;
-            else style = Prefs.ClimateIconStyle.STANDARD;
+            else if (checkedId == R.id.widgetClimateIconChrome) style = Prefs.ClimateIconStyle.CHROME;
+            else return;
             Prefs.setClimateIconStyle(context, style);
             updateAppearanceControls(context);
             OverlayWidgetService.restart(context);
@@ -1049,7 +1050,7 @@ public final class WidgetsFragment extends Fragment {
             case THIN -> R.id.widgetClimateIconThin;
             case EXTRA_THIN -> R.id.widgetClimateIconThin;
             case CHROME_THIN -> R.id.widgetClimateIconChromeThin;
-            case CHROME -> R.id.widgetClimateIconStandard;
+            case CHROME -> R.id.widgetClimateIconChrome;
         });
         updateAppearanceControls(c);
         ventMode.check(Prefs.ventDirectionButtons(c) ? R.id.widgetVentThree : R.id.widgetVentFive);
