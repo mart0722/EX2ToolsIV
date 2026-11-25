@@ -14,6 +14,10 @@ import com.ex2tools.iv.R;
 
 /** Surface styles shared by home-screen widgets and floating widgets. */
 final class WidgetAppearance {
+    static final int ACCENT_BLUE = 0;
+    static final int ACCENT_GREEN = 1;
+    static final int ACCENT_RED = 2;
+
     private static final int[] STEEL = {0xFF24384C, 0xFF60788F, 0xFF324A60, 0xFF30495F};
     private static final int[] TITANIUM = {0xFFA6BED5, 0xFFF7FAFF, 0xFF8AA4C0, 0xFFCAD8E9};
     private static final float[] STEEL_STOPS = {0f, .27f, .47f, 1f};
@@ -118,7 +122,6 @@ final class WidgetAppearance {
         return buttonBackground(c, background);
     }
 
-    /** Accent indices match the drive and regeneration controls: blue, green, red. */
     static int chipBackground(Context c, boolean transparent, boolean active, int accent) {
         return buttonBackground(c, chipSurface(c, transparent, active, accent));
     }
@@ -128,9 +131,9 @@ final class WidgetAppearance {
             if (!active) return R.drawable.bg_wg_chip;
             boolean boost = Prefs.widgetAccentBoost(c);
             return switch (accent) {
-                case 1 -> boost ? R.drawable.bg_wg_chip_on_green_boost
+                case ACCENT_GREEN -> boost ? R.drawable.bg_wg_chip_on_green_boost
                         : R.drawable.bg_wg_chip_on_green;
-                case 2 -> boost ? R.drawable.bg_wg_chip_on_red_boost
+                case ACCENT_RED -> boost ? R.drawable.bg_wg_chip_on_red_boost
                         : R.drawable.bg_wg_chip_on_red;
                 default -> boost ? R.drawable.bg_wg_chip_on_boost
                         : R.drawable.bg_wg_chip_on;
@@ -140,23 +143,37 @@ final class WidgetAppearance {
         if (!active) return R.drawable.bg_wg_climate_glass;
         if (Prefs.widgetAccentBoost(c)) {
             return switch (accent) {
-                case 1 -> R.drawable.bg_wg_glass_accent_green;
-                case 2 -> R.drawable.bg_wg_glass_accent_red;
+                case ACCENT_GREEN -> R.drawable.bg_wg_glass_accent_green;
+                case ACCENT_RED -> R.drawable.bg_wg_glass_accent_red;
                 default -> R.drawable.bg_wg_glass_accent_air;
             };
         }
         return switch (accent) {
-            case 1 -> R.drawable.bg_wg_glass_green;
-            case 2 -> R.drawable.bg_wg_glass_red;
+            case ACCENT_GREEN -> R.drawable.bg_wg_glass_green;
+            case ACCENT_RED -> R.drawable.bg_wg_glass_red;
             default -> R.drawable.bg_wg_climate_air;
         };
     }
 
+    static int regenIconTint(Context c, boolean active, int accent) {
+        if (active) {
+            return accent == ACCENT_BLUE ? c.getColor(R.color.wg_regen_blue_ink) : accentInk(c, accent);
+        }
+        return usesGlass(c) ? Color.TRANSPARENT : c.getColor(R.color.wg_text);
+    }
+
+    static int regenIconAlpha(boolean active) {
+        return active ? 255 : 200;
+    }
+
     static int chipTextColor(Context c, boolean active, int accent) {
-        if (!active || !usesGlass(c)) return c.getColor(R.color.wg_text);
+        return active && usesGlass(c) ? accentInk(c, accent) : c.getColor(R.color.wg_text);
+    }
+
+    private static int accentInk(Context c, int accent) {
         return c.getColor(switch (accent) {
-            case 1 -> R.color.wg_glass_green_ink;
-            case 2 -> R.color.wg_glass_red_ink;
+            case ACCENT_GREEN -> R.color.wg_glass_green_ink;
+            case ACCENT_RED -> R.color.wg_glass_red_ink;
             default -> R.color.wg_climate_blue;
         });
     }

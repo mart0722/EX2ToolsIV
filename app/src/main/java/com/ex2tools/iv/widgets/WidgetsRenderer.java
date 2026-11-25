@@ -24,21 +24,31 @@ public final class WidgetsRenderer {
     public static RemoteViews driveRegen(Context c, Integer drive, Integer regen) {
         RemoteViews v = new RemoteViews(c.getPackageName(), WidgetGrid.layout(c, R.layout.widget_drive_regen));
         bg(v, c);
+        Context theme = OverlayWidgetViews.themeContext(c);
         if (WidgetAppearance.usesGlass(c)) {
-            ClimateWidgetIcons.forRemote(c, OverlayWidgetViews.themeContext(c), v).driveAndRegen();
+            ClimateWidgetIcons.forRemote(c, theme, v).driveAndRegen();
         }
         titles(v, c, R.id.txt_drive_header, R.id.txt_regen_header);
         v.setTextViewText(R.id.txt_drive_header, c.getString(R.string.wg_drive_header));
         v.setTextViewText(R.id.txt_regen_header, c.getString(R.string.wg_regen_header));
         chip(v, c, R.id.chip_drive_eco, R.id.txt_drive_eco, R.string.wg_drive_eco,
-                drive != null && drive == CarProps.DRIVE_ECO, 1);
+                drive != null && drive == CarProps.DRIVE_ECO,
+                WidgetAppearance.ACCENT_GREEN);
         chip(v, c, R.id.chip_drive_comfort, R.id.txt_drive_comfort, R.string.wg_drive_comfort,
-                drive != null && drive == CarProps.DRIVE_COMFORT, 0);
+                drive != null && drive == CarProps.DRIVE_COMFORT,
+                WidgetAppearance.ACCENT_BLUE);
         chip(v, c, R.id.chip_drive_sport, R.id.txt_drive_sport, R.string.wg_drive_sport,
-                drive != null && drive == CarProps.DRIVE_SPORT, 2);
-        chip(v, c, R.id.chip_regen_low, R.id.txt_regen_low, R.string.wg_regen_low, regen != null && regen == CarProps.REGEN_WEAK);
-        chip(v, c, R.id.chip_regen_mid, R.id.txt_regen_mid, R.string.wg_regen_mid, regen != null && regen == CarProps.REGEN_MEDIUM);
-        chip(v, c, R.id.chip_regen_high, R.id.txt_regen_high, R.string.wg_regen_high, regen != null && regen == CarProps.REGEN_STRONG);
+                drive != null && drive == CarProps.DRIVE_SPORT,
+                WidgetAppearance.ACCENT_RED);
+        regenChip(v, c, theme, R.id.img_regen_low, R.id.chip_regen_low, R.id.txt_regen_low,
+                R.string.wg_regen_low, regen != null && regen == CarProps.REGEN_WEAK,
+                WidgetAppearance.ACCENT_GREEN);
+        regenChip(v, c, theme, R.id.img_regen_mid, R.id.chip_regen_mid, R.id.txt_regen_mid,
+                R.string.wg_regen_mid, regen != null && regen == CarProps.REGEN_MEDIUM,
+                WidgetAppearance.ACCENT_BLUE);
+        regenChip(v, c, theme, R.id.img_regen_high, R.id.chip_regen_high, R.id.txt_regen_high,
+                R.string.wg_regen_high, regen != null && regen == CarProps.REGEN_STRONG,
+                WidgetAppearance.ACCENT_RED);
         click(v, c, R.id.chip_drive_eco, WidgetsCommon.DRIVE_ECO);
         click(v, c, R.id.chip_drive_comfort, WidgetsCommon.DRIVE_COMFORT);
         click(v, c, R.id.chip_drive_sport, WidgetsCommon.DRIVE_SPORT);
@@ -474,11 +484,13 @@ public final class WidgetsRenderer {
                 WidgetsCommon.bgDrawableResForPct(c));
     }
 
-    private static void chip(RemoteViews v, Context c, int chipId, int textId, int label, boolean active) {
-        chip(v, c, chipId, textId, label, active, 0);
+    private static void regenChip(RemoteViews v, Context c, Context theme, int iconId,
+                                  int chipId, int textId, int label, boolean active, int accent) {
+        chip(v, c, chipId, textId, label, active, accent);
+        v.setInt(iconId, "setColorFilter", WidgetAppearance.regenIconTint(theme, active, accent));
+        v.setInt(iconId, "setImageAlpha", WidgetAppearance.regenIconAlpha(active));
     }
 
-    /** accent: 0 — синий, 1 — зелёный, 2 — красный. */
     private static void chip(RemoteViews v, Context c, int chipId, int textId, int label,
                              boolean active, int accent) {
         v.setInt(chipId, "setBackgroundResource", WidgetAppearance.chipBackground(
