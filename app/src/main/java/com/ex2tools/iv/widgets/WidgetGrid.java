@@ -50,7 +50,6 @@ final class WidgetGrid {
         GLASS_LAYOUTS.put(R.layout.widget_regen_vertical, R.layout.widget_glass_regen_vertical);
         GLASS_LAYOUTS.put(R.layout.widget_lock, R.layout.widget_glass_lock);
         GLASS_LAYOUTS.put(R.layout.widget_battery_range, R.layout.widget_glass_battery_range);
-        GLASS_LAYOUTS.put(R.layout.widget_windshield_heat, R.layout.widget_glass_windshield_heat);
 
         for (int panel : new int[]{R.layout.widget_heating_test, R.layout.widget_drive_regen,
                 R.layout.widget_climate_control}) {
@@ -108,11 +107,23 @@ final class WidgetGrid {
         float iconScale = glass ? Prefs.glassWidgetIconSizePct(context) / 100f : 1f;
         if (scale == 1f && iconScale == 1f) return;
         int layout = views.getLayoutId();
+        int standaloneCaption = switch (layout) {
+            case R.layout.widget_recirc -> R.id.txt_recirc;
+            case R.layout.widget_wipers -> R.id.txt_wipers;
+            case R.layout.widget_power_off -> R.id.txt_power_off;
+            case R.layout.widget_wheel_heat -> R.id.txt_wheel_heat;
+            case R.layout.widget_windshield_heat -> R.id.txt_windshield_heat;
+            default -> 0;
+        };
+        if (standaloneCaption != 0) {
+            textSize(views, scale, 11, standaloneCaption);
+            return;
+        }
         if (!glass) {
             scaleStandardContent(views, layout, scale);
             return;
         }
-        if (scale != 1f && layout != R.layout.widget_recirc) {
+        if (scale != 1f) {
             boolean compact = layout == R.layout.widget_glass_vent || layout == R.layout.widget_glass_fan_speed
                     || layout == R.layout.widget_glass_temperature || layout == R.layout.widget_glass_heating_single_row;
             float inset = context.getResources().getDimension(R.dimen.wg_glass_inset) * scale;
@@ -178,12 +189,6 @@ final class WidgetGrid {
         } else if (layout == R.layout.widget_real_range) {
             textSize(views, scale, 30, R.id.tv_real_range);
             textSize(views, scale, 12, R.id.widget_title);
-        } else if (layout == R.layout.widget_recirc) {
-            textSize(views, scale, 11, R.id.txt_recirc);
-        } else if (layout == R.layout.widget_wipers || layout == R.layout.widget_power_off
-                || layout == R.layout.widget_wheel_heat || layout == R.layout.widget_glass_windshield_heat) {
-            textSize(views, scale, 11, R.id.txt_wipers, R.id.txt_power_off,
-                    R.id.txt_wheel_heat, R.id.txt_windshield_heat);
         } else if (layout == R.layout.widget_lock) {
             size(views, scale, 64, R.id.img_lock);
         }
@@ -238,12 +243,6 @@ final class WidgetGrid {
         } else if (layout == R.layout.widget_real_range) {
             textSize(views, scale, 30, R.id.tv_real_range);
             textSize(views, scale, 12, R.id.widget_title);
-        } else if (layout == R.layout.widget_recirc) {
-            textSize(views, scale, 11, R.id.txt_recirc);
-        } else if (layout == R.layout.widget_wipers || layout == R.layout.widget_power_off
-                || layout == R.layout.widget_wheel_heat || layout == R.layout.widget_windshield_heat) {
-            textSize(views, scale, 11, R.id.txt_wipers, R.id.txt_power_off,
-                    R.id.txt_wheel_heat, R.id.txt_windshield_heat);
         } else if (layout == R.layout.widget_lock) {
             size(views, scale, 64, R.id.img_lock);
         }

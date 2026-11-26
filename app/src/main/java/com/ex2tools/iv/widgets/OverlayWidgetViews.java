@@ -616,35 +616,32 @@ final class OverlayWidgetViews {
         int chip = powerOff ? R.id.chip_power_off : R.id.chip_wipers;
         int caption = powerOff ? R.id.txt_power_off : R.id.txt_wipers;
         int label = powerOff ? R.string.widget_name_power_off : R.string.widget_name_wipers;
-        toggle(c, root, icons, chip, caption, active, false, c.getString(label), false);
+        standaloneToggle(c, root, icons, chip, caption, active, false, c.getString(label));
     }
 
     private static void updateRecirc(Context c, View root) {
         ClimateWidgetIcons icons = ClimateWidgetIcons.forOverlay(c, root, WidgetsCommon.SIZE_RECIRC);
         icons.recirculation(R.id.img_recirc);
-        toggle(c, root, icons, R.id.chip_recirc, R.id.txt_recirc,
+        standaloneToggle(c, root, icons, R.id.chip_recirc, R.id.txt_recirc,
                 Boolean.TRUE.equals(WidgetsCommon.readRecirc()), false,
-                c.getString(R.string.widget_name_recirc), false);
+                c.getString(R.string.widget_name_recirc));
     }
 
     private static void updateWheelHeat(Context c, View root) {
         Boolean state = WidgetsCommon.readWheelHeat();
         ClimateWidgetIcons icons = ClimateWidgetIcons.forOverlay(c, root, WidgetsCommon.SIZE_WHEEL_HEAT);
         icons.wheelHeat(state);
-        toggle(c, root, icons, R.id.chip_wheel_heat, R.id.txt_wheel_heat,
+        standaloneToggle(c, root, icons, R.id.chip_wheel_heat, R.id.txt_wheel_heat,
                 Boolean.TRUE.equals(state), WidgetsCommon.wheelHeatPending(c),
-                c.getString(R.string.widget_name_wheel_heat), false);
+                c.getString(R.string.widget_name_wheel_heat));
     }
 
     private static void updateWindshieldHeat(Context c, View root) {
         Boolean state = WidgetsCommon.readWindshieldHeat();
         ClimateWidgetIcons icons = ClimateWidgetIcons.forOverlay(c, root, WidgetsCommon.SIZE_WINDSHIELD_HEAT);
         icons.windshieldHeat(state);
-        boolean transparent = !icons.usesOutline()
-                && OverlayBackground.isTransparent(c, WidgetsCommon.SIZE_WINDSHIELD_HEAT);
-        toggle(c, root, icons, R.id.chip_windshield_heat, R.id.txt_windshield_heat,
-                Boolean.TRUE.equals(state), false, c.getString(R.string.widget_name_windshield_heat),
-                transparent);
+        standaloneToggle(c, root, icons, R.id.chip_windshield_heat, R.id.txt_windshield_heat,
+                Boolean.TRUE.equals(state), false, c.getString(R.string.widget_name_windshield_heat));
     }
 
     private static void updateClock(Context c, View root, boolean large, int width) {
@@ -819,6 +816,20 @@ final class OverlayWidgetViews {
         boolean airflow = chipId == R.id.chip_front_max_defrost && icons.usesOutline();
         root.findViewById(chipId).setBackgroundResource(
                 icons.buttonBackground(transparent, active, pending, airflow));
+        toggleCaption(c, root, icons, chipId, textId, active, pending, label, airflow);
+    }
+
+    private static void standaloneToggle(Context c, View root, ClimateWidgetIcons icons,
+                                         int chipId, int textId, boolean active, boolean pending,
+                                         String label) {
+        root.findViewById(R.id.widget_button_bg_layer)
+                .setBackgroundResource(icons.standaloneButtonBackground(active, pending));
+        toggleCaption(c, root, icons, chipId, textId, active, pending, label, false);
+    }
+
+    private static void toggleCaption(Context c, View root, ClimateWidgetIcons icons,
+                                      int chipId, int textId, boolean active, boolean pending,
+                                      String label, boolean airflow) {
         TextView caption = root.findViewById(textId);
         climateCaption(root, icons, chipId, caption, icons.caption(label));
         caption.setTextColor(pending && !active

@@ -341,10 +341,11 @@ public final class WidgetsRenderer {
     static RemoteViews recirc(Context widgetContext, Boolean state) {
         Context c = OverlayWidgetViews.themeContext(widgetContext);
         RemoteViews views = new RemoteViews(c.getPackageName(), R.layout.widget_recirc);
+        bg(views, c);
         ClimateWidgetIcons icons = ClimateWidgetIcons.forRemote(widgetContext, c, views);
         icons.recirculation(R.id.img_recirc);
-        toggle(views, c, icons, R.id.chip_recirc, R.id.txt_recirc, Boolean.TRUE.equals(state),
-                false, c.getString(R.string.widget_name_recirc), false);
+        standaloneToggle(views, c, icons, R.id.chip_recirc, R.id.txt_recirc,
+                Boolean.TRUE.equals(state), false, c.getString(R.string.widget_name_recirc));
         click(views, c, R.id.chip_recirc, WidgetsCommon.RECIRC_TOGGLE);
         return views;
     }
@@ -352,25 +353,24 @@ public final class WidgetsRenderer {
     static RemoteViews wheelHeat(Context widgetContext, Boolean state) {
         Context c = OverlayWidgetViews.themeContext(widgetContext);
         RemoteViews views = new RemoteViews(c.getPackageName(), R.layout.widget_wheel_heat);
+        bg(views, c);
         ClimateWidgetIcons icons = ClimateWidgetIcons.forRemote(widgetContext, c, views);
         icons.wheelHeat(state);
-        toggle(views, c, icons, R.id.chip_wheel_heat, R.id.txt_wheel_heat, Boolean.TRUE.equals(state),
-                WidgetsCommon.wheelHeatPending(c), c.getString(R.string.widget_name_wheel_heat), false);
+        standaloneToggle(views, c, icons, R.id.chip_wheel_heat, R.id.txt_wheel_heat,
+                Boolean.TRUE.equals(state), WidgetsCommon.wheelHeatPending(c),
+                c.getString(R.string.widget_name_wheel_heat));
         click(views, c, R.id.chip_wheel_heat, WidgetsCommon.WHEEL_HEAT_TOGGLE);
         return views;
     }
 
     static RemoteViews windshieldHeat(Context widgetContext, Boolean state) {
         Context c = OverlayWidgetViews.themeContext(widgetContext);
-        int layout = WidgetGrid.layout(c, R.layout.widget_windshield_heat);
-        RemoteViews v = new RemoteViews(c.getPackageName(), layout);
-        boolean glass = layout == R.layout.widget_glass_windshield_heat;
-        if (!glass) bg(v, c);
+        RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_windshield_heat);
+        bg(v, c);
         ClimateWidgetIcons icons = ClimateWidgetIcons.forRemote(widgetContext, c, v);
         icons.windshieldHeat(state);
-        toggle(v, c, icons, R.id.chip_windshield_heat, R.id.txt_windshield_heat,
-                Boolean.TRUE.equals(state), false, c.getString(R.string.widget_name_windshield_heat),
-                !glass && Prefs.widgetBgOpacity(c) < 10);
+        standaloneToggle(v, c, icons, R.id.chip_windshield_heat, R.id.txt_windshield_heat,
+                Boolean.TRUE.equals(state), false, c.getString(R.string.widget_name_windshield_heat));
         click(v, c, R.id.chip_windshield_heat, WidgetsCommon.WINDSHIELD_HEAT_TOGGLE);
         return v;
     }
@@ -387,14 +387,14 @@ public final class WidgetsRenderer {
         Context c = OverlayWidgetViews.themeContext(widgetContext);
         RemoteViews views = new RemoteViews(c.getPackageName(),
                 powerOff ? R.layout.widget_power_off : R.layout.widget_wipers);
+        bg(views, c);
         ClimateWidgetIcons icons = ClimateWidgetIcons.forRemote(widgetContext, c, views);
         icons.vehicleControl(powerOff);
         boolean active = !powerOff && WidgetsCommon.wiperServicePositionActive();
         int chip = powerOff ? R.id.chip_power_off : R.id.chip_wipers;
-        toggle(views, c, icons, chip, powerOff ? R.id.txt_power_off : R.id.txt_wipers,
+        standaloneToggle(views, c, icons, chip, powerOff ? R.id.txt_power_off : R.id.txt_wipers,
                 active, false,
-                c.getString(powerOff ? R.string.widget_name_power_off : R.string.widget_name_wipers),
-                false);
+                c.getString(powerOff ? R.string.widget_name_power_off : R.string.widget_name_wipers));
         if (powerOff) {
             views.setOnClickPendingIntent(chip, PendingIntent.getActivity(c, chip,
                     VehiclePowerOffActivity.widgetIntent(c), PendingIntent.FLAG_IMMUTABLE));
@@ -536,6 +536,20 @@ public final class WidgetsRenderer {
                                boolean active, boolean pending, String label, boolean transparent) {
         boolean airflow = chipId == R.id.chip_front_max_defrost && icons.usesOutline();
         v.setInt(chipId, "setBackgroundResource", icons.buttonBackground(transparent, active, pending, airflow));
+        toggleCaption(v, c, icons, chipId, textId, active, pending, label, airflow);
+    }
+
+    private static void standaloneToggle(RemoteViews v, Context c, ClimateWidgetIcons icons,
+                                         int chipId, int textId, boolean active, boolean pending,
+                                         String label) {
+        v.setInt(R.id.widget_button_bg_layer, "setBackgroundResource",
+                icons.standaloneButtonBackground(active, pending));
+        toggleCaption(v, c, icons, chipId, textId, active, pending, label, false);
+    }
+
+    private static void toggleCaption(RemoteViews v, Context c, ClimateWidgetIcons icons, int chipId,
+                                      int textId, boolean active, boolean pending, String label,
+                                      boolean airflow) {
         v.setTextColor(textId, pending && !active
                 ? c.getColor(R.color.wg_blue_light)
                 : icons.buttonTextColor(active, airflow));

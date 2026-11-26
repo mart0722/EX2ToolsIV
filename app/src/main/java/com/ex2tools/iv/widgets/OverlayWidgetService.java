@@ -553,9 +553,14 @@ public final class OverlayWidgetService extends Service {
                           WindowManager.LayoutParams lp) {
         final boolean locked = Prefs.overlayLock(this);
         final boolean lockWidget = WidgetsCommon.SIZE_LOCK.equals(spec.key);
-        final View button = WidgetsCommon.SIZE_WINDSHIELD_HEAT.equals(spec.key)
-                ? content.findViewById(R.id.chip_windshield_heat)
-                : WidgetsCommon.isStandaloneVehicleButton(spec.key) ? content : null;
+        final View button = switch (spec.key) {
+            case WidgetsCommon.SIZE_POWER_OFF -> content.findViewById(R.id.chip_power_off);
+            case WidgetsCommon.SIZE_WIPERS -> content.findViewById(R.id.chip_wipers);
+            case WidgetsCommon.SIZE_RECIRC -> content.findViewById(R.id.chip_recirc);
+            case WidgetsCommon.SIZE_WHEEL_HEAT -> content.findViewById(R.id.chip_wheel_heat);
+            case WidgetsCommon.SIZE_WINDSHIELD_HEAT -> content.findViewById(R.id.chip_windshield_heat);
+            default -> null;
+        };
         View drag = content.findViewById(R.id.widget_bg_layer);
         if (lockWidget) {
             // Тело виджета блокировки перекрывает фон и перехватывает касания.
