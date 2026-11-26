@@ -265,7 +265,10 @@ final class ClimateWidgetIcons {
     }
 
     int buttonBackground(boolean transparent, boolean active, boolean pending, boolean airflow) {
-        return WidgetAppearance.buttonBackground(context, buttonSurface(transparent, active, pending, airflow));
+        int surface = buttonSurface(transparent, active, pending, airflow);
+        // Keep the pending indicator visible when there is no caption to show it.
+        return pending && !active && !showLabels
+                ? surface : WidgetAppearance.buttonBackground(context, surface);
     }
 
     private int buttonSurface(boolean transparent, boolean active, boolean pending, boolean airflow) {
