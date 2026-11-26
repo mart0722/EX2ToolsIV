@@ -69,18 +69,11 @@ public final class WidgetUpdateService extends Service {
     private long lastTemperatureActionAt;
     private long lastFanActionAt;
     private volatile boolean updatePending;
+    private volatile int lastStartId;
 
     private final Runnable tick = new Runnable() {
         @Override
         public void run() {
-            if (!hasAnyWidget(WidgetUpdateService.this)) {
-                if (pendingActions.isEmpty()) {
-                    stopSelf();
-                    return;
-                }
-                handler.postDelayed(this, RETRY_MS);
-                return;
-            }
             requestUpdate();
             handler.postDelayed(this, POLL_MS);
         }
@@ -131,7 +124,7 @@ public final class WidgetUpdateService extends Service {
     }
 
     public static void sync(Context c) {
-        if (hasAnyWidget(c)) start(c);
+        if (hasAnyWidget(c) || WidgetsCommon.wheelHeatPending(c)) start(c);
         else stop(c);
     }
 
@@ -160,6 +153,7 @@ public final class WidgetUpdateService extends Service {
         if (action != null && !WidgetsCommon.REFRESH_OPACITY.equals(action)) {
             pendingActions.add(action);
         }
+        lastStartId = startId;
         requestUpdate();
         return START_STICKY;
     }
@@ -189,6 +183,7 @@ public final class WidgetUpdateService extends Service {
     }
 
     private void updateAll() {
+        int startId = lastStartId;
         VehicleState state = VehicleState.get();
         boolean carReady = state.ensure(this);
         if (!pendingActions.isEmpty()) {
@@ -210,14 +205,19 @@ public final class WidgetUpdateService extends Service {
             OverlayWidgetService.requestUpdate(this);
         }
 
-        if (!hasAnyWidget(this)) {
-            stopSelf();
-            return;
-        }
-
         // Обогрев руля: подтвердить или повторить отложенный запрос (нужен D).
         if (WidgetsCommon.wheelHeatPending(this)) {
             WidgetsCommon.checkWheelPending(this);
+            if (!WidgetsCommon.wheelHeatPending(this)) {
+                OverlayWidgetService.requestUpdate(this);
+            }
+        }
+
+        if (!hasAnyWidget(this)) {
+            if (!WidgetsCommon.wheelHeatPending(this) && pendingActions.isEmpty() && startId != 0) {
+                stopSelfResult(startId);
+            }
+            return;
         }
         // Модель запаса хода: накапливаем дельты SOC/одометра (сама себя троттлит).
         RangeModel.sample(this);
@@ -324,7 +324,10 @@ public final class WidgetUpdateService extends Service {
             any = true;
         }
 
-        if (!any && pendingActions.isEmpty()) stopSelf();
+        if (!any && !WidgetsCommon.wheelHeatPending(this) && pendingActions.isEmpty()
+                && startId != 0) {
+            stopSelfResult(startId);
+        }
     }
 
     private Integer readFanCached() {

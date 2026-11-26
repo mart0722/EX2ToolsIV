@@ -29,6 +29,7 @@ import com.ex2tools.iv.NotificationHelper;
 import com.ex2tools.iv.Prefs;
 import com.ex2tools.iv.R;
 import com.ex2tools.iv.car.RangeModel;
+import com.ex2tools.iv.lock.LockActivity;
 import com.ex2tools.iv.state.VehicleState;
 
 import java.util.ArrayList;
@@ -120,6 +121,7 @@ public final class OverlayWidgetService extends Service {
             }
             lastThemeSignature = themeSignature;
             ForegroundState state = foregroundState();
+            boolean lockScreen = LockActivity.isInForeground();
             boolean anyEnabled = false;
             boolean render = stateDirty;
             stateDirty = false;
@@ -131,9 +133,13 @@ public final class OverlayWidgetService extends Service {
                 anyEnabled |= active;
                 boolean apps = WidgetsCommon.SIZE_APPS.equals(spec.key);
                 boolean pinned = Prefs.overlayPinned(OverlayWidgetService.this, spec.key);
-                boolean show = active && (pinned || state.launcher)
+                boolean visible = (pinned || state.launcher)
                         && (!state.appList || (apps && pinned))
                         && (!apps || AppsOverlay.hasVisible(OverlayWidgetService.this));
+                if (lockScreen && WidgetsCommon.SIZE_SPEED.equals(spec.key)) {
+                    visible = Prefs.speedOnLockScreen(OverlayWidgetService.this);
+                }
+                boolean show = active && visible;
                 if (show) {
                     boolean created = ensure(spec);
                     if (WidgetsCommon.SIZE_OUTSIDE_TEMP.equals(spec.key)

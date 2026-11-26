@@ -316,6 +316,7 @@
     <string name="widgets_standard_group">Обычные AppWidget (сторонний лаунчер)</string>
     <string name="widgets_standard_note">Добавьте виджет через меню лаунчера: долгое нажатие на рабочем столе → Виджеты → EX2ToolsIV.</string>
     <string name="widgets_speed">Спидометр</string>
+    <string name="widgets_speed_on_lock_screen">Показывать на экране блокировки</string>
     <string name="widgets_speed_note">Скорость автомобиля в цифровом или стрелочном виде.</string>
     <string name="widgets_speed_mode">Отображение</string>
     <string name="widgets_speed_digital">Цифровой</string>

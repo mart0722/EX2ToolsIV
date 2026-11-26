@@ -26,10 +26,15 @@
 
         <TextView
             android:id="@+id/tv_outside_temp"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
+            android:autoSizeMaxTextSize="18sp"
+            android:autoSizeMinTextSize="8sp"
+            android:autoSizeStepGranularity="1sp"
+            android:autoSizeTextType="uniform"
             android:fontFamily="sans-serif-medium"
+            android:gravity="center"
             android:includeFontPadding="false"
             android:maxLines="1"
             android:text="@string/widget_outside_temp_missing"

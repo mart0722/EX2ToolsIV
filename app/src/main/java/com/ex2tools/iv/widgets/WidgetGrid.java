@@ -178,10 +178,6 @@ final class WidgetGrid {
         } else if (layout == R.layout.widget_real_range) {
             textSize(views, scale, 30, R.id.tv_real_range);
             textSize(views, scale, 12, R.id.widget_title);
-        } else if (layout == R.layout.widget_outside_temp
-                || layout == R.layout.widget_outside_temp_wide) {
-            textSize(views, scale, layout == R.layout.widget_outside_temp ? 18 : 36,
-                    R.id.tv_outside_temp);
         } else if (layout == R.layout.widget_recirc) {
             textSize(views, scale, 11, R.id.txt_recirc);
         } else if (layout == R.layout.widget_wipers || layout == R.layout.widget_power_off
@@ -242,9 +238,6 @@ final class WidgetGrid {
         } else if (layout == R.layout.widget_real_range) {
             textSize(views, scale, 30, R.id.tv_real_range);
             textSize(views, scale, 12, R.id.widget_title);
-        } else if (layout == R.layout.widget_outside_temp || layout == R.layout.widget_outside_temp_wide) {
-            textSize(views, scale, layout == R.layout.widget_outside_temp ? 18 : 36,
-                    R.id.tv_outside_temp);
         } else if (layout == R.layout.widget_recirc) {
             textSize(views, scale, 11, R.id.txt_recirc);
         } else if (layout == R.layout.widget_wipers || layout == R.layout.widget_power_off

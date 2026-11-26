@@ -27,6 +27,11 @@ public final class LockActivity extends Activity {
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final ExecutorService io = Executors.newSingleThreadExecutor();
     private static volatile boolean showing;
+    private static boolean inForeground;
+
+    public static boolean isInForeground() {
+        return inForeground;
+    }
 
     /** Открыт ли сейчас экран блокировки (чтобы автоблокировка не срабатывала повторно). */
     public static boolean isShowing() {
@@ -112,6 +117,7 @@ public final class LockActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        inForeground = true;
         openedAt = SystemClock.elapsedRealtime();
         running = true;
         handler.removeCallbacks(tick);
@@ -120,6 +126,7 @@ public final class LockActivity extends Activity {
 
     @Override
     protected void onPause() {
+        inForeground = false;
         running = false;
         handler.removeCallbacks(tick);
         super.onPause();
