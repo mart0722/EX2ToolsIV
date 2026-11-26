@@ -35,6 +35,7 @@ final class WidgetGrid {
     }
 
     private static final SparseIntArray GLASS_LAYOUTS = new SparseIntArray();
+    private static final SparseIntArray STANDALONE_CAPTIONS = new SparseIntArray();
     private static final SparseArray<Size> FOOTPRINTS = new SparseArray<>();
     private static final Size DEFAULT_SIZE = cells(3, 1);
 
@@ -73,6 +74,12 @@ final class WidgetGrid {
         FOOTPRINTS.put(R.layout.widget_clock_large, cells(3, 2));
         FOOTPRINTS.put(R.layout.widget_outside_temp, cells(1, 1));
         FOOTPRINTS.put(R.layout.widget_outside_temp_wide, cells(2, 1));
+
+        STANDALONE_CAPTIONS.put(R.layout.widget_recirc, R.id.txt_recirc);
+        STANDALONE_CAPTIONS.put(R.layout.widget_wipers, R.id.txt_wipers);
+        STANDALONE_CAPTIONS.put(R.layout.widget_power_off, R.id.txt_power_off);
+        STANDALONE_CAPTIONS.put(R.layout.widget_wheel_heat, R.id.txt_wheel_heat);
+        STANDALONE_CAPTIONS.put(R.layout.widget_windshield_heat, R.id.txt_windshield_heat);
     }
 
     static Size size(Context c, int layout) {
@@ -107,14 +114,7 @@ final class WidgetGrid {
         float iconScale = glass ? Prefs.glassWidgetIconSizePct(context) / 100f : 1f;
         if (scale == 1f && iconScale == 1f) return;
         int layout = views.getLayoutId();
-        int standaloneCaption = switch (layout) {
-            case R.layout.widget_recirc -> R.id.txt_recirc;
-            case R.layout.widget_wipers -> R.id.txt_wipers;
-            case R.layout.widget_power_off -> R.id.txt_power_off;
-            case R.layout.widget_wheel_heat -> R.id.txt_wheel_heat;
-            case R.layout.widget_windshield_heat -> R.id.txt_windshield_heat;
-            default -> 0;
-        };
+        int standaloneCaption = STANDALONE_CAPTIONS.get(layout);
         if (standaloneCaption != 0) {
             textSize(views, scale, 11, standaloneCaption);
             return;
