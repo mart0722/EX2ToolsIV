@@ -5,8 +5,10 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.ContentObserver;
 import android.graphics.Bitmap;
@@ -51,6 +53,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class StatusIconService extends Service {
 
     private static final int WATCHDOG_ID = 15030;
+    private static final long WIFI_WAKE_DELAY_MS = 3000L;
 
     private static final int NOTIF_TEMP = 15021;
     private static final int NOTIF_BATTERY = 15020;
@@ -93,6 +96,20 @@ public final class StatusIconService extends Service {
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final AtomicBoolean busy = new AtomicBoolean(false);
     private final Map<Integer, Integer> lastRank = new HashMap<>();
+
+    private boolean wifiWakeReceiverRegistered;
+    private final Runnable wifiAfterWake = () -> WifiAutoBoot.applyOnWake(this);
+    private final BroadcastReceiver wifiWakeReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            handler.removeCallbacks(wifiAfterWake);
+            if (!Intent.ACTION_SCREEN_OFF.equals(intent.getAction())
+                    && Prefs.statusWifi(context) && Prefs.wifiAutoOnBoot(context)) {
+                // Flyme may still turn Wi-Fi off during the first seconds after wake.
+                handler.postDelayed(wifiAfterWake, WIFI_WAKE_DELAY_MS);
+            }
+        }
+    };
 
     private boolean brightnessNeedsRepost;
     private Boolean lastBrightnessIncrease;
@@ -198,6 +215,16 @@ public final class StatusIconService extends Service {
         clearOldNotifications();
         cancelAll();
         startSocWatch();
+        IntentFilter wakeFilter = new IntentFilter(Intent.ACTION_SCREEN_ON);
+        wakeFilter.addAction(Intent.ACTION_USER_PRESENT);
+        wakeFilter.addAction(Intent.ACTION_SCREEN_OFF);
+        try {
+            ContextCompat.registerReceiver(this, wifiWakeReceiver, wakeFilter,
+                    ContextCompat.RECEIVER_NOT_EXPORTED);
+            wifiWakeReceiverRegistered = true;
+        } catch (RuntimeException e) {
+            LogStore.add(this, "wifi auto: cannot register wake receiver: " + e);
+        }
         getContentResolver().registerContentObserver(
                 Settings.System.getUriFor(Settings.System.SCREEN_BRIGHTNESS), false, brightnessObserver);
         Prefs.get(this).registerOnSharedPreferenceChangeListener(brightnessPrefsListener);
@@ -647,6 +674,7 @@ public final class StatusIconService extends Service {
 
     @Override
     public void onDestroy() {
+        if (wifiWakeReceiverRegistered) unregisterReceiver(wifiWakeReceiver);
         getContentResolver().unregisterContentObserver(brightnessObserver);
         Prefs.get(this).unregisterOnSharedPreferenceChangeListener(brightnessPrefsListener);
         handler.removeCallbacksAndMessages(null);
