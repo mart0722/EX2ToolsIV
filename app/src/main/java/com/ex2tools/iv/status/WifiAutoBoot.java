@@ -12,6 +12,7 @@ import android.util.Log;
 
 import com.ex2tools.iv.LogStore;
 import com.ex2tools.iv.Prefs;
+import com.ex2tools.iv.car.Telemetry;
 
 public final class WifiAutoBoot {
 
@@ -24,31 +25,40 @@ public final class WifiAutoBoot {
     private static final long FAST_SCAN_WINDOW_MS = 60000L;
     private static final long MAX_SCAN_WINDOW_MS = 180000L;
     private static boolean running;
-    private static boolean wakePending;
+    private static Trigger pendingWake;
+
+    private enum Trigger {
+        BOOT, SCREEN, IGNITION
+    }
 
     private WifiAutoBoot() {
     }
 
     public static void applyOnBoot(Context context) {
-        start(context, false);
+        start(context, Trigger.BOOT);
     }
 
     public static void applyOnWake(Context context) {
-        start(context, true);
+        start(context, Trigger.SCREEN);
     }
 
-    private static synchronized void start(Context context, boolean onWake) {
+    static void applyOnIgnition(Context context) {
+        start(context, Trigger.IGNITION);
+    }
+
+    private static synchronized void start(Context context, Trigger trigger) {
         Context app = context.getApplicationContext();
-        if (!mayRun(app, onWake)) return;
+        if (!mayRun(app, trigger)) return;
         if (running) {
-            wakePending |= onWake;
+            if (trigger == Trigger.IGNITION
+                    || (trigger == Trigger.SCREEN && pendingWake == null)) pendingWake = trigger;
             return;
         }
         running = true;
         new Thread(() -> {
             try {
-                if (onWake) Log.i(TAG, "Checking Wi-Fi after wake");
-                enableAndScan(app, onWake);
+                if (trigger != Trigger.BOOT) Log.i(TAG, "Checking Wi-Fi after wake: " + trigger);
+                enableAndScan(app, trigger);
             } finally {
                 finish(app);
             }
@@ -57,32 +67,34 @@ public final class WifiAutoBoot {
 
     private static synchronized void finish(Context context) {
         running = false;
-        if (wakePending) {
-            wakePending = false;
-            start(context, true);
+        if (pendingWake != null) {
+            Trigger trigger = pendingWake;
+            pendingWake = null;
+            start(context, trigger);
         }
     }
 
-    private static boolean mayRun(Context context, boolean onWake) {
+    private static boolean mayRun(Context context, Trigger trigger) {
         if (!Prefs.statusWifi(context) || !Prefs.wifiAutoOnBoot(context)) return false;
-        if (!onWake) return true;
+        if (trigger == Trigger.BOOT) return true;
+        if (trigger == Trigger.IGNITION) return Boolean.TRUE.equals(Telemetry.ignitionOn());
         PowerManager power = context.getSystemService(PowerManager.class);
         return power != null && power.isInteractive();
     }
 
-    private static void enableAndScan(Context context, boolean onWake) {
+    private static void enableAndScan(Context context, Trigger trigger) {
         WifiManager wm = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
         if (wm == null) {
             LogStore.add(context, "wifi auto: WifiManager unavailable");
             return;
         }
 
-        if (!enable(wm, context, onWake)) return;
+        if (!enable(wm, context, trigger)) return;
         if (!sleep(FIRST_SCAN_DELAY_MS)) return;
 
         long started = SystemClock.elapsedRealtime();
         int scans = 0;
-        while (mayRun(context, onWake)) {
+        while (mayRun(context, trigger)) {
             if (!wm.isWifiEnabled()) {
                 LogStore.add(context, "wifi auto: radio turned off, scan stopped");
                 return;
@@ -123,9 +135,9 @@ public final class WifiAutoBoot {
         LogStore.add(context, "wifi auto: cancelled");
     }
 
-    private static boolean enable(WifiManager wm, Context context, boolean onWake) {
+    private static boolean enable(WifiManager wm, Context context, Trigger trigger) {
         for (int attempt = 1; attempt <= ENABLE_ATTEMPTS; attempt++) {
-            if (!mayRun(context, onWake)) {
+            if (!mayRun(context, trigger)) {
                 LogStore.add(context, "wifi auto: cancelled");
                 return false;
             }

@@ -5,6 +5,8 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.car.hardware.CarPropertyValue;
+import android.car.hardware.property.CarPropertyManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -29,6 +31,7 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.provider.Settings;
+import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -41,6 +44,7 @@ import com.ex2tools.iv.R;
 import com.ex2tools.iv.car.CarProps;
 import com.ex2tools.iv.car.Telemetry;
 import com.ex2tools.iv.state.VehicleState;
+import com.ex2tools.iv.vehicle.VhalGateway;
 import com.ex2tools.iv.voice.SystemControls;
 
 import java.util.HashMap;
@@ -99,6 +103,21 @@ public final class StatusIconService extends Service {
 
     private boolean wifiWakeReceiverRegistered;
     private final Runnable wifiAfterWake = () -> WifiAutoBoot.applyOnWake(this);
+    private final Runnable wifiAfterIgnition = () -> WifiAutoBoot.applyOnIgnition(this);
+    private CarPropertyManager wifiIgnitionManager;
+    private boolean ignitionWasOff;
+    private final CarPropertyManager.CarPropertyEventCallback wifiIgnitionCallback =
+            new CarPropertyManager.CarPropertyEventCallback() {
+                @Override
+                public void onChangeEvent(CarPropertyValue value) {
+                    Boolean powered = Telemetry.decodeIgnitionOn(value);
+                    if (powered != null) handler.post(() -> onWifiIgnitionChanged(powered));
+                }
+
+                @Override
+                public void onErrorEvent(int propertyId, int area) {
+                }
+            };
     private final BroadcastReceiver wifiWakeReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -285,9 +304,55 @@ public final class StatusIconService extends Service {
         brightnessNeedsRepost |= repost;
         scheduleBrightnessRefresh();
         startSocWatch();
+        syncWifiIgnitionWatch();
         handler.removeCallbacks(tick);
         handler.postDelayed(tick, repost ? 300L : 0L);
         return START_STICKY;
+    }
+
+    private void syncWifiIgnitionWatch() {
+        if (!Prefs.statusWifi(this) || !Prefs.wifiAutoOnBoot(this)) {
+            stopWifiIgnitionWatch();
+            return;
+        }
+        if (wifiIgnitionManager != null) return;
+        try {
+            VhalGateway gateway = VhalGateway.get();
+            if (!gateway.ensure(this)) return;
+            CarPropertyManager manager = gateway.cpm();
+            ignitionWasOff = Boolean.FALSE.equals(Telemetry.ignitionOn());
+            if (manager.registerCallback(wifiIgnitionCallback, CarProps.IGNITION_STATE_VENDOR, 0f)) {
+                wifiIgnitionManager = manager;
+                Log.i("WifiAutoBoot", "Subscribed to vehicle ignition for Wi-Fi wake");
+            }
+        } catch (RuntimeException | LinkageError e) {
+            LogStore.add(this, "wifi auto: cannot observe ignition: " + e);
+        }
+    }
+
+    private void onWifiIgnitionChanged(boolean powered) {
+        if (wifiIgnitionManager == null) return;
+        if (!powered) {
+            ignitionWasOff = true;
+            handler.removeCallbacks(wifiAfterIgnition);
+        } else if (ignitionWasOff) {
+            ignitionWasOff = false;
+            Log.i("WifiAutoBoot", "Vehicle ignition woke the head unit");
+            handler.postDelayed(wifiAfterIgnition, WIFI_WAKE_DELAY_MS);
+        }
+    }
+
+    private void stopWifiIgnitionWatch() {
+        handler.removeCallbacks(wifiAfterIgnition);
+        ignitionWasOff = false;
+        if (wifiIgnitionManager == null) return;
+        CarPropertyManager manager = wifiIgnitionManager;
+        wifiIgnitionManager = null;
+        try {
+            manager.unregisterCallback(wifiIgnitionCallback);
+        } catch (RuntimeException e) {
+            LogStore.add(this, "wifi auto: cannot remove ignition observer: " + e);
+        }
     }
 
     private void requestUpdate() {
@@ -674,6 +739,7 @@ public final class StatusIconService extends Service {
 
     @Override
     public void onDestroy() {
+        stopWifiIgnitionWatch();
         if (wifiWakeReceiverRegistered) unregisterReceiver(wifiWakeReceiver);
         getContentResolver().unregisterContentObserver(brightnessObserver);
         Prefs.get(this).unregisterOnSharedPreferenceChangeListener(brightnessPrefsListener);
