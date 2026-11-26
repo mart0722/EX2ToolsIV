@@ -449,6 +449,7 @@ public final class WidgetsFragment extends Fragment {
             int overlayVisibility = standard ? View.GONE : View.VISIBLE;
             speedSettings.findViewById(R.id.widgetSpeedSizeOptions).setVisibility(overlayVisibility);
             speedReset.setVisibility(overlayVisibility);
+            speedOnLockScreen.setVisibility(overlayVisibility);
         }
         if (settings == rangeSettings) refreshRangeInfo();
     }
