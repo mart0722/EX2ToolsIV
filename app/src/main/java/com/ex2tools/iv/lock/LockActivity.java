@@ -12,10 +12,8 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.TextView;
 
-import com.ex2tools.iv.Prefs;
 import com.ex2tools.iv.R;
 import com.ex2tools.iv.car.Telemetry;
-import com.ex2tools.iv.widgets.WidgetsCommon;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -26,15 +24,13 @@ import java.util.concurrent.Executors;
 /** Full-screen dark screen with clock and vehicle summary. */
 public final class LockActivity extends Activity {
 
-    private static final long SPEED_REFRESH_MS = 120L;
-
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final ExecutorService io = Executors.newSingleThreadExecutor();
     private static volatile boolean showing;
-    private static boolean speedVisible;
+    private static boolean inForeground;
 
-    public static boolean isSpeedVisible() {
-        return speedVisible;
+    public static boolean isInForeground() {
+        return inForeground;
     }
 
     /** Открыт ли сейчас экран блокировки (чтобы автоблокировка не срабатывала повторно). */
@@ -49,28 +45,6 @@ public final class LockActivity extends Activity {
     private TextView battery;
     private TextView range;
     private TextView temp;
-    private View speedPanel;
-    private TextView speed;
-    private boolean speedReadPending;
-
-    private final Runnable speedTick = new Runnable() {
-        @Override
-        public void run() {
-            if (!running || speedPanel.getVisibility() != View.VISIBLE || speedReadPending) return;
-            speedReadPending = true;
-            io.execute(() -> {
-                float kmh = WidgetsCommon.readSpeed(LockActivity.this);
-                handler.post(() -> {
-                    speedReadPending = false;
-                    if (!running || speedPanel.getVisibility() != View.VISIBLE) return;
-                    speed.setText(Float.isFinite(kmh)
-                            ? Integer.toString(Math.round(kmh))
-                            : getString(R.string.lock_speed_missing));
-                    handler.postDelayed(this, SPEED_REFRESH_MS);
-                });
-            });
-        }
-    };
 
     private final Runnable tick = new Runnable() {
         @Override
@@ -109,8 +83,6 @@ public final class LockActivity extends Activity {
         battery = findViewById(R.id.lockBattery);
         range = findViewById(R.id.lockRange);
         temp = findViewById(R.id.lockTemp);
-        speedPanel = findViewById(R.id.lockSpeedPanel);
-        speed = findViewById(R.id.lockSpeed);
         openedAt = SystemClock.elapsedRealtime();
 
         View root = findViewById(R.id.lockRoot);
@@ -145,21 +117,18 @@ public final class LockActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        inForeground = true;
         openedAt = SystemClock.elapsedRealtime();
         running = true;
         handler.removeCallbacks(tick);
         handler.post(tick);
-        speedVisible = Prefs.speedOnLockScreen(this);
-        speedPanel.setVisibility(speedVisible ? View.VISIBLE : View.GONE);
-        if (speedVisible) handler.post(speedTick);
     }
 
     @Override
     protected void onPause() {
+        inForeground = false;
         running = false;
         handler.removeCallbacks(tick);
-        handler.removeCallbacks(speedTick);
-        speedVisible = false;
         super.onPause();
     }
 
