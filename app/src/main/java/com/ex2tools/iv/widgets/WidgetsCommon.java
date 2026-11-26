@@ -103,8 +103,6 @@ public final class WidgetsCommon {
     private static volatile long pendingSeatDriverAt;
     private static volatile Integer pendingSeatPassenger;
     private static volatile long pendingSeatPassengerAt;
-    private static volatile Boolean pendingWheel;
-    private static volatile long pendingWheelAt;
 
     private static boolean fresh(long at) {
         return at > 0 && android.os.SystemClock.elapsedRealtime() - at < PENDING_MS;
@@ -225,15 +223,7 @@ public final class WidgetsCommon {
     }
 
     public static Boolean readWheelHeat() {
-        Boolean pending = pendingWheel;
-        if (pending != null && fresh(pendingWheelAt)) return pending;
-        Integer v = readIntAny(CarProps.STEERING_WHEEL_HEAT, CarProps.WHEEL_HEAT_AREAS);
-        return v == null ? null : v != 0;
-    }
-
-    public static Integer readWheelHeatLevel() {
-        Integer v = readIntAny(CarProps.STEERING_WHEEL_HEAT, CarProps.WHEEL_HEAT_AREAS);
-        return v;
+        return readBoolAny(CarProps.STEERING_WHEEL_HEAT, CarProps.WHEEL_HEAT_AREAS);
     }
 
     public static Integer readSeatHeat(int area) {
@@ -435,14 +425,10 @@ public final class WidgetsCommon {
     }
 
     public static void setWheelHeat(Context c, boolean value) {
-        pendingWheel = value;
-        pendingWheelAt = android.os.SystemClock.elapsedRealtime();
         ClimateController.get().setWheelHeat(value);
     }
 
     public static void setWheelHeatLevel(Context c, int level) {
-        pendingWheel = level > 0;
-        pendingWheelAt = android.os.SystemClock.elapsedRealtime();
         Prefs.setSavedWheelHeat(c, level);
         ClimateController.get().setWheelHeatLevel(level);
     }
@@ -559,8 +545,7 @@ public final class WidgetsCommon {
             LogStore.add(c, "wheel heat: pending expired");
             return;
         }
-        Integer level = readWheelHeatLevel();
-        if (level != null && level > 0) {
+        if (Boolean.TRUE.equals(readWheelHeat())) {
             Prefs.setWheelHeatPending(c, false);
             Prefs.setWheelHeatRetryAt(c, 0L);
             LogStore.add(c, "wheel heat: confirmed by car");
