@@ -105,6 +105,7 @@ public final class WidgetsFragment extends Fragment {
     private FlymeSegmentedGroup speedColorGroup;
     private View speedReset;
     private FlymeSwitchRow speedTrip;
+    private FlymeSwitchRow speedOnLockScreen;
     private View speedTripReset;
     private FlymeSwitchRow overlayLock;
     private FlymeSegmentedGroup overlayPlacement;
@@ -174,6 +175,7 @@ public final class WidgetsFragment extends Fragment {
         speedColorGroup = view.findViewById(R.id.widgetSpeedColorGroup);
         speedReset = view.findViewById(R.id.widgetSpeedReset);
         speedTrip = view.findViewById(R.id.widgetSpeedTrip);
+        speedOnLockScreen = view.findViewById(R.id.widgetSpeedOnLockScreen);
         speedTripReset = view.findViewById(R.id.widgetSpeedTripReset);
         overlayLock = view.findViewById(R.id.widgetOverlayLock);
         overlayPlacement = view.findViewById(R.id.widgetOverlayPlacement);
@@ -675,6 +677,9 @@ public final class WidgetsFragment extends Fragment {
             Prefs.setSpeedShowTrip(requireContext(), checked);
             refreshSpeed();
         });
+        speedOnLockScreen.setOnCheckedChangeListener((button, checked) -> {
+            if (!binding) Prefs.setSpeedOnLockScreen(requireContext(), checked);
+        });
         speedTripReset.setOnClickListener(v -> {
             Context ctx = requireContext();
             FlymeDialog.showConfirm(ctx,
@@ -1054,6 +1059,7 @@ public final class WidgetsFragment extends Fragment {
                 : Prefs.speedColor(c) == 2 ? R.id.widgetSpeedColorBlue : R.id.widgetSpeedColorWhite);
         speedBackground.setChecked(Prefs.speedBackground(c));
         speedTrip.setChecked(Prefs.speedShowTrip(c));
+        speedOnLockScreen.setChecked(Prefs.speedOnLockScreen(c));
         if (overlayLock != null) overlayLock.setChecked(Prefs.overlayLock(c));
         Prefs.OverlayPlacement placement = Prefs.overlayPlacement(c);
         overlayPlacement.check(switch (placement) {

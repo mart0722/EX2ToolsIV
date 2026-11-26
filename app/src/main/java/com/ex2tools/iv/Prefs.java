@@ -509,6 +509,14 @@ public final class Prefs {
         get(c).edit().putBoolean("speed_background", value).apply();
     }
 
+    public static boolean speedOnLockScreen(Context c) {
+        return get(c).getBoolean("speed_on_lock_screen", false);
+    }
+
+    public static void setSpeedOnLockScreen(Context c, boolean enabled) {
+        get(c).edit().putBoolean("speed_on_lock_screen", enabled).apply();
+    }
+
     public static int speedColor(Context c) {
         return Math.max(0, Math.min(2, get(c).getInt("speed_color", 0)));
     }
