@@ -29,6 +29,7 @@ import com.ex2tools.iv.NotificationHelper;
 import com.ex2tools.iv.Prefs;
 import com.ex2tools.iv.R;
 import com.ex2tools.iv.car.RangeModel;
+import com.ex2tools.iv.lock.LockActivity;
 import com.ex2tools.iv.state.VehicleState;
 
 import java.util.ArrayList;
@@ -132,6 +133,7 @@ public final class OverlayWidgetService extends Service {
                 boolean apps = WidgetsCommon.SIZE_APPS.equals(spec.key);
                 boolean pinned = Prefs.overlayPinned(OverlayWidgetService.this, spec.key);
                 boolean show = active && (pinned || state.launcher)
+                        && !(WidgetsCommon.SIZE_SPEED.equals(spec.key) && LockActivity.isSpeedVisible())
                         && (!state.appList || (apps && pinned))
                         && (!apps || AppsOverlay.hasVisible(OverlayWidgetService.this));
                 if (show) {

@@ -6,6 +6,15 @@
     android:layout_height="wrap_content"
     android:orientation="vertical">
 
+    <com.ex2tools.iv.ui.FlymeSwitchRow
+        android:id="@+id/widgetSpeedOnLockScreen"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:text="@string/widgets_speed_on_lock_screen"
+        android:textColor="@color/flyme_label_level1"
+        android:textSize="22sp" />
+
     <LinearLayout
         android:id="@+id/widgetSpeedSizeOptions"
         android:layout_width="match_parent"
