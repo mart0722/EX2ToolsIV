@@ -47,18 +47,30 @@ public final class SystemControls {
     }
 
     public static int brightnessPercent(Context c) {
+        return Math.round(brightnessValue(c) * 100f / 255f);
+    }
+
+    private static int brightnessValue(Context c) {
         try {
-            int value = Settings.System.getInt(c.getContentResolver(), "screen_brightness", 128);
-            return Math.round(Math.max(0, Math.min(255, value)) * 100f / 255f);
+            int value = Settings.System.getInt(c.getContentResolver(), Settings.System.SCREEN_BRIGHTNESS, 128);
+            return Math.max(0, Math.min(255, value));
         } catch (Throwable t) {
             return 0;
         }
     }
 
+    private static int percentToBrightnessValue(int percent) {
+        return Math.round(Math.max(0, Math.min(100, percent)) * 255f / 100f);
+    }
+
+    public static boolean wouldIncreaseBrightness(Context c, int percent) {
+        return percentToBrightnessValue(percent) > brightnessValue(c);
+    }
+
     public static boolean setBrightnessPercent(Context c, int percent) {
         try {
-            int value = Math.round(Math.max(0, Math.min(100, percent)) * 255f / 100f);
-            return Settings.System.putInt(c.getContentResolver(), "screen_brightness", value);
+            return Settings.System.putInt(c.getContentResolver(), Settings.System.SCREEN_BRIGHTNESS,
+                    percentToBrightnessValue(percent));
         } catch (Throwable t) {
             return false;
         }

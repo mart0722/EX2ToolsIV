@@ -16,6 +16,9 @@ from the Gradle dependency artifacts.
 
 ## Models and media
 
+- Google Material Symbols Outlined (`nightlight` and `sunny`), adapted as Android vectors.
+  [Source and Apache License 2.0](https://github.com/google/material-design-icons).
+
 - `app/src/main/assets/model-ru` — a third-party Russian speech-recognition
   model. It is included as application data and is not covered by the MIT
   license of the original code. Check the model's upstream license before
