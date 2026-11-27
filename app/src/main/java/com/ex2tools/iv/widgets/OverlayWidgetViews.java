@@ -127,9 +127,11 @@ final class OverlayWidgetViews {
                 // Built once in create(); the selection only changes on restart.
                 break;
             case WidgetsCommon.SIZE_LOCK:
+                root.findViewById(R.id.lock_body).setBackgroundResource(WidgetAppearance.outline(c)
+                        ? R.drawable.bg_wg_outline_edge : android.R.color.transparent);
                 if (WidgetAppearance.usesGlass(c)) {
                     ClimateWidgetIcons.forOverlay(c, root, key)
-                            .chromeGlyph(R.id.img_lock, R.drawable.wg_ic_lock, ClimateWidgetIcons.ACTION_ICON_DP);
+                            .chromeGlyph(R.id.img_lock, R.drawable.wg_ic_lock, WidgetAppearance.outline(c) ? 44 : ClimateWidgetIcons.ACTION_ICON_DP);
                 }
                 break;
             case WidgetsCommon.SIZE_CLIMATE:
@@ -823,7 +825,7 @@ final class OverlayWidgetViews {
                                          int chipId, int textId, boolean active, boolean pending,
                                          String label) {
         root.findViewById(R.id.widget_button_bg_layer)
-                .setBackgroundResource(icons.standaloneButtonBackground(active, pending));
+                .setBackgroundResource(icons.standaloneButtonBackground(chipId, active, pending));
         toggleCaption(c, root, icons, chipId, textId, active, pending, label, false);
     }
 

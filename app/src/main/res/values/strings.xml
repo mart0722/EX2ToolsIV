@@ -953,4 +953,5 @@
     <string name="widget_power_off_direct_unavailable">Выключение без подтверждения сейчас недоступно</string>
     <string name="widgets_card_border">Показывать рамку виджета</string>
     <string name="widgets_button_border">Показывать рамки кнопок</string>
+    <string name="widgets_climate_icons_outline">Контурные</string>
 </resources>

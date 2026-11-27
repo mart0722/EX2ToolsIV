@@ -1,0 +1,13 @@
+<resources>
+    <color name="wg_outline_card_000">#0015191F</color>
+    <color name="wg_outline_card_020">#3215191F</color>
+    <color name="wg_outline_card_040">#6415191F</color>
+    <color name="wg_outline_card_060">#9615191F</color>
+    <color name="wg_outline_card_080">#C815191F</color>
+    <color name="wg_outline_card_100">#FA15191F</color>
+    <color name="wg_outline_edge">#8997A9</color>
+    <color name="wg_outline_air">#84BCFF</color>
+    <color name="wg_outline_heat">#FFAF7F</color>
+    <color name="wg_outline_green">#82DDB4</color>
+    <color name="wg_outline_red">#FFA3B3</color>
+</resources>

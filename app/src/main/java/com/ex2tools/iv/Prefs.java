@@ -629,7 +629,7 @@ public final class Prefs {
     }
 
     public enum ClimateIconStyle {
-        STANDARD, THIN, EXTRA_THIN, CHROME_THIN, CHROME;
+        STANDARD, THIN, EXTRA_THIN, CHROME_THIN, CHROME, OUTLINE;
 
         public boolean isChrome() {
             return this == CHROME || this == CHROME_THIN;
@@ -639,6 +639,7 @@ public final class Prefs {
     public static ClimateIconStyle climateIconStyle(Context c) {
         SharedPreferences prefs = get(c);
         return switch (prefs.getString("climate_icon_style", "")) {
+            case "OUTLINE" -> ClimateIconStyle.OUTLINE;
             case "STANDARD" -> ClimateIconStyle.STANDARD;
             case "THIN" -> ClimateIconStyle.THIN;
             // The 0.25 px outline was removed from the UI; keep the preference
