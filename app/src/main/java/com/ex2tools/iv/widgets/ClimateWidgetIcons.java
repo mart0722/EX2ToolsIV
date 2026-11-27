@@ -271,6 +271,10 @@ final class ClimateWidgetIcons {
                 ? surface : WidgetAppearance.buttonBackground(context, surface);
     }
 
+    int standaloneButtonBackground(boolean active, boolean pending) {
+        return active || pending ? buttonBackground(false, active, pending, false) : 0;
+    }
+
     private int buttonSurface(boolean transparent, boolean active, boolean pending, boolean airflow) {
         if (!usesOutline()) {
             if (active) return airflow

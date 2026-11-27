@@ -10,12 +10,19 @@
         android:layout_height="match_parent"
         android:background="@drawable/bg_wg_card_100" />
 
+    <TextView
+        android:id="@+id/widget_button_bg_layer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_margin="4dp" />
+
     <LinearLayout
         android:id="@+id/chip_windshield_heat"
         style="@style/WgChip"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_margin="6dp">
+        android:background="@null"
+        android:layout_margin="4dp">
 
         <ImageView
             android:id="@+id/img_windshield_heat"

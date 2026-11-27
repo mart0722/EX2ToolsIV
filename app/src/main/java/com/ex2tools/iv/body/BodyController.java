@@ -110,9 +110,10 @@ public final class BodyController {
         if (powered == null) return WipersOnLockResult.IGNITION_UNAVAILABLE;
         if (!powered) return WipersOnLockResult.IGNITION_NOT_POWERED;
         if (SystemClock.elapsedRealtimeNanos() > deadlineNs) return WipersOnLockResult.SIGNAL_EXPIRED;
-        // Flyme maps true to the explicit service-position request (1). The current
-        // position is only needed to skip a redundant request.
-        if (!setWiperServicePosition(true)) return WipersOnLockResult.WRITE_REJECTED;
+        // Match the integer vendor request from the successful one-shot lock probe.
+        CommandDispatcher.Result request = dispatcher.submit(new CommandDispatcher.Command(
+                CarProps.WIPER_SERVICE_POSITION, 0, PropertySpec.Type.INT, 1), false);
+        if (!request.ok()) return WipersOnLockResult.WRITE_REJECTED;
         return raised == null ? WipersOnLockResult.SENT_WITHOUT_POSITION : WipersOnLockResult.SENT;
     }
 

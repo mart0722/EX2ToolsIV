@@ -35,6 +35,7 @@ final class WidgetGrid {
     }
 
     private static final SparseIntArray GLASS_LAYOUTS = new SparseIntArray();
+    private static final SparseIntArray STANDALONE_CAPTIONS = new SparseIntArray();
     private static final SparseArray<Size> FOOTPRINTS = new SparseArray<>();
     private static final Size DEFAULT_SIZE = cells(3, 1);
 
@@ -50,7 +51,6 @@ final class WidgetGrid {
         GLASS_LAYOUTS.put(R.layout.widget_regen_vertical, R.layout.widget_glass_regen_vertical);
         GLASS_LAYOUTS.put(R.layout.widget_lock, R.layout.widget_glass_lock);
         GLASS_LAYOUTS.put(R.layout.widget_battery_range, R.layout.widget_glass_battery_range);
-        GLASS_LAYOUTS.put(R.layout.widget_windshield_heat, R.layout.widget_glass_windshield_heat);
 
         for (int panel : new int[]{R.layout.widget_heating_test, R.layout.widget_drive_regen,
                 R.layout.widget_climate_control}) {
@@ -74,6 +74,12 @@ final class WidgetGrid {
         FOOTPRINTS.put(R.layout.widget_clock_large, cells(3, 2));
         FOOTPRINTS.put(R.layout.widget_outside_temp, cells(1, 1));
         FOOTPRINTS.put(R.layout.widget_outside_temp_wide, cells(2, 1));
+
+        STANDALONE_CAPTIONS.put(R.layout.widget_recirc, R.id.txt_recirc);
+        STANDALONE_CAPTIONS.put(R.layout.widget_wipers, R.id.txt_wipers);
+        STANDALONE_CAPTIONS.put(R.layout.widget_power_off, R.id.txt_power_off);
+        STANDALONE_CAPTIONS.put(R.layout.widget_wheel_heat, R.id.txt_wheel_heat);
+        STANDALONE_CAPTIONS.put(R.layout.widget_windshield_heat, R.id.txt_windshield_heat);
     }
 
     static Size size(Context c, int layout) {
@@ -108,11 +114,16 @@ final class WidgetGrid {
         float iconScale = glass ? Prefs.glassWidgetIconSizePct(context) / 100f : 1f;
         if (scale == 1f && iconScale == 1f) return;
         int layout = views.getLayoutId();
+        int standaloneCaption = STANDALONE_CAPTIONS.get(layout);
+        if (standaloneCaption != 0) {
+            textSize(views, scale, 11, standaloneCaption);
+            return;
+        }
         if (!glass) {
             scaleStandardContent(views, layout, scale);
             return;
         }
-        if (scale != 1f && layout != R.layout.widget_recirc) {
+        if (scale != 1f) {
             boolean compact = layout == R.layout.widget_glass_vent || layout == R.layout.widget_glass_fan_speed
                     || layout == R.layout.widget_glass_temperature || layout == R.layout.widget_glass_heating_single_row;
             float inset = context.getResources().getDimension(R.dimen.wg_glass_inset) * scale;
@@ -178,12 +189,6 @@ final class WidgetGrid {
         } else if (layout == R.layout.widget_real_range) {
             textSize(views, scale, 30, R.id.tv_real_range);
             textSize(views, scale, 12, R.id.widget_title);
-        } else if (layout == R.layout.widget_recirc) {
-            textSize(views, scale, 11, R.id.txt_recirc);
-        } else if (layout == R.layout.widget_wipers || layout == R.layout.widget_power_off
-                || layout == R.layout.widget_wheel_heat || layout == R.layout.widget_glass_windshield_heat) {
-            textSize(views, scale, 11, R.id.txt_wipers, R.id.txt_power_off,
-                    R.id.txt_wheel_heat, R.id.txt_windshield_heat);
         } else if (layout == R.layout.widget_lock) {
             size(views, scale, 64, R.id.img_lock);
         }
@@ -238,12 +243,6 @@ final class WidgetGrid {
         } else if (layout == R.layout.widget_real_range) {
             textSize(views, scale, 30, R.id.tv_real_range);
             textSize(views, scale, 12, R.id.widget_title);
-        } else if (layout == R.layout.widget_recirc) {
-            textSize(views, scale, 11, R.id.txt_recirc);
-        } else if (layout == R.layout.widget_wipers || layout == R.layout.widget_power_off
-                || layout == R.layout.widget_wheel_heat || layout == R.layout.widget_windshield_heat) {
-            textSize(views, scale, 11, R.id.txt_wipers, R.id.txt_power_off,
-                    R.id.txt_wheel_heat, R.id.txt_windshield_heat);
         } else if (layout == R.layout.widget_lock) {
             size(views, scale, 64, R.id.img_lock);
         }

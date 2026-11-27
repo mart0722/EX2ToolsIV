@@ -1,19 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/chip_wipers"
-    style="@style/WgChip"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <ImageView
-        android:id="@+id/img_wipers"
-        style="@style/WgClimateIcon"
-        android:src="@drawable/wg_ic_wipers" />
+    <TextView
+        android:id="@+id/widget_bg_layer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_wg_card_100" />
 
     <TextView
-        android:id="@+id/txt_wipers"
-        style="@style/WgClimateChipLabel"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/widget_name_wipers" />
-</LinearLayout>
+        android:id="@+id/widget_button_bg_layer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_margin="4dp" />
+
+    <LinearLayout
+        android:id="@+id/chip_wipers"
+        style="@style/WgChip"
+        android:background="@null"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <ImageView
+            android:id="@+id/img_wipers"
+            style="@style/WgClimateIcon"
+            android:src="@drawable/wg_ic_wipers" />
+
+        <TextView
+            android:id="@+id/txt_wipers"
+            style="@style/WgClimateChipLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/widget_name_wipers" />
+    </LinearLayout>
+</FrameLayout>

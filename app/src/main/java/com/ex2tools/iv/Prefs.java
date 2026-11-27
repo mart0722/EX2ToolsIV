@@ -210,8 +210,12 @@ public final class Prefs {
     }
 
     public static boolean statusAny(Context c) {
+        return statusBrightness(c) || statusHasPeriodicIcons(c);
+    }
+
+    public static boolean statusHasPeriodicIcons(Context c) {
         return statusWifi(c) || statusBattery(c) || statusTemp(c)
-                || statusTotalKm(c) || statusTripKm(c) || statusBrightness(c);
+                || statusTotalKm(c) || statusTripKm(c);
     }
 
     public static int statusBrightnessPct(Context c) {
@@ -236,6 +240,12 @@ public final class Prefs {
 
     public static void setStatusBrightnessApplied(Context c, int value) {
         get(c).edit().putInt("status_brightness_applied", value).apply();
+    }
+
+    public static int statusBrightnessNextPct(Context c) {
+        if (statusBrightnessApplied(c) == 0) return statusBrightnessPct(c);
+        int saved = statusBrightnessSaved(c);
+        return saved < 0 ? 50 : saved;
     }
 
     public static boolean statusEnabled(Context c, String key) {

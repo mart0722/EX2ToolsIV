@@ -6,15 +6,17 @@ import android.net.NetworkInfo;
 import android.net.wifi.SupplicantState;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.os.PowerManager;
 import android.os.SystemClock;
-
-import java.util.concurrent.atomic.AtomicBoolean;
+import android.util.Log;
 
 import com.ex2tools.iv.LogStore;
 import com.ex2tools.iv.Prefs;
+import com.ex2tools.iv.car.Telemetry;
 
 public final class WifiAutoBoot {
 
+    private static final String TAG = "WifiAutoBoot";
     private static final int ENABLE_ATTEMPTS = 24;
     private static final long ENABLE_RETRY_MS = 2500L;
     private static final long FIRST_SCAN_DELAY_MS = 2000L;
@@ -22,37 +24,77 @@ public final class WifiAutoBoot {
     private static final long SLOW_SCAN_MS = 15000L;
     private static final long FAST_SCAN_WINDOW_MS = 60000L;
     private static final long MAX_SCAN_WINDOW_MS = 180000L;
-    private static final AtomicBoolean RUNNING = new AtomicBoolean();
+    private static boolean running;
+    private static Trigger pendingWake;
+
+    private enum Trigger {
+        BOOT, SCREEN, IGNITION
+    }
 
     private WifiAutoBoot() {
     }
 
     public static void applyOnBoot(Context context) {
-        if (!Prefs.statusWifi(context) || !Prefs.wifiAutoOnBoot(context)) return;
-        if (!RUNNING.compareAndSet(false, true)) return;
-        Context app = context.getApplicationContext();
-        new Thread(() -> {
-            try {
-                enableAndScan(app);
-            } finally {
-                RUNNING.set(false);
-            }
-        }, "wifi-auto-boot").start();
+        start(context, Trigger.BOOT);
     }
 
-    private static void enableAndScan(Context context) {
+    public static void applyOnWake(Context context) {
+        start(context, Trigger.SCREEN);
+    }
+
+    static void applyOnIgnition(Context context) {
+        start(context, Trigger.IGNITION);
+    }
+
+    private static synchronized void start(Context context, Trigger trigger) {
+        Context app = context.getApplicationContext();
+        if (!mayRun(app, trigger)) return;
+        if (running) {
+            if (trigger == Trigger.IGNITION
+                    || (trigger == Trigger.SCREEN && pendingWake == null)) pendingWake = trigger;
+            return;
+        }
+        running = true;
+        new Thread(() -> {
+            try {
+                if (trigger != Trigger.BOOT) Log.i(TAG, "Checking Wi-Fi after wake: " + trigger);
+                enableAndScan(app, trigger);
+            } finally {
+                finish(app);
+            }
+        }, "wifi-auto").start();
+    }
+
+    private static synchronized void finish(Context context) {
+        running = false;
+        if (pendingWake != null) {
+            Trigger trigger = pendingWake;
+            pendingWake = null;
+            start(context, trigger);
+        }
+    }
+
+    private static boolean mayRun(Context context, Trigger trigger) {
+        if (!Prefs.statusWifi(context) || !Prefs.wifiAutoOnBoot(context)) return false;
+        if (trigger == Trigger.BOOT) return true;
+        if (trigger == Trigger.IGNITION) return Boolean.TRUE.equals(Telemetry.ignitionOn());
+        PowerManager power = context.getSystemService(PowerManager.class);
+        return power != null && power.isInteractive();
+    }
+
+    private static void enableAndScan(Context context, Trigger trigger) {
         WifiManager wm = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
         if (wm == null) {
             LogStore.add(context, "wifi auto: WifiManager unavailable");
             return;
         }
 
-        if (!enable(wm, context)) return;
+        if (!enable(wm, context, trigger)) return;
         if (!sleep(FIRST_SCAN_DELAY_MS)) return;
 
         long started = SystemClock.elapsedRealtime();
         int scans = 0;
-        while (Prefs.statusWifi(context) && Prefs.wifiAutoOnBoot(context)) {
+        while (mayRun(context, trigger)) {
             if (!wm.isWifiEnabled()) {
                 LogStore.add(context, "wifi auto: radio turned off, scan stopped");
                 return;
@@ -90,13 +132,13 @@ public final class WifiAutoBoot {
             }
             if (!sleep(elapsed < FAST_SCAN_WINDOW_MS ? FAST_SCAN_MS : SLOW_SCAN_MS)) return;
         }
-        LogStore.add(context, "wifi auto: cancelled by settings");
+        LogStore.add(context, "wifi auto: cancelled");
     }
 
-    private static boolean enable(WifiManager wm, Context context) {
+    private static boolean enable(WifiManager wm, Context context, Trigger trigger) {
         for (int attempt = 1; attempt <= ENABLE_ATTEMPTS; attempt++) {
-            if (!Prefs.statusWifi(context) || !Prefs.wifiAutoOnBoot(context)) {
-                LogStore.add(context, "wifi auto: cancelled by settings");
+            if (!mayRun(context, trigger)) {
+                LogStore.add(context, "wifi auto: cancelled");
                 return false;
             }
             try {

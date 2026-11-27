@@ -860,7 +860,6 @@ public final class WidgetsFragment extends Fragment {
         private FlymeSegmentedGroup format;
         private String configuredKey;
         private View sizeRow;
-        private View alphaRow;
 
         OverlayCard(Context context, String key, LinearLayout list) {
             this.context = context;
@@ -945,7 +944,6 @@ public final class WidgetsFragment extends Fragment {
             configuredKey = selectedKey;
             options.removeAllViews();
             sizeRow = null;
-            alphaRow = null;
 
             boolean apps = WidgetsCommon.SIZE_APPS.equals(key);
             boolean speed = WidgetsCommon.SIZE_SPEED.equals(key);
@@ -975,11 +973,9 @@ public final class WidgetsFragment extends Fragment {
             options.addView(pin);
             if (apps) addAppsSettings(context, options);
 
-            if (!WidgetsCommon.isStandaloneVehicleButton(selectedKey)) {
-                alphaRow = addPercentRow(options, R.string.widgets_overlay_alpha, 0, 100,
-                        Prefs.overlayAlphaPct(context, selectedKey), false,
-                        pct -> Prefs.setOverlayAlphaPct(context, selectedKey, pct), restart);
-            }
+            addPercentRow(options, R.string.widgets_overlay_alpha, 0, 100,
+                    Prefs.overlayAlphaPct(context, selectedKey), false,
+                    pct -> Prefs.setOverlayAlphaPct(context, selectedKey, pct), restart);
 
             if (WidgetsCommon.SIZE_TEMP.equals(key)) {
                 FlymeSwitchRow wide = new FlymeSwitchRow(context);
@@ -1004,9 +1000,6 @@ public final class WidgetsFragment extends Fragment {
             boolean glass = usesGlass(context);
             if (sizeRow != null) {
                 sizeRow.setVisibility(Prefs.widgetsGlobalSize(context) ? View.GONE : View.VISIBLE);
-            }
-            if (alphaRow != null && WidgetsCommon.SIZE_WINDSHIELD_HEAT.equals(key)) {
-                alphaRow.setVisibility(glass ? View.GONE : View.VISIBLE);
             }
         }
     }

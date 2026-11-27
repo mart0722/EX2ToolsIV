@@ -110,6 +110,7 @@ public final class StatusBarFragment extends Fragment {
             Context c = requireContext();
             LogStore.add(c, "status wifi auto=" + checked);
             Prefs.setWifiAutoOnBoot(c, checked);
+            StatusIconService.sync(c);
         });
     }
 

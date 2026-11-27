@@ -5,14 +5,21 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.car.hardware.CarPropertyValue;
+import android.car.hardware.property.CarPropertyManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.SharedPreferences;
+import android.database.ContentObserver;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.Icon;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -23,6 +30,8 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.SystemClock;
+import android.provider.Settings;
+import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -35,6 +44,8 @@ import com.ex2tools.iv.R;
 import com.ex2tools.iv.car.CarProps;
 import com.ex2tools.iv.car.Telemetry;
 import com.ex2tools.iv.state.VehicleState;
+import com.ex2tools.iv.vehicle.VhalGateway;
+import com.ex2tools.iv.voice.SystemControls;
 
 import java.util.HashMap;
 import java.util.Locale;
@@ -46,6 +57,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class StatusIconService extends Service {
 
     private static final int WATCHDOG_ID = 15030;
+    private static final long WIFI_WAKE_DELAY_MS = 3000L;
 
     private static final int NOTIF_TEMP = 15021;
     private static final int NOTIF_BATTERY = 15020;
@@ -53,6 +65,7 @@ public final class StatusIconService extends Service {
     private static final int NOTIF_TRIP = 15026;
     private static final int NOTIF_WIFI = 15024;
     private static final int NOTIF_BRIGHTNESS = 15022;
+    private static final int LEGACY_NOTIF_THEME = 15023;
 
     private static final int ICON_TEMP = 15;
     private static final int ICON_BATTERY = 97;
@@ -88,6 +101,55 @@ public final class StatusIconService extends Service {
     private final AtomicBoolean busy = new AtomicBoolean(false);
     private final Map<Integer, Integer> lastRank = new HashMap<>();
 
+    private boolean wifiWakeReceiverRegistered;
+    private final Runnable wifiAfterWake = () -> WifiAutoBoot.applyOnWake(this);
+    private final Runnable wifiAfterIgnition = () -> WifiAutoBoot.applyOnIgnition(this);
+    private CarPropertyManager wifiIgnitionManager;
+    private boolean ignitionWasOff;
+    private final CarPropertyManager.CarPropertyEventCallback wifiIgnitionCallback =
+            new CarPropertyManager.CarPropertyEventCallback() {
+                @Override
+                public void onChangeEvent(CarPropertyValue value) {
+                    Boolean powered = Telemetry.decodeIgnitionOn(value);
+                    if (powered != null) handler.post(() -> onWifiIgnitionChanged(powered));
+                }
+
+                @Override
+                public void onErrorEvent(int propertyId, int area) {
+                }
+            };
+    private final BroadcastReceiver wifiWakeReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            handler.removeCallbacks(wifiAfterWake);
+            if (!Intent.ACTION_SCREEN_OFF.equals(intent.getAction())
+                    && Prefs.statusWifi(context) && Prefs.wifiAutoOnBoot(context)) {
+                // Flyme may still turn Wi-Fi off during the first seconds after wake.
+                handler.postDelayed(wifiAfterWake, WIFI_WAKE_DELAY_MS);
+            }
+        }
+    };
+
+    private boolean brightnessNeedsRepost;
+    private Boolean lastBrightnessIncrease;
+    private final Runnable refreshBrightness = () -> {
+        boolean repost = brightnessNeedsRepost;
+        brightnessNeedsRepost = false;
+        executor.execute(() -> updateBrightnessIcon(repost));
+    };
+    private final ContentObserver brightnessObserver = new ContentObserver(handler) {
+        @Override
+        public void onChange(boolean selfChange) {
+            scheduleBrightnessRefresh();
+        }
+    };
+    private final SharedPreferences.OnSharedPreferenceChangeListener brightnessPrefsListener =
+            (prefs, key) -> {
+                if ("status_brightness_pct".equals(key) || "status_brightness_applied".equals(key)) {
+                    scheduleBrightnessRefresh();
+                }
+            };
+
     // Батарея обновляется по событию SOC, а не только по таймеру: иначе цифра
     // отстаёт от системной на один процент до трёх секунд.
     private VehicleState state;
@@ -100,7 +162,9 @@ public final class StatusIconService extends Service {
         @Override
         public void run() {
             requestUpdate();
-            handler.postDelayed(this, Math.max(3, Prefs.intervalSec(StatusIconService.this)) * 1000L);
+            if (Prefs.statusHasPeriodicIcons(StatusIconService.this)) {
+                handler.postDelayed(this, Math.max(3, Prefs.intervalSec(StatusIconService.this)) * 1000L);
+            }
         }
     };
 
@@ -143,7 +207,7 @@ public final class StatusIconService extends Service {
             NotificationManager nm = (NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE);
             if (nm == null) return;
             for (int id : new int[]{NOTIF_TEMP, NOTIF_BATTERY, NOTIF_TOTAL, NOTIF_TRIP,
-                    NOTIF_WIFI, NOTIF_BRIGHTNESS, 18020, 18024, 18026, 18028, 18021}) {
+                    NOTIF_WIFI, NOTIF_BRIGHTNESS, LEGACY_NOTIF_THEME, 18020, 18024, 18026, 18028, 18021}) {
                 nm.cancel(id);
             }
             for (int base = 16000; base <= 16990; base += 10) {
@@ -170,6 +234,20 @@ public final class StatusIconService extends Service {
         clearOldNotifications();
         cancelAll();
         startSocWatch();
+        IntentFilter wakeFilter = new IntentFilter(Intent.ACTION_SCREEN_ON);
+        wakeFilter.addAction(Intent.ACTION_USER_PRESENT);
+        wakeFilter.addAction(Intent.ACTION_SCREEN_OFF);
+        try {
+            ContextCompat.registerReceiver(this, wifiWakeReceiver, wakeFilter,
+                    ContextCompat.RECEIVER_NOT_EXPORTED);
+            wifiWakeReceiverRegistered = true;
+        } catch (RuntimeException e) {
+            LogStore.add(this, "wifi auto: cannot register wake receiver: " + e);
+        }
+        getContentResolver().registerContentObserver(
+                Settings.System.getUriFor(Settings.System.SCREEN_BRIGHTNESS), false, brightnessObserver);
+        Prefs.get(this).registerOnSharedPreferenceChangeListener(brightnessPrefsListener);
+        scheduleBrightnessRefresh();
         handler.post(tick);
     }
 
@@ -223,10 +301,58 @@ public final class StatusIconService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         boolean repost = intent != null && intent.getBooleanExtra("repost", false);
+        brightnessNeedsRepost |= repost;
+        scheduleBrightnessRefresh();
         startSocWatch();
+        syncWifiIgnitionWatch();
         handler.removeCallbacks(tick);
         handler.postDelayed(tick, repost ? 300L : 0L);
         return START_STICKY;
+    }
+
+    private void syncWifiIgnitionWatch() {
+        if (!Prefs.statusWifi(this) || !Prefs.wifiAutoOnBoot(this)) {
+            stopWifiIgnitionWatch();
+            return;
+        }
+        if (wifiIgnitionManager != null) return;
+        try {
+            VhalGateway gateway = VhalGateway.get();
+            if (!gateway.ensure(this)) return;
+            CarPropertyManager manager = gateway.cpm();
+            ignitionWasOff = Boolean.FALSE.equals(Telemetry.ignitionOn());
+            if (manager.registerCallback(wifiIgnitionCallback, CarProps.IGNITION_STATE_VENDOR, 0f)) {
+                wifiIgnitionManager = manager;
+                Log.i("WifiAutoBoot", "Subscribed to vehicle ignition for Wi-Fi wake");
+            }
+        } catch (RuntimeException | LinkageError e) {
+            LogStore.add(this, "wifi auto: cannot observe ignition: " + e);
+        }
+    }
+
+    private void onWifiIgnitionChanged(boolean powered) {
+        if (wifiIgnitionManager == null) return;
+        if (!powered) {
+            ignitionWasOff = true;
+            handler.removeCallbacks(wifiAfterIgnition);
+        } else if (ignitionWasOff) {
+            ignitionWasOff = false;
+            Log.i("WifiAutoBoot", "Vehicle ignition woke the head unit");
+            handler.postDelayed(wifiAfterIgnition, WIFI_WAKE_DELAY_MS);
+        }
+    }
+
+    private void stopWifiIgnitionWatch() {
+        handler.removeCallbacks(wifiAfterIgnition);
+        ignitionWasOff = false;
+        if (wifiIgnitionManager == null) return;
+        CarPropertyManager manager = wifiIgnitionManager;
+        wifiIgnitionManager = null;
+        try {
+            manager.unregisterCallback(wifiIgnitionCallback);
+        } catch (RuntimeException e) {
+            LogStore.add(this, "wifi auto: cannot remove ignition observer: " + e);
+        }
     }
 
     private void requestUpdate() {
@@ -273,11 +399,6 @@ public final class StatusIconService extends Service {
             postWifi();
         } else {
             cancel(NOTIF_WIFI);
-        }
-        if (Prefs.statusBrightness(this)) {
-            postBrightness();
-        } else {
-            cancel(NOTIF_BRIGHTNESS);
         }
     }
 
@@ -369,18 +490,35 @@ public final class StatusIconService extends Service {
                 getString(R.string.status_wifi_title), text, icon, pending);
     }
 
-    private void postBrightness() {
-        Icon icon = Icon.createWithBitmap(brightnessBitmap());
+    private void scheduleBrightnessRefresh() {
+        handler.removeCallbacks(refreshBrightness);
+        handler.postDelayed(refreshBrightness, 100L);
+    }
+
+    private void updateBrightnessIcon(boolean repost) {
+        if (!Prefs.statusBrightness(this)) {
+            if (lastBrightnessIncrease != null || repost) cancel(NOTIF_BRIGHTNESS);
+            lastBrightnessIncrease = null;
+            return;
+        }
+
+        int nextBrightness = Prefs.statusBrightnessNextPct(this);
+        boolean brighter = SystemControls.wouldIncreaseBrightness(this, nextBrightness);
+        if (!repost && lastBrightnessIncrease != null && lastBrightnessIncrease == brighter) return;
+
+        Icon icon = Icon.createWithBitmap(brightnessBitmap(brighter));
         PendingIntent pending = PendingIntent.getBroadcast(this, ICON_BRIGHTNESS,
                 new Intent(this, BrightnessActionReceiver.class),
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        postStatusIcon(NOTIF_BRIGHTNESS, ICON_BRIGHTNESS, RANK_BRIGHTNESS,
+        if (postStatusIcon(NOTIF_BRIGHTNESS, ICON_BRIGHTNESS, RANK_BRIGHTNESS,
                 "StatusIcon_BrightnessApply", CHANNEL_BRIGHTNESS,
                 getString(R.string.status_brightness_title),
-                getString(R.string.status_brightness_text), icon, pending);
+                getString(R.string.status_brightness_text), icon, pending)) {
+            lastBrightnessIncrease = brighter;
+        }
     }
 
-    private void postStatusIcon(int notifId, int iconId, int rank, String describe,
+    private boolean postStatusIcon(int notifId, int iconId, int rank, String describe,
                                 String channel, String title, String text,
                                 Icon icon, PendingIntent pending) {
         Integer previous = lastRank.get(notifId);
@@ -407,12 +545,14 @@ public final class StatusIconService extends Service {
             bundle.putBoolean("flag_status_icon_is_pick_on", false);
             bundle.putInt("flag_status_icon_specific_width", 0);
             NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-            if (nm == null) return;
+            if (nm == null) return false;
             LogStore.add(this, "status " + describe + " notif=" + notifId
                     + " icon=" + iconId + " rank=" + rank + " text=" + text);
             nm.notify(notifId, notification);
+            return true;
         } catch (Throwable t) {
             LogStore.add(this, "status icon " + describe + " failed: " + t);
+            return false;
         }
     }
 
@@ -490,30 +630,14 @@ public final class StatusIconService extends Service {
         return bitmap;
     }
 
-    private Bitmap brightnessBitmap() {
-        float base = 36f * getResources().getDisplayMetrics().density;
-        int size = Math.max((int) (base / 0.61f), 1);
+    private Bitmap brightnessBitmap(boolean brighter) {
+        Drawable symbol = getDrawable(brighter ? R.drawable.status_brightness_moon
+                : R.drawable.status_brightness_sun);
+        int size = dp(56);
+        int inset = (size - dp(36)) / 2;
         Bitmap bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(bitmap);
-        Paint paint = new Paint(1);
-        paint.setColor(-1);
-        paint.setStyle(Paint.Style.STROKE);
-        paint.setStrokeWidth(0.06f * base);
-        paint.setStrokeCap(Paint.Cap.ROUND);
-        float center = size / 2f;
-        float r0 = base * 0.32f;
-        float r1 = base * 0.46f;
-        for (int i = 0; i < 8; i++) {
-            double angle = Math.toRadians(i * 45);
-            float cos = (float) Math.cos(angle);
-            float sin = (float) Math.sin(angle);
-            canvas.drawLine(center + cos * r0, center + sin * r0,
-                    center + cos * r1, center + sin * r1, paint);
-        }
-        Paint fill = new Paint(1);
-        fill.setColor(-1);
-        fill.setStyle(Paint.Style.FILL);
-        canvas.drawCircle(center, center, base * 0.22f, fill);
+        symbol.setBounds(inset, inset, size - inset, size - inset);
+        symbol.draw(new Canvas(bitmap));
         return bitmap;
     }
 
@@ -603,7 +727,7 @@ public final class StatusIconService extends Service {
     }
 
     private void clearOldNotifications() {
-        for (int id : new int[]{18020, 18024, 18026, 18028, 18021}) cancel(id);
+        for (int id : new int[]{LEGACY_NOTIF_THEME, 18020, 18024, 18026, 18028, 18021}) cancel(id);
         for (int base = 16000; base <= 16990; base += 10) {
             cancel(base + 20);
             cancel(base + 24);
@@ -615,7 +739,11 @@ public final class StatusIconService extends Service {
 
     @Override
     public void onDestroy() {
-        handler.removeCallbacks(tick);
+        stopWifiIgnitionWatch();
+        if (wifiWakeReceiverRegistered) unregisterReceiver(wifiWakeReceiver);
+        getContentResolver().unregisterContentObserver(brightnessObserver);
+        Prefs.get(this).unregisterOnSharedPreferenceChangeListener(brightnessPrefsListener);
+        handler.removeCallbacksAndMessages(null);
         stopSocWatch();
         executor.shutdownNow();
         cancelAll();
