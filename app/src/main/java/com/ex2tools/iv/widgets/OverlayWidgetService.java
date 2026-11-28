@@ -134,7 +134,7 @@ public final class OverlayWidgetService extends Service {
                 boolean apps = WidgetsCommon.SIZE_APPS.equals(spec.key);
                 boolean pinned = Prefs.overlayPinned(OverlayWidgetService.this, spec.key);
                 boolean visible = (pinned || state.launcher)
-                        && (!state.appList || (apps && pinned))
+                        && (!state.appList || pinned && (apps || WidgetsCommon.SIZE_REAL_RANGE.equals(spec.key)))
                         && (!apps || AppsOverlay.hasVisible(OverlayWidgetService.this));
                 if (lockScreen && WidgetsCommon.SIZE_SPEED.equals(spec.key)) {
                     visible = Prefs.speedOnLockScreen(OverlayWidgetService.this);
@@ -341,6 +341,7 @@ public final class OverlayWidgetService extends Service {
             boolean largeSpeed = speed && Prefs.overlaySpeedCells(this) > 2;
             boolean apps = WidgetsCommon.SIZE_APPS.equals(spec.key);
             boolean glass = WidgetAppearance.usesGlass(this);
+            boolean floatingRange = isFloatingRange(spec);
             boolean vertical = Prefs.overlayVertical(this, spec.key)
                     || Prefs.overlayCells(this, spec.key) != Prefs.OverlayCells.DEFAULT;
             Size base = glass || vertical ? tileSize(spec) : apps ? AppsOverlay.sizeDp(this) : legacySize(spec);
@@ -358,7 +359,7 @@ public final class OverlayWidgetService extends Service {
             int maxHeight = Math.max(1, metrics.heightPixels - dp(16));
             int width;
             int height;
-            if (tilePitch > 0) {
+            if (tilePitch > 0 && !floatingRange) {
                 // Reserve one gutter per grid line, including between neighboring tiles.
                 int gap = tileGap();
                 width = base.getWidth() / WidgetGrid.UNIT_DP * tilePitch - gap;
@@ -379,7 +380,7 @@ public final class OverlayWidgetService extends Service {
                 content = spec.speedView.view();
                 spec.speedView.update(this, WidgetsCommon.readSpeed(this), WidgetsCommon.readTripKm(this));
             } else {
-                content = OverlayWidgetViews.create(this, spec.key, scale);
+                content = OverlayWidgetViews.create(this, spec.key, scale, width, height);
                 OverlayWidgetViews.update(content, spec.key, width);
             }
             container.addView(content, new FrameLayout.LayoutParams(
@@ -398,7 +399,7 @@ public final class OverlayWidgetService extends Service {
                 lp.x = Math.max(0, Math.min(metrics.widthPixels - width, lp.x));
                 lp.y = Math.max(0, Math.min(metrics.heightPixels - height, lp.y));
             }
-            if (placement == Prefs.OverlayPlacement.GRID) {
+            if (!floatingRange && placement == Prefs.OverlayPlacement.GRID) {
                 snapToGrid(lp);
             }
             container.setAlpha(1f);
@@ -433,7 +434,7 @@ public final class OverlayWidgetService extends Service {
             int inset = gap;
             int columnWidth = 0;
             for (OverlaySpec spec : specs) {
-                if (spec.view == null || spec.params == null) continue;
+                if (spec.view == null || spec.params == null || isFloatingRange(spec)) continue;
                 WindowManager.LayoutParams lp = spec.params;
                 if (Prefs.overlayCorner(this, spec.key) != corner) continue;
                 if (used > gap && used + lp.height > height - gap) {
@@ -483,7 +484,7 @@ public final class OverlayWidgetService extends Service {
         int maxHeight = Math.max(1, metrics.heightPixels - dp(16));
         int pitch = Math.round(WidgetGrid.UNIT_DP * density() * WidgetGrid.scale(this));
         for (OverlaySpec spec : specs) {
-            if (!Prefs.overlayEnabled(this, spec.key)) continue;
+            if (!Prefs.overlayEnabled(this, spec.key) || isFloatingRange(spec)) continue;
             if (WidgetsCommon.SIZE_CLIMATE.equals(spec.key) && !Prefs.climateEnabled(this)) continue;
             Size size = tileSize(spec);
             pitch = Math.min(pitch, (maxWidth + gap) / (size.getWidth() / WidgetGrid.UNIT_DP));
@@ -555,7 +556,8 @@ public final class OverlayWidgetService extends Service {
 
     private void bindDrag(OverlaySpec spec, FrameLayout container, View content,
                           WindowManager.LayoutParams lp) {
-        final boolean locked = Prefs.overlayLock(this);
+        final boolean floatingRange = isFloatingRange(spec);
+        final boolean locked = Prefs.overlayLock(this) && !floatingRange;
         final boolean lockWidget = WidgetsCommon.SIZE_LOCK.equals(spec.key);
         final View button = switch (spec.key) {
             case WidgetsCommon.SIZE_POWER_OFF -> content.findViewById(R.id.chip_power_off);
@@ -574,7 +576,7 @@ public final class OverlayWidgetService extends Service {
                 body.setClickable(false);
             }
             drag = content;
-        } else if (drag == null || drag.getVisibility() != View.VISIBLE) {
+        } else if (floatingRange || drag == null || drag.getVisibility() != View.VISIBLE) {
             drag = content;
         }
         View.OnTouchListener listener = new View.OnTouchListener() {
@@ -603,6 +605,11 @@ public final class OverlayWidgetService extends Service {
                             spec.dragging = true;
                             lp.x = startX + Math.round(dx);
                             lp.y = startY + Math.round(dy);
+                            if (floatingRange) {
+                                DisplayMetrics screen = getResources().getDisplayMetrics();
+                                lp.x = Math.max(0, Math.min(screen.widthPixels - lp.width, lp.x));
+                                lp.y = Math.max(0, Math.min(screen.heightPixels - lp.height, lp.y));
+                            }
                             try {
                                 windowManager.updateViewLayout(container, lp);
                             } catch (Throwable ignored) {
@@ -613,7 +620,11 @@ public final class OverlayWidgetService extends Service {
                     case MotionEvent.ACTION_CANCEL:
                         spec.dragging = false;
                         if (moved && !locked) {
-                            placeAfterDrag(spec, container, lp);
+                            if (floatingRange) {
+                                Prefs.setOverlayPos(OverlayWidgetService.this, spec.key, lp.x, lp.y);
+                            } else {
+                                placeAfterDrag(spec, container, lp);
+                            }
                         } else if (!moved && event.getActionMasked() == MotionEvent.ACTION_UP) {
                             if (lockWidget) {
                                 openLockScreen();
@@ -640,6 +651,10 @@ public final class OverlayWidgetService extends Service {
             View iconArea = content.findViewById(R.id.apps_container);
             if (iconArea != null && iconArea != drag) iconArea.setOnTouchListener(listener);
         }
+    }
+
+    private boolean isFloatingRange(OverlaySpec spec) {
+        return WidgetsCommon.SIZE_REAL_RANGE.equals(spec.key) && Prefs.overlayPinned(this, spec.key);
     }
 
     private void placeAfterDrag(OverlaySpec spec, View container, WindowManager.LayoutParams lp) {

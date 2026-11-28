@@ -48,15 +48,11 @@ final class OverlayWidgetViews {
     private OverlayWidgetViews() {
     }
 
-    static View create(Context c, String key) {
-        return create(c, key, 1f);
-    }
-
     /**
      * scale — коэффициент размера оверлея. Меняем плотность контекста, чтобы
      * вместе с карточкой увеличивались иконки, отступы и текст.
      */
-    static View create(Context c, String key, float scale) {
+    static View create(Context c, String key, float scale, int width, int height) {
         boolean apps = WidgetsCommon.SIZE_APPS.equals(key);
         Context theme = themeContext(c, apps && !WidgetAppearance.usesGlass(c) ? 1f : scale);
         View root = LayoutInflater.from(theme).inflate(layout(c, key), null);
@@ -66,7 +62,11 @@ final class OverlayWidgetViews {
         }
         visibility(root, R.id.widget_vent_fan_row, WidgetsCommon.SIZE_VENT_FAN.equals(key)
                 ? View.VISIBLE : View.GONE);
-        bindClicks(c, root, key);
+        if (apps) {
+            bindApps(root, width, height);
+        } else {
+            bindClicks(c, root, key);
+        }
         return root;
     }
 
@@ -125,18 +125,21 @@ final class OverlayWidgetViews {
                 updateBatteryRange(c, root);
                 break;
             case WidgetsCommon.SIZE_REAL_RANGE:
-                text(root, R.id.tv_real_range,
-                        WidgetsRenderer.realRangeText(c, RangeModel.estimateKm(c)));
+                visibility(root, R.id.widget_title, View.GONE);
+                float rangeKm = RangeModel.estimateKm(c);
+                text(root, R.id.tv_real_range, Float.isFinite(rangeKm)
+                        ? c.getString(R.string.widget_real_range_overlay_km, Math.round(rangeKm))
+                        : c.getString(R.string.widget_real_range_missing));
                 break;
             case WidgetsCommon.SIZE_APPS:
                 // Built once in create(); the selection only changes on restart.
                 break;
             case WidgetsCommon.SIZE_LOCK:
-                root.findViewById(R.id.lock_body).setBackgroundResource(Prefs.climateIconStyle(c) == Prefs.ClimateIconStyle.OUTLINE
-                        ? R.drawable.bg_wg_outline_edge : android.R.color.transparent);
                 if (WidgetAppearance.usesGlass(c)) {
-                    ClimateWidgetIcons.forOverlay(c, root, key)
-                            .lockGlyph();
+                    ClimateWidgetIcons icons = ClimateWidgetIcons.forOverlay(c, root, key);
+                    root.findViewById(R.id.widget_button_bg_layer)
+                            .setBackgroundResource(icons.standaloneButtonBackground(R.id.lock_body, false, false));
+                    icons.lockGlyph();
                 }
                 break;
             case WidgetsCommon.SIZE_CLIMATE:
@@ -286,15 +289,12 @@ final class OverlayWidgetViews {
                 click(c, root, R.id.wg_climate_plus, WidgetsCommon.CLIMATE_TARGET_PLUS);
                 click(c, root, R.id.wg_climate_status, WidgetsCommon.CLIMATE_TOGGLE);
                 break;
-            case WidgetsCommon.SIZE_APPS:
-                bindApps(root);
-                break;
             default:
                 break;
         }
     }
 
-    private static void bindApps(View root) {
+    private static void bindApps(View root, int width, int height) {
         Context c = root.getContext();
         View containerView = root.findViewById(R.id.apps_container);
         if (!(containerView instanceof LinearLayout)) return;
@@ -307,21 +307,28 @@ final class OverlayWidgetViews {
         int columns = AppsOverlay.columns(c, count);
         boolean glass = WidgetAppearance.usesGlass(c);
         float scale = glass ? 1f : Prefs.overlaySizePct(c, WidgetsCommon.SIZE_APPS) / 100f;
-        int padding = glass ? c.getResources().getDimensionPixelSize(R.dimen.wg_glass_inset)
+        int horizontalInset = glass ? c.getResources().getDimensionPixelSize(R.dimen.wg_glass_inset)
                 : dp(c, Math.round(AppsOverlay.PADDING_DP * scale));
-        int gap = dp(c, Math.round(AppsOverlay.GAP_DP * scale));
-        int cell = dp(c, Math.round(AppsOverlay.CELL_DP * scale));
+        int verticalInset = glass ? c.getResources().getDimensionPixelSize(R.dimen.wg_glass_compact_inset)
+                : horizontalInset;
+        int horizontalGap = glass ? dp(c, 4) : dp(c, Math.round(AppsOverlay.GAP_DP * scale));
+        int verticalGap = glass ? c.getResources().getDimensionPixelSize(R.dimen.wg_glass_control_gap)
+                : horizontalGap;
+        int cellWidth = dp(c, Math.round(AppsOverlay.CELL_DP * scale));
+        int cellHeight = cellWidth;
         if (glass) {
             int rows = (count + columns - 1) / columns;
-            int availableWidth = dp(c, columns * WidgetGrid.UNIT_DP) - 2 * padding - (columns - 1) * gap;
-            int availableHeight = dp(c, rows * WidgetGrid.UNIT_DP) - 2 * padding - (rows - 1) * gap;
-            cell = Math.max(1, Math.min(availableWidth / columns, availableHeight / rows));
+            int availableWidth = width - 2 * horizontalInset - (columns - 1) * horizontalGap;
+            int availableHeight = height - 2 * verticalInset - (rows - 1) * verticalGap;
+            cellWidth = Math.max(1, availableWidth / columns);
+            cellHeight = Math.max(1, availableHeight / rows);
         }
-        float iconScale = glass ? Prefs.glassWidgetIconSizePct(c) / 100f : scale;
-        int iconSize = dp(c, Math.round((glass ? ClimateWidgetIcons.ACTION_ICON_DP
+        float iconScale = scale * Prefs.glassWidgetIconSizePct(c) / 100f;
+        int desiredIconSize = dp(c, Math.round((glass ? ClimateWidgetIcons.ACTION_ICON_DP
                 : AppsOverlay.ICON_DP) * iconScale));
+        int iconSize = Math.min(desiredIconSize, Math.min(cellWidth, cellHeight));
         int corner = dp(c, Math.round(AppsOverlay.CORNER_DP * scale));
-        container.setPadding(padding, padding, padding, padding);
+        container.setPadding(horizontalInset, verticalInset, horizontalInset, verticalInset);
         LinearLayout row = null;
         for (int i = 0; i < count; i++) {
             if (i % columns == 0) {
@@ -331,17 +338,17 @@ final class OverlayWidgetViews {
                 LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(
                         LinearLayout.LayoutParams.WRAP_CONTENT,
                         LinearLayout.LayoutParams.WRAP_CONTENT);
-                if (i > 0) rowParams.topMargin = gap;
+                if (i > 0) rowParams.topMargin = verticalGap;
                 container.addView(row, rowParams);
             }
-            ImageView icon = appIcon(c, packages.get(i), cell, iconSize, corner);
-            LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(cell, cell);
-            if (i % columns != 0) iconParams.setMarginStart(gap);
+            ImageView icon = appIcon(c, packages.get(i), cellWidth, cellHeight, iconSize, corner);
+            LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(cellWidth, cellHeight);
+            if (i % columns != 0) iconParams.setMarginStart(horizontalGap);
             if (row != null) row.addView(icon, iconParams);
         }
     }
 
-    private static ImageView appIcon(Context c, String pkg, int cellPx, int iconPx, int cornerPx) {
+    private static ImageView appIcon(Context c, String pkg, int width, int height, int iconPx, int cornerPx) {
         ImageView icon = new ImageView(c);
         Drawable drawable = AppsOverlay.icon(c, pkg);
         if (drawable != null) {
@@ -351,8 +358,10 @@ final class OverlayWidgetViews {
         }
         icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
         icon.setContentDescription(AppsOverlay.label(c, pkg));
-        int inset = Math.max(0, (cellPx - iconPx) / 2);
-        icon.setPadding(inset, inset, inset, inset);
+        int horizontalSpace = width - iconPx;
+        int verticalSpace = height - iconPx;
+        icon.setPadding(horizontalSpace / 2, verticalSpace / 2,
+                (horizontalSpace + 1) / 2, (verticalSpace + 1) / 2);
 
         if (WidgetAppearance.usesGlass(c)) {
             icon.setBackgroundResource(WidgetAppearance.buttonBackground(c, R.drawable.bg_wg_climate_glass));

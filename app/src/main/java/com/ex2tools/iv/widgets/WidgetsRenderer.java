@@ -444,8 +444,10 @@ public final class WidgetsRenderer {
         bg(v, c);
         Context tc = OverlayWidgetViews.themeContext(c);
         if (WidgetAppearance.usesGlass(c)) {
-            ClimateWidgetIcons.forRemote(c, tc, v)
-                    .lockGlyph();
+            ClimateWidgetIcons icons = ClimateWidgetIcons.forRemote(c, tc, v);
+            v.setInt(R.id.widget_button_bg_layer, "setBackgroundResource",
+                    icons.standaloneButtonBackground(R.id.lock_body, false, false));
+            icons.lockGlyph();
         } else {
             v.setInt(R.id.img_lock, "setColorFilter", tc.getColor(R.color.wg_text));
         }
@@ -453,8 +455,6 @@ public final class WidgetsRenderer {
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pending = PendingIntent.getActivity(c, 0x4c4f434b, intent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        v.setInt(R.id.lock_body, "setBackgroundResource", Prefs.climateIconStyle(c) == Prefs.ClimateIconStyle.OUTLINE
-                        ? R.drawable.bg_wg_outline_edge : android.R.color.transparent);
         v.setOnClickPendingIntent(R.id.lock_body, pending);
         return v;
     }

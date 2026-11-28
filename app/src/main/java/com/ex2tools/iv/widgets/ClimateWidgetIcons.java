@@ -194,7 +194,8 @@ final class ClimateWidgetIcons {
 
     void recirculation(int id) {
         if (usesOutline()) {
-            chromeGlyph(id, R.drawable.wg_ic_recirc, id == R.id.img_recirc_v ? 22 : ACTION_ICON_DP);
+            int resource = style.isFlyme() ? R.drawable.ic_widget_recirc : R.drawable.wg_ic_recirc;
+            chromeGlyph(id, resource, id == R.id.img_recirc_v ? 22 : ACTION_ICON_DP);
         } else {
             set(id, R.drawable.wg_ic_recirc, false, null, 0);
         }
@@ -356,20 +357,21 @@ final class ClimateWidgetIcons {
     }
 
     void vehicleControl(boolean powerOff) {
+        boolean sharedArtwork = style.isChrome() || style.isFlyme();
         if (powerOff) {
             set(R.id.img_power_off, R.drawable.wg_ic_power_off, true,
-                    style.isChrome() ? Shape.CHROME_POWER_OFF : Shape.POWER_OFF, 0);
+                    sharedArtwork ? Shape.CHROME_POWER_OFF : Shape.POWER_OFF, 0);
         } else {
             set(R.id.img_wipers, R.drawable.wg_ic_wipers, true,
-                    style.isChrome() ? Shape.CHROME_WIPERS : Shape.WIPERS, 0);
+                    sharedArtwork ? Shape.CHROME_WIPERS : Shape.WIPERS, 0);
         }
     }
 
     void lockGlyph() {
-        if (style.isChrome()) {
+        if (style.isChrome() || style.isFlyme()) {
             target.set(R.id.img_lock, bitmap(Shape.LOCK, 0, pixels(ACTION_ICON_DP), null, false));
         } else {
-            chromeGlyph(R.id.img_lock, R.drawable.wg_ic_lock, style.isFlyme() ? 44 : ACTION_ICON_DP);
+            chromeGlyph(R.id.img_lock, R.drawable.wg_ic_lock, ACTION_ICON_DP);
         }
     }
 
@@ -461,9 +463,9 @@ final class ClimateWidgetIcons {
         boolean thinChrome = style == Prefs.ClimateIconStyle.CHROME_THIN;
         boolean extraThin = style == Prefs.ClimateIconStyle.EXTRA_THIN;
         boolean multiLevelHeat = shape == Shape.SEAT || shape == Shape.WHEEL;
-        boolean chromeControl = style.isChrome()
-                && (shape == Shape.CHROME_WIPERS || shape == Shape.CHROME_POWER_OFF || shape == Shape.LOCK);
-        boolean strokeOnly = chromeControl || shape == Shape.WIPERS || shape == Shape.POWER_OFF;
+        boolean vehicleControl = shape == Shape.CHROME_WIPERS || shape == Shape.CHROME_POWER_OFF
+                || shape == Shape.LOCK;
+        boolean strokeOnly = vehicleControl || shape == Shape.WIPERS || shape == Shape.POWER_OFF;
         Shader chromeShader = null;
         for (int layer = 0; layer < data.length; layer++) {
             Path path = PathParser.createPathFromPathData(data[layer]);
@@ -488,8 +490,8 @@ final class ClimateWidgetIcons {
             if (mark != null && thinChrome && layer > 0) width = 0.55f;
             float strokeWidth = width * FIGMA_TO_VIEWPORT;
             // The heating silhouettes already include a band of this thickness in their paths.
-            float controlWidth = chromeControl ? strokeWidth + CONTROL_BODY_WIDTH : strokeWidth;
-            if (thick && chromeControl) {
+            float controlWidth = vehicleControl ? strokeWidth + CONTROL_BODY_WIDTH : strokeWidth;
+            if (thick && vehicleControl) {
                 paint.setStyle(Paint.Style.STROKE);
                 paint.setStrokeWidth(controlWidth);
                 canvas.drawPath(path, paint);

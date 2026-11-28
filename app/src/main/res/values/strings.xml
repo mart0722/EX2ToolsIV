@@ -372,6 +372,7 @@
     <string name="widget_real_range_desc">Оценка остатка километров по фактическому расходу</string>
     <string name="widget_real_range_title">По расходу</string>
     <string name="widget_real_range_missing">— км</string>
+    <string name="widget_real_range_overlay_km">%1$d км</string>
     <string name="widget_name_lock">Блокировка экрана</string>
     <string name="widget_lock_desc">Чёрный экран с часами, зарядом и температурой</string>
     <string name="wg_lock_label">Блокировка экрана</string>
