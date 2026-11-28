@@ -341,7 +341,8 @@ public final class OverlayWidgetService extends Service {
             boolean largeSpeed = speed && Prefs.overlaySpeedCells(this) > 2;
             boolean apps = WidgetsCommon.SIZE_APPS.equals(spec.key);
             boolean glass = WidgetAppearance.usesGlass(this);
-            boolean vertical = Prefs.overlayVertical(this, spec.key);
+            boolean vertical = Prefs.overlayVertical(this, spec.key)
+                    || Prefs.overlayCells(this, spec.key) != Prefs.OverlayCells.DEFAULT;
             Size base = glass || vertical ? tileSize(spec) : apps ? AppsOverlay.sizeDp(this) : legacySize(spec);
             float scale;
             if (Prefs.widgetsGlobalSize(this)) {
@@ -460,6 +461,8 @@ public final class OverlayWidgetService extends Service {
     }
 
     private Size tileSize(OverlaySpec spec) {
+        Prefs.OverlayCells format = Prefs.overlayCells(this, spec.key);
+        if (format != Prefs.OverlayCells.DEFAULT) return FullCellWidget.size(this, spec.key, format);
         if (WidgetsCommon.SIZE_SPEED.equals(spec.key)) {
             int cells = Prefs.overlaySpeedCells(this);
             return WidgetGrid.cells(cells, cells);

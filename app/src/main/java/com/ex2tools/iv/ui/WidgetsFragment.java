@@ -328,7 +328,7 @@ public final class WidgetsFragment extends Fragment {
                 addAppWidgetSelector(c, body, key, instances);
             }
         }
-        if (WidgetsCommon.SIZE_HEATING.equals(key)) addHeatingSettings(c, body);
+        if (WidgetsCommon.SIZE_HEATING.equals(key)) addHeatingSettings(c, body, false);
         standardList.addView(card);
     }
 
@@ -416,24 +416,24 @@ public final class WidgetsFragment extends Fragment {
         body.addView(row);
     }
 
-    private void addHeatingSettings(Context c, LinearLayout body) {
+    private void addHeatingSettings(Context c, LinearLayout body, boolean fullCells) {
         FlymeSwitchRow singleRow = new FlymeSwitchRow(c);
         singleRow.setText(getString(R.string.widgets_heating_single_row));
         singleRow.setChecked(Prefs.heatingSingleRow(c));
         FlymeSwitchRow hideMaxAir = new FlymeSwitchRow(c);
         hideMaxAir.setText(getString(R.string.widgets_heating_hide_max_air));
         hideMaxAir.setChecked(Prefs.heatingHideMaxAir(c));
-        hideMaxAir.setVisibility(singleRow.isChecked() ? View.VISIBLE : View.GONE);
+        hideMaxAir.setVisibility(fullCells || singleRow.isChecked() ? View.VISIBLE : View.GONE);
         Runnable apply = () -> {
             if (binding) return;
             Prefs.setHeatingLayout(c, singleRow.isChecked(), hideMaxAir.isChecked());
-            hideMaxAir.setVisibility(singleRow.isChecked() ? View.VISIBLE : View.GONE);
+            hideMaxAir.setVisibility(fullCells || singleRow.isChecked() ? View.VISIBLE : View.GONE);
             OverlayWidgetService.restart(c);
             WidgetUpdateService.sync(c);
         };
         singleRow.setOnCheckedChangeListener((button, checked) -> apply.run());
         hideMaxAir.setOnCheckedChangeListener((button, checked) -> apply.run());
-        body.addView(singleRow);
+        if (!fullCells) body.addView(singleRow);
         body.addView(hideMaxAir);
     }
 
@@ -989,7 +989,25 @@ public final class WidgetsFragment extends Fragment {
                     Prefs.overlayAlphaPct(context, selectedKey), false,
                     pct -> Prefs.setOverlayAlphaPct(context, selectedKey, pct), restart);
 
-            if (WidgetCatalog.verticalLayout(selectedKey) != 0) {
+            Prefs.OverlayCells cells = Prefs.overlayCells(context, selectedKey);
+            if (WidgetsCommon.SIZE_VENT.equals(selectedKey) || WidgetsCommon.SIZE_HEATING.equals(selectedKey)) {
+                FlymeSegmentedGroup formats = (FlymeSegmentedGroup) getLayoutInflater().inflate(
+                        R.layout.item_overlay_cell_format, options, false);
+                formats.check(switch (cells) {
+                    case ROW -> R.id.overlayCellsRow;
+                    case COLUMN -> R.id.overlayCellsColumn;
+                    case DEFAULT -> R.id.overlayCellsDefault;
+                });
+                formats.addOnButtonCheckedListener((group, id, checked) -> {
+                    if (!checked || binding) return;
+                    Prefs.setOverlayCells(context, selectedKey, id == R.id.overlayCellsRow ? Prefs.OverlayCells.ROW
+                            : id == R.id.overlayCellsColumn ? Prefs.OverlayCells.COLUMN : Prefs.OverlayCells.DEFAULT);
+                    configure(selectedKey);
+                    restart.run();
+                });
+                options.addView(formats);
+            }
+            if (cells == Prefs.OverlayCells.DEFAULT && WidgetCatalog.verticalLayout(selectedKey) != 0) {
                 FlymeSwitchRow vertical = new FlymeSwitchRow(context);
                 vertical.setText(getString(R.string.widgets_overlay_vertical));
                 vertical.setChecked(Prefs.overlayVertical(context, selectedKey));
@@ -1015,7 +1033,7 @@ public final class WidgetsFragment extends Fragment {
                 addIconLabels(context, options, selectedKey,
                         () -> OverlayWidgetService.requestUpdate(context));
             }
-            if (WidgetsCommon.SIZE_HEATING.equals(key)) addHeatingSettings(context, options);
+            if (WidgetsCommon.SIZE_HEATING.equals(key)) addHeatingSettings(context, options, cells != Prefs.OverlayCells.DEFAULT);
             updateAppearance();
         }
 

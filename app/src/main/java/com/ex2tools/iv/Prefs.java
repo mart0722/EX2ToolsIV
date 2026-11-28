@@ -863,6 +863,20 @@ public final class Prefs {
                 get(c).getInt("overlay_" + key + "_size_pct", 100)));
     }
 
+    public enum OverlayCells { DEFAULT, ROW, COLUMN }
+
+    public static OverlayCells overlayCells(Context c, String key) {
+        return switch (get(c).getString("overlay_cells_" + key, "")) {
+            case "ROW" -> OverlayCells.ROW;
+            case "COLUMN" -> OverlayCells.COLUMN;
+            default -> OverlayCells.DEFAULT;
+        };
+    }
+
+    public static void setOverlayCells(Context c, String key, OverlayCells value) {
+        get(c).edit().putString("overlay_cells_" + key, value.name()).apply();
+    }
+
     public static boolean overlayVertical(Context c, String key) {
         return get(c).getBoolean("overlay_vertical_" + key, false);
     }

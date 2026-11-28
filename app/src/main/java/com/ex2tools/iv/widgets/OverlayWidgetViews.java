@@ -60,6 +60,10 @@ final class OverlayWidgetViews {
         boolean apps = WidgetsCommon.SIZE_APPS.equals(key);
         Context theme = themeContext(c, apps && !WidgetAppearance.usesGlass(c) ? 1f : scale);
         View root = LayoutInflater.from(theme).inflate(layout(c, key), null);
+        Prefs.OverlayCells format = Prefs.overlayCells(c, key);
+        if (format != Prefs.OverlayCells.DEFAULT) {
+            FullCellWidget.arrange((android.widget.FrameLayout) root, key, format);
+        }
         visibility(root, R.id.widget_vent_fan_row, WidgetsCommon.SIZE_VENT_FAN.equals(key)
                 ? View.VISIBLE : View.GONE);
         bindClicks(c, root, key);
@@ -188,6 +192,10 @@ final class OverlayWidgetViews {
     }
 
     private static int layout(Context c, String key) {
+        if (Prefs.overlayCells(c, key) != Prefs.OverlayCells.DEFAULT) {
+            return WidgetsCommon.SIZE_HEATING.equals(key) ? R.layout.widget_heating_single_row
+                    : R.layout.widget_hvac_direction;
+        }
         if (WidgetsCommon.SIZE_HEATING.equals(key) && Prefs.heatingSingleRow(c)) {
             return WidgetGrid.layout(c, R.layout.widget_heating_single_row);
         }
@@ -614,7 +622,7 @@ final class OverlayWidgetViews {
             icons.chromeGlyph(R.id.img_heating_title, R.drawable.wg_ic_heat, singleRow ? 14 : 20);
         }
         icons.heating(wheel, rear, windshield, seatDriver, seatPassenger);
-        boolean showMaxAir = Prefs.showHeatingMaxAir(c);
+        boolean showMaxAir = FullCellWidget.showMaxAir(c);
         visibility(root, R.id.chip_front_max_defrost, showMaxAir ? View.VISIBLE : View.GONE);
         if (showMaxAir) {
             boolean front = Boolean.TRUE.equals(WidgetsCommon.readFrontMaxDefrost());
