@@ -444,8 +444,10 @@ public final class WidgetsRenderer {
         bg(v, c);
         Context tc = OverlayWidgetViews.themeContext(c);
         if (WidgetAppearance.usesGlass(c)) {
-            ClimateWidgetIcons.forRemote(c, tc, v)
-                    .chromeGlyph(R.id.img_lock, R.drawable.wg_ic_lock, ClimateWidgetIcons.ACTION_ICON_DP);
+            ClimateWidgetIcons icons = ClimateWidgetIcons.forRemote(c, tc, v);
+            v.setInt(R.id.widget_button_bg_layer, "setBackgroundResource",
+                    icons.standaloneButtonBackground(R.id.lock_body, false, false));
+            icons.lockGlyph();
         } else {
             v.setInt(R.id.img_lock, "setColorFilter", tc.getColor(R.color.wg_text));
         }
@@ -543,7 +545,7 @@ public final class WidgetsRenderer {
                                          int chipId, int textId, boolean active, boolean pending,
                                          String label) {
         v.setInt(R.id.widget_button_bg_layer, "setBackgroundResource",
-                icons.standaloneButtonBackground(active, pending));
+                icons.standaloneButtonBackground(chipId, active, pending));
         toggleCaption(v, c, icons, chipId, textId, active, pending, label, false);
     }
 

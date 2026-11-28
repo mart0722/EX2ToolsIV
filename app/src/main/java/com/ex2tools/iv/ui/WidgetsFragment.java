@@ -112,6 +112,7 @@ public final class WidgetsFragment extends Fragment {
     private View overlayNeighborHint;
     private FlymeSegmentedGroup climateIconStyle;
     private FlymeSegmentedGroup chromeIconWeight;
+    private FlymeSegmentedGroup flymeSurface;
     private FlymeSegmentedGroup ventMode;
     private FlymeSwitchRow ventShowRecirc;
     private View glassScaleControls;
@@ -181,6 +182,7 @@ public final class WidgetsFragment extends Fragment {
         overlayPlacement = view.findViewById(R.id.widgetOverlayPlacement);
         overlayNeighborHint = view.findViewById(R.id.widgetOverlayNeighborHint);
         climateIconStyle = view.findViewById(R.id.widgetClimateIconStyle);
+        flymeSurface = view.findViewById(R.id.widgetFlymeSurface);
         chromeIconWeight = view.findViewById(R.id.widgetClimateIconChromeWeight);
         widgetCardBorder = view.findViewById(R.id.widgetCardBorder);
         widgetButtonBorder = view.findViewById(R.id.widgetButtonBorder);
@@ -230,10 +232,16 @@ public final class WidgetsFragment extends Fragment {
             Context context = requireContext();
             Prefs.ClimateIconStyle style;
             if (checkedId == R.id.widgetClimateIconStandard) style = Prefs.ClimateIconStyle.STANDARD;
+            else if (checkedId == R.id.widgetClimateIconOutline) style = Prefs.preferredFlymeStyle(context);
             else if (checkedId == R.id.widgetClimateIconThin) style = Prefs.ClimateIconStyle.THIN;
             else if (checkedId == R.id.widgetClimateIconChrome) style = Prefs.preferredChromeIconStyle(context);
             else return;
             applyClimateIconStyle(context, style);
+        });
+        flymeSurface.addOnButtonCheckedListener((group, checkedId, checked) -> {
+            if (binding || !checked || !Prefs.climateIconStyle(requireContext()).isFlyme()) return;
+            applyClimateIconStyle(requireContext(), checkedId == R.id.widgetFlymeOutlined
+                    ? Prefs.ClimateIconStyle.OUTLINE : Prefs.ClimateIconStyle.FLYME_FILLED);
         });
         chromeIconWeight.addOnButtonCheckedListener((group, checkedId, checked) -> {
             if (binding || !checked) return;
@@ -320,7 +328,7 @@ public final class WidgetsFragment extends Fragment {
                 addAppWidgetSelector(c, body, key, instances);
             }
         }
-        if (WidgetsCommon.SIZE_HEATING.equals(key)) addHeatingSettings(c, body);
+        if (WidgetsCommon.SIZE_HEATING.equals(key)) addHeatingSettings(c, body, false);
         standardList.addView(card);
     }
 
@@ -408,24 +416,24 @@ public final class WidgetsFragment extends Fragment {
         body.addView(row);
     }
 
-    private void addHeatingSettings(Context c, LinearLayout body) {
+    private void addHeatingSettings(Context c, LinearLayout body, boolean fullCells) {
         FlymeSwitchRow singleRow = new FlymeSwitchRow(c);
         singleRow.setText(getString(R.string.widgets_heating_single_row));
         singleRow.setChecked(Prefs.heatingSingleRow(c));
         FlymeSwitchRow hideMaxAir = new FlymeSwitchRow(c);
         hideMaxAir.setText(getString(R.string.widgets_heating_hide_max_air));
         hideMaxAir.setChecked(Prefs.heatingHideMaxAir(c));
-        hideMaxAir.setVisibility(singleRow.isChecked() ? View.VISIBLE : View.GONE);
+        hideMaxAir.setVisibility(fullCells || singleRow.isChecked() ? View.VISIBLE : View.GONE);
         Runnable apply = () -> {
             if (binding) return;
             Prefs.setHeatingLayout(c, singleRow.isChecked(), hideMaxAir.isChecked());
-            hideMaxAir.setVisibility(singleRow.isChecked() ? View.VISIBLE : View.GONE);
+            hideMaxAir.setVisibility(fullCells || singleRow.isChecked() ? View.VISIBLE : View.GONE);
             OverlayWidgetService.restart(c);
             WidgetUpdateService.sync(c);
         };
         singleRow.setOnCheckedChangeListener((button, checked) -> apply.run());
         hideMaxAir.setOnCheckedChangeListener((button, checked) -> apply.run());
-        body.addView(singleRow);
+        if (!fullCells) body.addView(singleRow);
         body.addView(hideMaxAir);
     }
 
@@ -551,12 +559,16 @@ public final class WidgetsFragment extends Fragment {
     private void updateAppearanceControls(Context c) {
         Prefs.ClimateIconStyle style = Prefs.climateIconStyle(c);
         TextView speedColorDefault = speedColorGroup.findViewById(R.id.widgetSpeedColorWhite);
-        speedColorDefault.setText(style.isChrome()
+        speedColorDefault.setText(style.isFlyme() ? R.string.widget_clock_color_auto : style.isChrome()
                 ? R.string.widgets_speed_color_chrome : R.string.widgets_speed_color_white);
         widgetAccentBoost.setVisibility(View.VISIBLE);
         boolean global = Prefs.widgetsGlobalSize(c);
         boolean wasBinding = binding;
         binding = true;
+        widgetButtonBorder.setEnabled(style != Prefs.ClimateIconStyle.OUTLINE);
+        flymeSurface.setVisibility(style.isFlyme() ? View.VISIBLE : View.GONE);
+        if (style.isFlyme()) flymeSurface.check(style == Prefs.ClimateIconStyle.OUTLINE
+                ? R.id.widgetFlymeOutlined : R.id.widgetFlymeFilled);
         chromeIconWeight.setVisibility(style.isChrome() ? View.VISIBLE : View.GONE);
         if (style.isChrome()) {
             chromeIconWeight.check(style == Prefs.ClimateIconStyle.CHROME
@@ -977,7 +989,36 @@ public final class WidgetsFragment extends Fragment {
                     Prefs.overlayAlphaPct(context, selectedKey), false,
                     pct -> Prefs.setOverlayAlphaPct(context, selectedKey, pct), restart);
 
-            if (WidgetsCommon.SIZE_TEMP.equals(key)) {
+            Prefs.OverlayCells cells = Prefs.overlayCells(context, selectedKey);
+            if (WidgetsCommon.SIZE_VENT.equals(selectedKey) || WidgetsCommon.SIZE_HEATING.equals(selectedKey)) {
+                FlymeSegmentedGroup formats = (FlymeSegmentedGroup) getLayoutInflater().inflate(
+                        R.layout.item_overlay_cell_format, options, false);
+                formats.check(switch (cells) {
+                    case ROW -> R.id.overlayCellsRow;
+                    case COLUMN -> R.id.overlayCellsColumn;
+                    case DEFAULT -> R.id.overlayCellsDefault;
+                });
+                formats.addOnButtonCheckedListener((group, id, checked) -> {
+                    if (!checked || binding) return;
+                    Prefs.setOverlayCells(context, selectedKey, id == R.id.overlayCellsRow ? Prefs.OverlayCells.ROW
+                            : id == R.id.overlayCellsColumn ? Prefs.OverlayCells.COLUMN : Prefs.OverlayCells.DEFAULT);
+                    configure(selectedKey);
+                    restart.run();
+                });
+                options.addView(formats);
+            }
+            if (cells == Prefs.OverlayCells.DEFAULT && WidgetCatalog.verticalLayout(selectedKey) != 0) {
+                FlymeSwitchRow vertical = new FlymeSwitchRow(context);
+                vertical.setText(getString(R.string.widgets_overlay_vertical));
+                vertical.setChecked(Prefs.overlayVertical(context, selectedKey));
+                vertical.setOnCheckedChangeListener((button, checked) -> {
+                    Prefs.setOverlayVertical(context, selectedKey, checked);
+                    configure(selectedKey);
+                    restart.run();
+                });
+                options.addView(vertical);
+            }
+            if (WidgetsCommon.SIZE_TEMP.equals(key) && !Prefs.overlayVertical(context, key)) {
                 FlymeSwitchRow wide = new FlymeSwitchRow(context);
                 wide.setText(getString(R.string.widgets_overlay_wide_temperature));
                 wide.setChecked(Prefs.overlayWideTemperature(context));
@@ -992,7 +1033,7 @@ public final class WidgetsFragment extends Fragment {
                 addIconLabels(context, options, selectedKey,
                         () -> OverlayWidgetService.requestUpdate(context));
             }
-            if (WidgetsCommon.SIZE_HEATING.equals(key)) addHeatingSettings(context, options);
+            if (WidgetsCommon.SIZE_HEATING.equals(key)) addHeatingSettings(context, options, cells != Prefs.OverlayCells.DEFAULT);
             updateAppearance();
         }
 
@@ -1065,6 +1106,7 @@ public final class WidgetsFragment extends Fragment {
         updateNeighborHint(placement);
         climateIconStyle.check(switch (Prefs.climateIconStyle(c)) {
             case STANDARD -> R.id.widgetClimateIconStandard;
+            case OUTLINE, FLYME_FILLED -> R.id.widgetClimateIconOutline;
             case THIN, EXTRA_THIN -> R.id.widgetClimateIconThin;
             case CHROME, CHROME_THIN -> R.id.widgetClimateIconChrome;
         });

@@ -8,6 +8,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
+import android.graphics.Shader;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Typeface;
@@ -33,6 +34,7 @@ final class ClimateWidgetIcons {
     private static final int VIEWPORT = 96;
     private static final int MAX_BITMAP_SIZE = 144;
     private static final float FIGMA_TO_VIEWPORT = VIEWPORT / 44f;
+    private static final float CONTROL_BODY_WIDTH = 2.6f;
     private static final int SEAT_GAP_LEFT = 36;
     private static final int SEAT_GAP_RIGHT = 50;
     private static final LruCache<String, Bitmap> CACHE = new LruCache<>(64);
@@ -57,6 +59,9 @@ final class ClimateWidgetIcons {
         FACE_FLOOR(R.array.wg_chrome_face_floor),
         WIPERS(R.array.wg_icon_wipers),
         POWER_OFF(R.array.wg_icon_power_off),
+        CHROME_WIPERS(R.array.wg_chrome_wipers),
+        CHROME_POWER_OFF(R.array.wg_chrome_power_off),
+        LOCK(R.array.wg_chrome_lock),
         REGEN(R.array.wg_icon_regen),
         FLOOR_GLASS(R.array.wg_chrome_floor_glass);
 
@@ -111,7 +116,8 @@ final class ClimateWidgetIcons {
         night = (resources.getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK)
                 == Configuration.UI_MODE_NIGHT_YES;
         ink = c.getColor(R.color.wg_text);
-        neutral = c.getColor(R.color.wg_climate_neutral);
+        neutral = style.isFlyme() ? (night ? 0xFFFFFFFF : 0xFF000000)
+                : c.getColor(R.color.wg_climate_neutral);
         amber = c.getColor(R.color.wg_climate_amber);
         blue = c.getColor(R.color.wg_climate_blue);
         coral = c.getColor(R.color.wg_climate_coral);
@@ -143,6 +149,7 @@ final class ClimateWidgetIcons {
     }
 
     int ventModeBackground(boolean transparent, boolean active) {
+        if (style.isFlyme()) return buttonBackground(false, active, false, true);
         return usesOutline() && !transparent && active
                 ? WidgetAppearance.buttonBackground(context, airflowBackground())
                 : android.R.color.transparent;
@@ -187,7 +194,8 @@ final class ClimateWidgetIcons {
 
     void recirculation(int id) {
         if (usesOutline()) {
-            chromeGlyph(id, R.drawable.wg_ic_recirc, id == R.id.img_recirc_v ? 22 : ACTION_ICON_DP);
+            int resource = style.isFlyme() ? R.drawable.ic_widget_recirc : R.drawable.wg_ic_recirc;
+            chromeGlyph(id, resource, id == R.id.img_recirc_v ? 22 : ACTION_ICON_DP);
         } else {
             set(id, R.drawable.wg_ic_recirc, false, null, 0);
         }
@@ -265,13 +273,24 @@ final class ClimateWidgetIcons {
     }
 
     int buttonBackground(boolean transparent, boolean active, boolean pending, boolean airflow) {
+        if (style.isFlyme()) {
+            if (active) return airflow
+                    ? WidgetAppearance.flymeSurface(context, R.drawable.bg_wg_outline_air, R.drawable.bg_wg_flyme_air)
+                    : WidgetAppearance.flymeSurface(context, R.drawable.bg_wg_outline_heat, R.drawable.bg_wg_flyme_heat);
+            return pending ? WidgetAppearance.flymeSurface(context, R.drawable.bg_wg_outline_pending, R.drawable.bg_wg_flyme_pending)
+                    : WidgetAppearance.flymeSurface(context, R.drawable.bg_wg_outline_edge, R.drawable.bg_wg_flyme_edge);
+        }
         int surface = buttonSurface(transparent, active, pending, airflow);
         // Keep the pending indicator visible when there is no caption to show it.
         return pending && !active && !showLabels
                 ? surface : WidgetAppearance.buttonBackground(context, surface);
     }
 
-    int standaloneButtonBackground(boolean active, boolean pending) {
+    int standaloneButtonBackground(int chip, boolean active, boolean pending) {
+        if (style.isFlyme()) {
+            if (style == Prefs.ClimateIconStyle.FLYME_FILLED && !active && !pending) return 0;
+            return buttonBackground(false, active, pending, chip == R.id.chip_recirc);
+        }
         return active || pending ? buttonBackground(false, active, pending, false) : 0;
     }
 
@@ -312,7 +331,7 @@ final class ClimateWidgetIcons {
         Object font = switch (style) {
             case STANDARD -> new StyleSpan(Typeface.BOLD);
             case EXTRA_THIN, CHROME_THIN -> new TypefaceSpan("sans-serif-light");
-            case THIN -> new TypefaceSpan("sans-serif");
+            case FLYME_FILLED, OUTLINE, THIN -> new TypefaceSpan("sans-serif");
             case CHROME -> new TypefaceSpan("sans-serif-medium");
         };
         caption.setSpan(font, 0, caption.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -320,6 +339,7 @@ final class ClimateWidgetIcons {
     }
 
     int buttonTextColor(boolean active, boolean airflow) {
+        if (style == Prefs.ClimateIconStyle.FLYME_FILLED) return neutral;
         if (!active || !usesOutline()) return ink;
         return airflow ? airflowColor() : amber;
     }
@@ -337,10 +357,21 @@ final class ClimateWidgetIcons {
     }
 
     void vehicleControl(boolean powerOff) {
+        boolean sharedArtwork = style.isChrome() || style.isFlyme();
         if (powerOff) {
-            set(R.id.img_power_off, R.drawable.wg_ic_power_off, true, Shape.POWER_OFF, 0);
+            set(R.id.img_power_off, R.drawable.wg_ic_power_off, true,
+                    sharedArtwork ? Shape.CHROME_POWER_OFF : Shape.POWER_OFF, 0);
         } else {
-            set(R.id.img_wipers, R.drawable.wg_ic_wipers, true, Shape.WIPERS, 0);
+            set(R.id.img_wipers, R.drawable.wg_ic_wipers, true,
+                    sharedArtwork ? Shape.CHROME_WIPERS : Shape.WIPERS, 0);
+        }
+    }
+
+    void lockGlyph() {
+        if (style.isChrome() || style.isFlyme()) {
+            target.set(R.id.img_lock, bitmap(Shape.LOCK, 0, pixels(ACTION_ICON_DP), null, false));
+        } else {
+            chromeGlyph(R.id.img_lock, R.drawable.wg_ic_lock, ACTION_ICON_DP);
         }
     }
 
@@ -385,7 +416,7 @@ final class ClimateWidgetIcons {
         if (chrome) {
             Paint metal = new Paint(Paint.ANTI_ALIAS_FLAG);
             metal.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
-            if (style == Prefs.ClimateIconStyle.THIN) metal.setColor(neutral);
+            if (style == Prefs.ClimateIconStyle.THIN || style.isFlyme()) metal.setColor(neutral);
             else metal.setShader(WidgetAppearance.chromeGradient(night, top, top + height));
             canvas.drawRect(0, 0, icon.getWidth(), icon.getHeight(), metal);
         }
@@ -432,14 +463,23 @@ final class ClimateWidgetIcons {
         boolean thinChrome = style == Prefs.ClimateIconStyle.CHROME_THIN;
         boolean extraThin = style == Prefs.ClimateIconStyle.EXTRA_THIN;
         boolean multiLevelHeat = shape == Shape.SEAT || shape == Shape.WHEEL;
+        boolean vehicleControl = shape == Shape.CHROME_WIPERS || shape == Shape.CHROME_POWER_OFF
+                || shape == Shape.LOCK;
+        boolean strokeOnly = vehicleControl || shape == Shape.WIPERS || shape == Shape.POWER_OFF;
+        Shader chromeShader = null;
         for (int layer = 0; layer < data.length; layer++) {
             Path path = PathParser.createPathFromPathData(data[layer]);
             path.setFillType(Path.FillType.EVEN_ODD);
             boolean waves = shape == Shape.FLOOR_GLASS && layer == 2;
+            boolean wiperBlade = shape == Shape.CHROME_WIPERS && layer == 1;
             boolean active = layer > 0 && layer <= level;
             paint.setShader(null);
             paint.setColor(active || (waves && level > 0) ? accent
                     : layer > 0 && (multiLevelHeat || shape == Shape.REGEN) ? inactiveHeat : neutral);
+            if (style.isFlyme()) {
+                paint.setColor(neutral);
+                if (layer > 0 && !active && (multiLevelHeat || shape == Shape.REGEN)) paint.setAlpha(85);
+            }
             float width;
             if (extraThin) width = 0.25f;
             else if (thinChrome) width = 0.75f;
@@ -448,20 +488,29 @@ final class ClimateWidgetIcons {
             else if (multiLevelHeat && layer > 0) width = thick ? 1.02f : 0.56f;
             else width = thick ? 1.64f : 1f;
             if (mark != null && thinChrome && layer > 0) width = 0.55f;
-            paint.setStrokeWidth(width * FIGMA_TO_VIEWPORT);
+            float strokeWidth = width * FIGMA_TO_VIEWPORT;
+            // The heating silhouettes already include a band of this thickness in their paths.
+            float controlWidth = vehicleControl ? strokeWidth + CONTROL_BODY_WIDTH : strokeWidth;
+            if (thick && vehicleControl) {
+                paint.setStyle(Paint.Style.STROKE);
+                paint.setStrokeWidth(controlWidth);
+                canvas.drawPath(path, paint);
+            }
+            paint.setStrokeWidth(thick ? strokeWidth : controlWidth);
 
             boolean seatGap = mark != null && layer == 0;
-            if ((thick || thinChrome || extraThin || seatGap) && layer == 0) {
+            if ((!style.isFlyme() && (thick || thinChrome || extraThin || seatGap)) && layer == 0) {
                 RectF bounds = new RectF();
                 path.computeBounds(bounds, true);
-                paint.setShader(WidgetAppearance.chromeGradient(night, bounds.top, bounds.bottom));
+                chromeShader = WidgetAppearance.chromeGradient(night, bounds.top, bounds.bottom);
+                paint.setShader(chromeShader);
             }
+            if (wiperBlade) paint.setShader(chromeShader);
             if (seatGap) {
                 canvas.save();
                 canvas.clipOutRect(SEAT_GAP_LEFT, 73, SEAT_GAP_RIGHT, VIEWPORT);
             }
-            if (!waves && shape != Shape.WIPERS && shape != Shape.POWER_OFF
-                    && !(shape == Shape.REGEN && layer == 0)) {
+            if (wiperBlade || (!waves && !strokeOnly && !(shape == Shape.REGEN && layer == 0))) {
                 paint.setStyle(Paint.Style.FILL);
                 canvas.drawPath(path, paint);
             }

@@ -32,7 +32,7 @@ final class SpeedWidgetRenderer {
                 ? Math.round(255f * Prefs.widgetBgOpacity(c) / 100f) : 0;
         float trip = WidgetsCommon.readTripKm(c);
         boolean showTrip = Prefs.speedShowTrip(c);
-        Context theme = Prefs.climateIconStyle(c).isChrome() ? OverlayWidgetViews.themeContext(c) : c;
+        Context theme = (Prefs.climateIconStyle(c).isChrome() || WidgetAppearance.flyme(c)) ? OverlayWidgetViews.themeContext(c) : c;
         int bitmapSize = Math.min(384, Math.max(BITMAP_SIZE,
                 Math.round(BITMAP_SIZE * slot.scale())));
         Bitmap bitmap = SpeedGaugePainter.render(theme, bitmapSize, bitmapSize,

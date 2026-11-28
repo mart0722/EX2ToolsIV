@@ -125,6 +125,18 @@
                             android:paddingEnd="2dp"
                             android:textSize="14sp"
                             android:text="@string/widgets_climate_icons_chrome" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/widgetClimateIconOutline"
+                            style="@style/Widget.EX2.Toggle"
+                            android:layout_width="0dp"
+                            android:layout_height="56dp"
+                            android:layout_weight="1"
+                            android:minWidth="0dp"
+                            android:paddingStart="2dp"
+                            android:paddingEnd="2dp"
+                            android:textSize="14sp"
+                            android:text="@string/widgets_flyme_standard" />
                     </com.ex2tools.iv.ui.FlymeSegmentedGroup>
 
                     <com.ex2tools.iv.ui.FlymeSegmentedGroup
@@ -157,6 +169,38 @@
                             android:paddingEnd="2dp"
                             android:textSize="14sp"
                             android:text="@string/widgets_climate_icons_chrome_bold" />
+                    </com.ex2tools.iv.ui.FlymeSegmentedGroup>
+
+                    <com.ex2tools.iv.ui.FlymeSegmentedGroup
+                        android:id="@+id/widgetFlymeSurface"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:visibility="gone">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/widgetFlymeFilled"
+                            style="@style/Widget.EX2.Toggle"
+                            android:layout_width="0dp"
+                            android:layout_height="56dp"
+                            android:layout_weight="1"
+                            android:minWidth="0dp"
+                            android:paddingStart="2dp"
+                            android:paddingEnd="2dp"
+                            android:textSize="14sp"
+                            android:text="@string/widgets_flyme_filled" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/widgetFlymeOutlined"
+                            style="@style/Widget.EX2.Toggle"
+                            android:layout_width="0dp"
+                            android:layout_height="56dp"
+                            android:layout_weight="1"
+                            android:minWidth="0dp"
+                            android:paddingStart="2dp"
+                            android:paddingEnd="2dp"
+                            android:textSize="14sp"
+                            android:text="@string/widgets_climate_icons_outline" />
                     </com.ex2tools.iv.ui.FlymeSegmentedGroup>
 
                     <com.ex2tools.iv.ui.FlymeSwitchRow

@@ -1,5 +1,8 @@
 package com.ex2tools.iv.widgets;
 
+import android.content.Context;
+
+import com.ex2tools.iv.Prefs;
 import com.ex2tools.iv.R;
 
 import java.util.ArrayList;
@@ -103,6 +106,20 @@ public final class WidgetCatalog {
     public static int layout(String key) {
         Entry entry = ENTRIES.get(key);
         return entry == null ? R.layout.widget_drive_regen : entry.layoutRes;
+    }
+
+    public static int verticalLayout(String key) {
+        return switch (key) {
+            case WidgetsCommon.SIZE_FAN -> R.layout.widget_fan_speed_vertical;
+            case WidgetsCommon.SIZE_TEMP -> R.layout.widget_temperature_vertical;
+            case WidgetsCommon.SIZE_VENT -> R.layout.widget_hvac_direction_vertical;
+            default -> 0;
+        };
+    }
+
+    static int overlayLayout(Context c, String key) {
+        int vertical = verticalLayout(key);
+        return vertical != 0 && Prefs.overlayVertical(c, key) ? vertical : layout(key);
     }
 
     private WidgetCatalog() {

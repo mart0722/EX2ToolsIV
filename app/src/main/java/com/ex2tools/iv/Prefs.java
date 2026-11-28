@@ -629,7 +629,11 @@ public final class Prefs {
     }
 
     public enum ClimateIconStyle {
-        STANDARD, THIN, EXTRA_THIN, CHROME_THIN, CHROME;
+        STANDARD, THIN, EXTRA_THIN, CHROME_THIN, CHROME, OUTLINE, FLYME_FILLED;
+
+        public boolean isFlyme() {
+            return this == OUTLINE || this == FLYME_FILLED;
+        }
 
         public boolean isChrome() {
             return this == CHROME || this == CHROME_THIN;
@@ -639,6 +643,8 @@ public final class Prefs {
     public static ClimateIconStyle climateIconStyle(Context c) {
         SharedPreferences prefs = get(c);
         return switch (prefs.getString("climate_icon_style", "")) {
+            case "FLYME_FILLED" -> ClimateIconStyle.FLYME_FILLED;
+            case "OUTLINE" -> ClimateIconStyle.OUTLINE;
             case "STANDARD" -> ClimateIconStyle.STANDARD;
             case "THIN" -> ClimateIconStyle.THIN;
             // The 0.25 px outline was removed from the UI; keep the preference
@@ -648,6 +654,11 @@ public final class Prefs {
             case "CHROME" -> ClimateIconStyle.CHROME;
             default -> ClimateIconStyle.STANDARD;
         };
+    }
+
+    public static ClimateIconStyle preferredFlymeStyle(Context c) {
+        return get(c).getBoolean("widget_flyme_outline", climateIconStyle(c) == ClimateIconStyle.OUTLINE)
+                ? ClimateIconStyle.OUTLINE : ClimateIconStyle.FLYME_FILLED;
     }
 
     public static ClimateIconStyle preferredChromeIconStyle(Context c) {
@@ -661,8 +672,10 @@ public final class Prefs {
         boolean boldChrome = style.isChrome()
                 ? style == ClimateIconStyle.CHROME
                 : preferredChromeIconStyle(c) == ClimateIconStyle.CHROME;
-        prefs.edit()
-                .putString("climate_icon_style", style.name())
+        SharedPreferences.Editor editor = prefs.edit();
+        ClimateIconStyle flymeStyle = style.isFlyme() ? style : preferredFlymeStyle(c);
+        editor.putBoolean("widget_flyme_outline", flymeStyle == ClimateIconStyle.OUTLINE);
+        editor.putString("climate_icon_style", style.name())
                 .putBoolean("climate_icon_chrome_bold", boldChrome)
                 .apply();
     }
@@ -848,6 +861,28 @@ public final class Prefs {
     public static int overlaySizePct(Context c, String key) {
         return Math.max(50, Math.min(250,
                 get(c).getInt("overlay_" + key + "_size_pct", 100)));
+    }
+
+    public enum OverlayCells { DEFAULT, ROW, COLUMN }
+
+    public static OverlayCells overlayCells(Context c, String key) {
+        return switch (get(c).getString("overlay_cells_" + key, "")) {
+            case "ROW" -> OverlayCells.ROW;
+            case "COLUMN" -> OverlayCells.COLUMN;
+            default -> OverlayCells.DEFAULT;
+        };
+    }
+
+    public static void setOverlayCells(Context c, String key, OverlayCells value) {
+        get(c).edit().putString("overlay_cells_" + key, value.name()).apply();
+    }
+
+    public static boolean overlayVertical(Context c, String key) {
+        return get(c).getBoolean("overlay_vertical_" + key, false);
+    }
+
+    public static void setOverlayVertical(Context c, String key, boolean enabled) {
+        get(c).edit().putBoolean("overlay_vertical_" + key, enabled).apply();
     }
 
     public static boolean overlayWideTemperature(Context c) {

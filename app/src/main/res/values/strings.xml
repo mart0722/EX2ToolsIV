@@ -372,6 +372,7 @@
     <string name="widget_real_range_desc">Оценка остатка километров по фактическому расходу</string>
     <string name="widget_real_range_title">По расходу</string>
     <string name="widget_real_range_missing">— км</string>
+    <string name="widget_real_range_overlay_km">%1$d км</string>
     <string name="widget_name_lock">Блокировка экрана</string>
     <string name="widget_lock_desc">Чёрный экран с часами, зарядом и температурой</string>
     <string name="wg_lock_label">Блокировка экрана</string>
@@ -953,4 +954,11 @@
     <string name="widget_power_off_direct_unavailable">Выключение без подтверждения сейчас недоступно</string>
     <string name="widgets_card_border">Показывать рамку виджета</string>
     <string name="widgets_button_border">Показывать рамки кнопок</string>
+    <string name="widgets_climate_icons_outline">Контурные</string>
+    <string name="widgets_flyme_standard">Классика</string>
+    <string name="widgets_flyme_filled">С заливкой</string>
+    <string name="widgets_overlay_vertical">Вертикальный формат 1×3</string>
+    <string name="widgets_cells_default">Обычный</string>
+    <string name="widgets_cells_row">Ряд</string>
+    <string name="widgets_cells_column">Колонка</string>
 </resources>

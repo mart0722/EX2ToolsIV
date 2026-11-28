@@ -25,6 +25,26 @@ final class WidgetAppearance {
 
     private WidgetAppearance() {}
 
+    static boolean flyme(Context c) {
+        return Prefs.climateIconStyle(c).isFlyme();
+    }
+
+    static int flymeSurface(Context c, int outline, int filled) {
+        if (Prefs.climateIconStyle(c) == Prefs.ClimateIconStyle.OUTLINE) return outline;
+        return Prefs.widgetButtonBorder(c) ? filled : borderless(filled);
+    }
+
+    static int outlineCardResource(int percent) {
+        return switch (percent) {
+            case 0 -> R.drawable.bg_wg_outline_card_000;
+            case 20 -> R.drawable.bg_wg_outline_card_020;
+            case 40 -> R.drawable.bg_wg_outline_card_040;
+            case 60 -> R.drawable.bg_wg_outline_card_060;
+            case 80 -> R.drawable.bg_wg_outline_card_080;
+            default -> R.drawable.bg_wg_outline_card_100;
+        };
+    }
+
     static boolean usesGlass(Context c) {
         return Prefs.climateIconStyle(c) != Prefs.ClimateIconStyle.STANDARD;
     }
@@ -39,12 +59,24 @@ final class WidgetAppearance {
     }
 
     static int buttonBackground(Context c, int resource) {
+        if (flyme(c)) return flymeSurface(c, R.drawable.bg_wg_outline_edge, R.drawable.bg_wg_flyme_edge);
         return Prefs.widgetButtonBorder(c) ? resource : borderless(resource);
     }
 
     private static final SparseIntArray BORDERLESS = new SparseIntArray();
 
     static {
+        BORDERLESS.put(R.drawable.bg_wg_flyme_red, R.drawable.bg_wg_flyme_red_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_flyme_green, R.drawable.bg_wg_flyme_green_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_flyme_heat, R.drawable.bg_wg_flyme_heat_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_flyme_air, R.drawable.bg_wg_flyme_air_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_flyme_round, R.drawable.bg_wg_flyme_round_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_flyme_edge, R.drawable.bg_wg_flyme_edge_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_outline_card_020, R.drawable.bg_wg_outline_card_020_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_outline_card_040, R.drawable.bg_wg_outline_card_040_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_outline_card_060, R.drawable.bg_wg_outline_card_060_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_outline_card_080, R.drawable.bg_wg_outline_card_080_borderless);
+        BORDERLESS.put(R.drawable.bg_wg_outline_card_100, R.drawable.bg_wg_outline_card_100_borderless);
         BORDERLESS.put(R.drawable.bg_wg_card_020, R.drawable.bg_wg_card_020_borderless);
         BORDERLESS.put(R.drawable.bg_wg_card_040, R.drawable.bg_wg_card_040_borderless);
         BORDERLESS.put(R.drawable.bg_wg_card_060, R.drawable.bg_wg_card_060_borderless);
@@ -102,6 +134,13 @@ final class WidgetAppearance {
     }
 
     static GradientDrawable glassCard(Context c, int alpha, float radius, int strokeWidth) {
+        if (flyme(c)) {
+            GradientDrawable card = new GradientDrawable();
+            card.setCornerRadius(4f);
+            card.setColor(scaledAlpha(c.getColor(R.color.wg_outline_card_100), alpha));
+            if (Prefs.widgetCardBorder(c)) card.setStroke(strokeWidth, scaledAlpha(c.getColor(R.color.wg_stroke_100), alpha));
+            return card;
+        }
         int top = scaledAlpha(c.getColor(R.color.wg_glass_top_100), alpha);
         int bottom = scaledAlpha(c.getColor(R.color.wg_glass_bottom_100), alpha);
         int edge = scaledAlpha(c.getColor(R.color.wg_glass_edge_100), alpha);
@@ -117,12 +156,21 @@ final class WidgetAppearance {
     }
 
     static int controlBackground(Context c, boolean transparent, int standard) {
+        if (flyme(c)) return flymeSurface(c, R.drawable.bg_wg_outline_round, R.drawable.bg_wg_flyme_round);
         int background = !usesGlass(c) ? standard
                 : transparent ? android.R.color.transparent : R.drawable.bg_wg_climate_glass;
         return buttonBackground(c, background);
     }
 
     static int chipBackground(Context c, boolean transparent, boolean active, int accent) {
+        if (flyme(c)) {
+            if (!active) return flymeSurface(c, R.drawable.bg_wg_outline_edge, R.drawable.bg_wg_flyme_edge);
+            return switch (accent) {
+                case ACCENT_GREEN -> flymeSurface(c, R.drawable.bg_wg_outline_green, R.drawable.bg_wg_flyme_green);
+                case ACCENT_RED -> flymeSurface(c, R.drawable.bg_wg_outline_red, R.drawable.bg_wg_flyme_red);
+                default -> flymeSurface(c, R.drawable.bg_wg_outline_air, R.drawable.bg_wg_flyme_air);
+            };
+        }
         return buttonBackground(c, chipSurface(c, transparent, active, accent));
     }
 
@@ -167,6 +215,7 @@ final class WidgetAppearance {
     }
 
     static int chipTextColor(Context c, boolean active, int accent) {
+        if (Prefs.climateIconStyle(c) == Prefs.ClimateIconStyle.FLYME_FILLED) return c.getColor(R.color.wg_text);
         return active && usesGlass(c) ? accentInk(c, accent) : c.getColor(R.color.wg_text);
     }
 

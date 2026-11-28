@@ -27,6 +27,12 @@ final class WidgetGrid {
     private WidgetGrid() {}
 
     static int layout(Context context, int original) {
+        if (WidgetAppearance.flyme(context)) {
+            if (original == R.layout.widget_hvac_direction_vertical) return R.layout.widget_outline_vent_vertical;
+            if (original == R.layout.widget_temperature) return R.layout.widget_outline_temperature;
+            if (original == R.layout.widget_fan_speed) return R.layout.widget_outline_fan_speed;
+            if (original == R.layout.widget_climate_control) return R.layout.widget_outline_climate_control;
+        }
         if (!WidgetAppearance.usesGlass(context)) return original;
         if (original == R.layout.widget_hvac_direction || original == R.layout.widget_hvac_direction_fan) {
             return R.layout.widget_glass_vent;
@@ -57,7 +63,7 @@ final class WidgetGrid {
             FOOTPRINTS.put(panel, cells(3, 2));
         }
         for (int vertical : new int[]{R.layout.widget_drive_mode_vertical, R.layout.widget_regen_vertical,
-                R.layout.widget_hvac_direction_vertical, R.layout.widget_fan_speed_vertical,
+                R.layout.widget_hvac_direction_vertical, R.layout.widget_outline_vent_vertical, R.layout.widget_fan_speed_vertical,
                 R.layout.widget_temperature_vertical}) {
             FOOTPRINTS.put(vertical, cells(1, 3));
         }
@@ -114,6 +120,10 @@ final class WidgetGrid {
         float iconScale = glass ? Prefs.glassWidgetIconSizePct(context) / 100f : 1f;
         if (scale == 1f && iconScale == 1f) return;
         int layout = views.getLayoutId();
+        boolean outlineStepper = layout == R.layout.widget_outline_temperature || layout == R.layout.widget_outline_fan_speed;
+        if (layout == R.layout.widget_outline_temperature) layout = R.layout.widget_glass_temperature;
+        if (layout == R.layout.widget_outline_fan_speed) layout = R.layout.widget_glass_fan_speed;
+        if (layout == R.layout.widget_outline_vent_vertical) layout = R.layout.widget_hvac_direction_vertical;
         int standaloneCaption = STANDALONE_CAPTIONS.get(layout);
         if (standaloneCaption != 0) {
             textSize(views, scale, 11, standaloneCaption);
@@ -129,7 +139,7 @@ final class WidgetGrid {
             float inset = context.getResources().getDimension(R.dimen.wg_glass_inset) * scale;
             float vertical = compact
                     ? context.getResources().getDimension(R.dimen.wg_glass_compact_inset) * scale : inset;
-            views.setViewPadding(R.id.widget_glass_content, Math.round(inset), Math.round(vertical),
+            views.setViewPadding(R.id.widget_glass_content, Math.round(inset), Math.round(outlineStepper ? vertical / 2f : vertical),
                     Math.round(inset), Math.round(vertical));
         }
         if (layout == R.layout.widget_glass_vent

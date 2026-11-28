@@ -10,13 +10,18 @@
         android:layout_height="match_parent"
         android:background="@drawable/bg_wg_card_100" />
 
-    <LinearLayout
-        android:id="@+id/lock_body"
+    <TextView
+        android:id="@+id/widget_button_bg_layer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:gravity="center"
-        android:orientation="vertical"
-        android:padding="10dp">
+        android:layout_margin="4dp" />
+
+    <LinearLayout
+        android:id="@+id/lock_body"
+        style="@style/WgChip"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@null">
 
         <ImageView
             android:id="@+id/img_lock"

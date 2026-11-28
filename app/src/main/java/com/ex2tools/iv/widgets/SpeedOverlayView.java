@@ -23,7 +23,7 @@ final class SpeedOverlayView extends View {
     private float trip = Float.NaN;
 
     SpeedOverlayView(Context context) {
-        super(Prefs.climateIconStyle(context).isChrome() ? OverlayWidgetViews.themeContext(context) : context);
+        super((Prefs.climateIconStyle(context).isChrome() || WidgetAppearance.flyme(context)) ? OverlayWidgetViews.themeContext(context) : context);
         setWillNotDraw(false);
         setLayerType(View.LAYER_TYPE_SOFTWARE, null);
     }

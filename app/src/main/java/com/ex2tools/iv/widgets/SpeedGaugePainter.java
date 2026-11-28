@@ -53,7 +53,7 @@ final class SpeedGaugePainter {
         float cy = height * 0.5f;
         float speed = Float.isNaN(kmh) ? 0f : Math.max(0f, Math.min(MAX_SPEED, kmh));
 
-        if (backgroundAlpha > 0 && chrome) {
+        if (backgroundAlpha > 0 && (chrome || WidgetAppearance.flyme(c))) {
             float cellScale = size / (2f * WidgetGrid.UNIT_DP);
             GradientDrawable card = WidgetAppearance.glassCard(c, backgroundAlpha,
                     22f * cellScale, Math.max(1, Math.round(cellScale)));
@@ -273,6 +273,11 @@ final class SpeedGaugePainter {
     }
 
     private static Palette palette(Context c) {
+        if (WidgetAppearance.flyme(c) && Prefs.speedColor(c) == 0) {
+            int ink = c.getColor(R.color.wg_text);
+            return new Palette(ink, ink, ink, c.getColor(R.color.wg_text2),
+                    ColorUtils.setAlphaComponent(ink, 54), c.getColor(R.color.wg_outline_card_100));
+        }
         switch (Prefs.speedColor(c)) {
             case 1:
                 return new Palette(
