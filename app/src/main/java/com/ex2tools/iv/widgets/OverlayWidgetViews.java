@@ -131,7 +131,7 @@ final class OverlayWidgetViews {
                         ? R.drawable.bg_wg_outline_edge : android.R.color.transparent);
                 if (WidgetAppearance.usesGlass(c)) {
                     ClimateWidgetIcons.forOverlay(c, root, key)
-                            .chromeGlyph(R.id.img_lock, R.drawable.wg_ic_lock, WidgetAppearance.flyme(c) ? 44 : ClimateWidgetIcons.ACTION_ICON_DP);
+                            .lockGlyph();
                 }
                 break;
             case WidgetsCommon.SIZE_CLIMATE:

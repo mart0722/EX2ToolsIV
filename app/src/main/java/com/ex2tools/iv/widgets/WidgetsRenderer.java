@@ -445,7 +445,7 @@ public final class WidgetsRenderer {
         Context tc = OverlayWidgetViews.themeContext(c);
         if (WidgetAppearance.usesGlass(c)) {
             ClimateWidgetIcons.forRemote(c, tc, v)
-                    .chromeGlyph(R.id.img_lock, R.drawable.wg_ic_lock, WidgetAppearance.flyme(c) ? 44 : ClimateWidgetIcons.ACTION_ICON_DP);
+                    .lockGlyph();
         } else {
             v.setInt(R.id.img_lock, "setColorFilter", tc.getColor(R.color.wg_text));
         }

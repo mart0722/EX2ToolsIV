@@ -8,6 +8,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
+import android.graphics.Shader;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Typeface;
@@ -33,6 +34,7 @@ final class ClimateWidgetIcons {
     private static final int VIEWPORT = 96;
     private static final int MAX_BITMAP_SIZE = 144;
     private static final float FIGMA_TO_VIEWPORT = VIEWPORT / 44f;
+    private static final float CONTROL_BODY_WIDTH = 2.6f;
     private static final int SEAT_GAP_LEFT = 36;
     private static final int SEAT_GAP_RIGHT = 50;
     private static final LruCache<String, Bitmap> CACHE = new LruCache<>(64);
@@ -57,6 +59,9 @@ final class ClimateWidgetIcons {
         FACE_FLOOR(R.array.wg_chrome_face_floor),
         WIPERS(R.array.wg_icon_wipers),
         POWER_OFF(R.array.wg_icon_power_off),
+        CHROME_WIPERS(R.array.wg_chrome_wipers),
+        CHROME_POWER_OFF(R.array.wg_chrome_power_off),
+        LOCK(R.array.wg_chrome_lock),
         REGEN(R.array.wg_icon_regen),
         FLOOR_GLASS(R.array.wg_chrome_floor_glass);
 
@@ -352,9 +357,19 @@ final class ClimateWidgetIcons {
 
     void vehicleControl(boolean powerOff) {
         if (powerOff) {
-            set(R.id.img_power_off, R.drawable.wg_ic_power_off, true, Shape.POWER_OFF, 0);
+            set(R.id.img_power_off, R.drawable.wg_ic_power_off, true,
+                    style.isChrome() ? Shape.CHROME_POWER_OFF : Shape.POWER_OFF, 0);
         } else {
-            set(R.id.img_wipers, R.drawable.wg_ic_wipers, true, Shape.WIPERS, 0);
+            set(R.id.img_wipers, R.drawable.wg_ic_wipers, true,
+                    style.isChrome() ? Shape.CHROME_WIPERS : Shape.WIPERS, 0);
+        }
+    }
+
+    void lockGlyph() {
+        if (style.isChrome()) {
+            target.set(R.id.img_lock, bitmap(Shape.LOCK, 0, pixels(ACTION_ICON_DP), null, false));
+        } else {
+            chromeGlyph(R.id.img_lock, R.drawable.wg_ic_lock, style.isFlyme() ? 44 : ACTION_ICON_DP);
         }
     }
 
@@ -446,10 +461,15 @@ final class ClimateWidgetIcons {
         boolean thinChrome = style == Prefs.ClimateIconStyle.CHROME_THIN;
         boolean extraThin = style == Prefs.ClimateIconStyle.EXTRA_THIN;
         boolean multiLevelHeat = shape == Shape.SEAT || shape == Shape.WHEEL;
+        boolean chromeControl = style.isChrome()
+                && (shape == Shape.CHROME_WIPERS || shape == Shape.CHROME_POWER_OFF || shape == Shape.LOCK);
+        boolean strokeOnly = chromeControl || shape == Shape.WIPERS || shape == Shape.POWER_OFF;
+        Shader chromeShader = null;
         for (int layer = 0; layer < data.length; layer++) {
             Path path = PathParser.createPathFromPathData(data[layer]);
             path.setFillType(Path.FillType.EVEN_ODD);
             boolean waves = shape == Shape.FLOOR_GLASS && layer == 2;
+            boolean wiperBlade = shape == Shape.CHROME_WIPERS && layer == 1;
             boolean active = layer > 0 && layer <= level;
             paint.setShader(null);
             paint.setColor(active || (waves && level > 0) ? accent
@@ -466,20 +486,29 @@ final class ClimateWidgetIcons {
             else if (multiLevelHeat && layer > 0) width = thick ? 1.02f : 0.56f;
             else width = thick ? 1.64f : 1f;
             if (mark != null && thinChrome && layer > 0) width = 0.55f;
-            paint.setStrokeWidth(width * FIGMA_TO_VIEWPORT);
+            float strokeWidth = width * FIGMA_TO_VIEWPORT;
+            // The heating silhouettes already include a band of this thickness in their paths.
+            float controlWidth = chromeControl ? strokeWidth + CONTROL_BODY_WIDTH : strokeWidth;
+            if (thick && chromeControl) {
+                paint.setStyle(Paint.Style.STROKE);
+                paint.setStrokeWidth(controlWidth);
+                canvas.drawPath(path, paint);
+            }
+            paint.setStrokeWidth(thick ? strokeWidth : controlWidth);
 
             boolean seatGap = mark != null && layer == 0;
-            if (!style.isFlyme() && (thick || thinChrome || extraThin || seatGap) && layer == 0) {
+            if ((!style.isFlyme() && (thick || thinChrome || extraThin || seatGap)) && layer == 0) {
                 RectF bounds = new RectF();
                 path.computeBounds(bounds, true);
-                paint.setShader(WidgetAppearance.chromeGradient(night, bounds.top, bounds.bottom));
+                chromeShader = WidgetAppearance.chromeGradient(night, bounds.top, bounds.bottom);
+                paint.setShader(chromeShader);
             }
+            if (wiperBlade) paint.setShader(chromeShader);
             if (seatGap) {
                 canvas.save();
                 canvas.clipOutRect(SEAT_GAP_LEFT, 73, SEAT_GAP_RIGHT, VIEWPORT);
             }
-            if (!waves && shape != Shape.WIPERS && shape != Shape.POWER_OFF
-                    && !(shape == Shape.REGEN && layer == 0)) {
+            if (wiperBlade || (!waves && !strokeOnly && !(shape == Shape.REGEN && layer == 0))) {
                 paint.setStyle(Paint.Style.FILL);
                 canvas.drawPath(path, paint);
             }
