@@ -956,4 +956,5 @@
     <string name="widgets_climate_icons_outline">Контурные</string>
     <string name="widgets_flyme_standard">Классика</string>
     <string name="widgets_flyme_filled">С заливкой</string>
+    <string name="widgets_overlay_vertical">Вертикальный формат 1×3</string>
 </resources>

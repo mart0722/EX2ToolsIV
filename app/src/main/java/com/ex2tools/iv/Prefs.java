@@ -863,6 +863,14 @@ public final class Prefs {
                 get(c).getInt("overlay_" + key + "_size_pct", 100)));
     }
 
+    public static boolean overlayVertical(Context c, String key) {
+        return get(c).getBoolean("overlay_vertical_" + key, false);
+    }
+
+    public static void setOverlayVertical(Context c, String key, boolean enabled) {
+        get(c).edit().putBoolean("overlay_vertical_" + key, enabled).apply();
+    }
+
     public static boolean overlayWideTemperature(Context c) {
         return get(c).getBoolean("overlay_adapt_climate_size", false);
     }

@@ -95,7 +95,8 @@ final class OverlayWidgetViews {
                 updateTemp(c, root);
                 break;
             case WidgetsCommon.SIZE_VENT:
-                updateVent(c, root);
+                if (root.findViewById(R.id.btn_vent_next) != null) updateVerticalVent(c, root);
+                else updateVent(c, root);
                 break;
             case WidgetsCommon.SIZE_VENT_FAN:
                 updateVentFan(c, root);
@@ -190,7 +191,7 @@ final class OverlayWidgetViews {
         if (WidgetsCommon.SIZE_HEATING.equals(key) && Prefs.heatingSingleRow(c)) {
             return WidgetGrid.layout(c, R.layout.widget_heating_single_row);
         }
-        return WidgetGrid.layout(c, WidgetCatalog.layout(key));
+        return WidgetGrid.layout(c, WidgetCatalog.overlayLayout(c, key));
     }
 
     private static void bindClicks(Context c, View root, String key) {
@@ -220,6 +221,12 @@ final class OverlayWidgetViews {
                 click(c, root, R.id.btn_temp_plus, WidgetsCommon.TEMP_PLUS);
                 break;
             case WidgetsCommon.SIZE_VENT:
+                if (root.findViewById(R.id.btn_vent_next) != null) {
+                    click(c, root, R.id.btn_vent_next, WidgetsCommon.VENT_NEXT);
+                    click(c, root, R.id.btn_vent_prev, WidgetsCommon.VENT_PREV);
+                    click(c, root, R.id.chip_recirc_v, WidgetsCommon.RECIRC_TOGGLE);
+                    break;
+                }
                 click(c, root, R.id.chip_vent_face, WidgetsCommon.VENT_FACE);
                 click(c, root, R.id.chip_vent_floor, WidgetsCommon.VENT_FLOOR);
                 click(c, root, R.id.chip_vent_windshield, WidgetsCommon.VENT_WINDSHIELD);
@@ -478,6 +485,24 @@ final class OverlayWidgetViews {
             int progress = Math.max(0, Math.min(15, Math.round(temp) - 17));
             ((ProgressBar) bar).setProgress(progress);
         }
+    }
+
+    private static void updateVerticalVent(Context c, View root) {
+        Integer vent = WidgetsCommon.readVent();
+        int mode = vent == null ? 1 : vent;
+        String key = WidgetsCommon.SIZE_VENT;
+        boolean transparent = OverlayBackground.isTransparent(c, key);
+        ClimateWidgetIcons icons = ClimateWidgetIcons.forOverlay(c, root, key);
+        icons.vent(R.id.img_vent_mode, mode, vent != null);
+        climateCaption(root, icons, R.id.chip_vent_current, root.findViewById(R.id.tv_vent_mode_label),
+                icons.ventModeCaption(mode));
+        root.findViewById(R.id.chip_vent_current).setBackgroundResource(icons.ventModeBackground(transparent, vent != null));
+        text(root, R.id.widget_title, c.getString(R.string.wg_vent_short));
+        controls(c, root, key, R.drawable.bg_wg_round, R.id.btn_vent_next, R.id.btn_vent_prev);
+        icons.recirculation(R.id.img_recirc_v);
+        visibility(root, R.id.chip_recirc_v, Prefs.showVentRecirc(c) ? View.VISIBLE : View.GONE);
+        ventChip(icons, root, transparent, R.id.chip_recirc_v, R.id.txt_recirc_v,
+                Boolean.TRUE.equals(WidgetsCommon.readRecirc()));
     }
 
     private static void updateVent(Context c, View root) {

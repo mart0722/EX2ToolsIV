@@ -989,7 +989,18 @@ public final class WidgetsFragment extends Fragment {
                     Prefs.overlayAlphaPct(context, selectedKey), false,
                     pct -> Prefs.setOverlayAlphaPct(context, selectedKey, pct), restart);
 
-            if (WidgetsCommon.SIZE_TEMP.equals(key)) {
+            if (WidgetCatalog.verticalLayout(selectedKey) != 0) {
+                FlymeSwitchRow vertical = new FlymeSwitchRow(context);
+                vertical.setText(getString(R.string.widgets_overlay_vertical));
+                vertical.setChecked(Prefs.overlayVertical(context, selectedKey));
+                vertical.setOnCheckedChangeListener((button, checked) -> {
+                    Prefs.setOverlayVertical(context, selectedKey, checked);
+                    configure(selectedKey);
+                    restart.run();
+                });
+                options.addView(vertical);
+            }
+            if (WidgetsCommon.SIZE_TEMP.equals(key) && !Prefs.overlayVertical(context, key)) {
                 FlymeSwitchRow wide = new FlymeSwitchRow(context);
                 wide.setText(getString(R.string.widgets_overlay_wide_temperature));
                 wide.setChecked(Prefs.overlayWideTemperature(context));

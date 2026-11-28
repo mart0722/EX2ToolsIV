@@ -341,7 +341,8 @@ public final class OverlayWidgetService extends Service {
             boolean largeSpeed = speed && Prefs.overlaySpeedCells(this) > 2;
             boolean apps = WidgetsCommon.SIZE_APPS.equals(spec.key);
             boolean glass = WidgetAppearance.usesGlass(this);
-            Size base = glass ? tileSize(spec) : apps ? AppsOverlay.sizeDp(this) : legacySize(spec);
+            boolean vertical = Prefs.overlayVertical(this, spec.key);
+            Size base = glass || vertical ? tileSize(spec) : apps ? AppsOverlay.sizeDp(this) : legacySize(spec);
             float scale;
             if (Prefs.widgetsGlobalSize(this)) {
                 scale = Prefs.overlayGlobalSizePct(this) / 100f;
@@ -363,7 +364,7 @@ public final class OverlayWidgetService extends Service {
                 height = base.getHeight() / WidgetGrid.UNIT_DP * tilePitch - gap;
                 scale = tilePitch / (WidgetGrid.UNIT_DP * density());
             } else {
-                if (glass || largeSpeed) {
+                if (glass || vertical || largeSpeed) {
                     scale = Math.min(scale, Math.min(maxWidth / (base.getWidth() * density()),
                             maxHeight / (base.getHeight() * density())));
                 }
@@ -392,7 +393,7 @@ public final class OverlayWidgetService extends Service {
             lp.gravity = Gravity.TOP | Gravity.START;
             lp.x = Prefs.overlayX(this, spec.key, spec.defaultX);
             lp.y = Prefs.overlayY(this, spec.key, spec.defaultY);
-            if (glass || apps || largeSpeed || WidgetsCommon.SIZE_REAL_RANGE.equals(spec.key)) {
+            if (glass || vertical || apps || largeSpeed || WidgetsCommon.SIZE_REAL_RANGE.equals(spec.key)) {
                 lp.x = Math.max(0, Math.min(metrics.widthPixels - width, lp.x));
                 lp.y = Math.max(0, Math.min(metrics.heightPixels - height, lp.y));
             }
@@ -464,7 +465,7 @@ public final class OverlayWidgetService extends Service {
             return WidgetGrid.cells(cells, cells);
         }
         return WidgetsCommon.SIZE_APPS.equals(spec.key)
-                ? AppsOverlay.sizeDp(this) : WidgetGrid.size(this, WidgetCatalog.layout(spec.key));
+                ? AppsOverlay.sizeDp(this) : WidgetGrid.size(this, WidgetCatalog.overlayLayout(this, spec.key));
     }
 
     private int resolveTilePitch() {
