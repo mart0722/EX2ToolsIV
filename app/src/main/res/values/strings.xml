@@ -954,4 +954,6 @@
     <string name="widgets_card_border">Показывать рамку виджета</string>
     <string name="widgets_button_border">Показывать рамки кнопок</string>
     <string name="widgets_climate_icons_outline">Контурные</string>
+    <string name="widgets_flyme_standard">Стандартные</string>
+    <string name="widgets_flyme_filled">С заливкой</string>
 </resources>

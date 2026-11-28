@@ -10,4 +10,9 @@
     <color name="wg_outline_heat">#FFAF7F</color>
     <color name="wg_outline_green">#82DDB4</color>
     <color name="wg_outline_red">#FFA3B3</color>
+    <color name="wg_flyme_edge">#414957</color>
+    <color name="wg_flyme_air">#486DA7</color>
+    <color name="wg_flyme_heat">#A94D35</color>
+    <color name="wg_flyme_green">#35664D</color>
+    <color name="wg_flyme_red">#874456</color>
 </resources>

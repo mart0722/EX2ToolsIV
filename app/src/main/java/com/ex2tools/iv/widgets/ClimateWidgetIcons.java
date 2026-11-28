@@ -111,7 +111,7 @@ final class ClimateWidgetIcons {
         night = (resources.getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK)
                 == Configuration.UI_MODE_NIGHT_YES;
         ink = c.getColor(R.color.wg_text);
-        neutral = style == Prefs.ClimateIconStyle.OUTLINE ? (night ? 0xFFFFFFFF : 0xFF000000)
+        neutral = style.isFlyme() ? (night ? 0xFFFFFFFF : 0xFF000000)
                 : c.getColor(R.color.wg_climate_neutral);
         amber = c.getColor(R.color.wg_climate_amber);
         blue = c.getColor(R.color.wg_climate_blue);
@@ -144,7 +144,7 @@ final class ClimateWidgetIcons {
     }
 
     int ventModeBackground(boolean transparent, boolean active) {
-        if (style == Prefs.ClimateIconStyle.OUTLINE) return active ? R.drawable.bg_wg_outline_air : R.drawable.bg_wg_outline_edge;
+        if (style.isFlyme()) return buttonBackground(false, active, false, true);
         return usesOutline() && !transparent && active
                 ? WidgetAppearance.buttonBackground(context, airflowBackground())
                 : android.R.color.transparent;
@@ -267,9 +267,12 @@ final class ClimateWidgetIcons {
     }
 
     int buttonBackground(boolean transparent, boolean active, boolean pending, boolean airflow) {
-        if (style == Prefs.ClimateIconStyle.OUTLINE) {
-            if (active) return airflow ? R.drawable.bg_wg_outline_air : R.drawable.bg_wg_outline_heat;
-            return pending ? R.drawable.bg_wg_outline_pending : R.drawable.bg_wg_outline_edge;
+        if (style.isFlyme()) {
+            if (active) return airflow
+                    ? WidgetAppearance.flymeSurface(context, R.drawable.bg_wg_outline_air, R.drawable.bg_wg_flyme_air)
+                    : WidgetAppearance.flymeSurface(context, R.drawable.bg_wg_outline_heat, R.drawable.bg_wg_flyme_heat);
+            return pending ? WidgetAppearance.flymeSurface(context, R.drawable.bg_wg_outline_pending, R.drawable.bg_wg_flyme_pending)
+                    : WidgetAppearance.flymeSurface(context, R.drawable.bg_wg_outline_edge, R.drawable.bg_wg_flyme_edge);
         }
         int surface = buttonSurface(transparent, active, pending, airflow);
         // Keep the pending indicator visible when there is no caption to show it.
@@ -278,7 +281,8 @@ final class ClimateWidgetIcons {
     }
 
     int standaloneButtonBackground(int chip, boolean active, boolean pending) {
-        if (style == Prefs.ClimateIconStyle.OUTLINE) {
+        if (style.isFlyme()) {
+            if (style == Prefs.ClimateIconStyle.FLYME_FILLED && !active && !pending) return 0;
             return buttonBackground(false, active, pending, chip == R.id.chip_recirc);
         }
         return active || pending ? buttonBackground(false, active, pending, false) : 0;
@@ -321,7 +325,7 @@ final class ClimateWidgetIcons {
         Object font = switch (style) {
             case STANDARD -> new StyleSpan(Typeface.BOLD);
             case EXTRA_THIN, CHROME_THIN -> new TypefaceSpan("sans-serif-light");
-            case OUTLINE, THIN -> new TypefaceSpan("sans-serif");
+            case FLYME_FILLED, OUTLINE, THIN -> new TypefaceSpan("sans-serif");
             case CHROME -> new TypefaceSpan("sans-serif-medium");
         };
         caption.setSpan(font, 0, caption.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -329,6 +333,7 @@ final class ClimateWidgetIcons {
     }
 
     int buttonTextColor(boolean active, boolean airflow) {
+        if (style == Prefs.ClimateIconStyle.FLYME_FILLED) return neutral;
         if (!active || !usesOutline()) return ink;
         return airflow ? airflowColor() : amber;
     }
@@ -394,7 +399,7 @@ final class ClimateWidgetIcons {
         if (chrome) {
             Paint metal = new Paint(Paint.ANTI_ALIAS_FLAG);
             metal.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
-            if (style == Prefs.ClimateIconStyle.THIN || style == Prefs.ClimateIconStyle.OUTLINE) metal.setColor(neutral);
+            if (style == Prefs.ClimateIconStyle.THIN || style.isFlyme()) metal.setColor(neutral);
             else metal.setShader(WidgetAppearance.chromeGradient(night, top, top + height));
             canvas.drawRect(0, 0, icon.getWidth(), icon.getHeight(), metal);
         }
@@ -449,7 +454,7 @@ final class ClimateWidgetIcons {
             paint.setShader(null);
             paint.setColor(active || (waves && level > 0) ? accent
                     : layer > 0 && (multiLevelHeat || shape == Shape.REGEN) ? inactiveHeat : neutral);
-            if (style == Prefs.ClimateIconStyle.OUTLINE) {
+            if (style.isFlyme()) {
                 paint.setColor(neutral);
                 if (layer > 0 && !active && (multiLevelHeat || shape == Shape.REGEN)) paint.setAlpha(85);
             }
@@ -464,7 +469,7 @@ final class ClimateWidgetIcons {
             paint.setStrokeWidth(width * FIGMA_TO_VIEWPORT);
 
             boolean seatGap = mark != null && layer == 0;
-            if (style != Prefs.ClimateIconStyle.OUTLINE && (thick || thinChrome || extraThin || seatGap) && layer == 0) {
+            if (!style.isFlyme() && (thick || thinChrome || extraThin || seatGap) && layer == 0) {
                 RectF bounds = new RectF();
                 path.computeBounds(bounds, true);
                 paint.setShader(WidgetAppearance.chromeGradient(night, bounds.top, bounds.bottom));

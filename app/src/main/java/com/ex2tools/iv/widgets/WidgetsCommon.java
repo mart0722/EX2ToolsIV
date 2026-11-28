@@ -584,7 +584,7 @@ public final class WidgetsCommon {
 
     public static int bgDrawableResForPct(Context c) {
         int pct = Math.round(Prefs.widgetBgOpacity(c) / 20f) * 20;
-        if (WidgetAppearance.outline(c)) return WidgetAppearance.cardBackground(c, WidgetAppearance.outlineCardResource(pct));
+        if (WidgetAppearance.flyme(c)) return WidgetAppearance.cardBackground(c, WidgetAppearance.outlineCardResource(pct));
         int resource = WidgetAppearance.usesGlass(c) ? WidgetAppearance.glassCardResource(pct)
                 : switch (pct) {
                     case 0 -> R.drawable.bg_wg_card_000;

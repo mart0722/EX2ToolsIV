@@ -112,6 +112,7 @@ public final class WidgetsFragment extends Fragment {
     private View overlayNeighborHint;
     private FlymeSegmentedGroup climateIconStyle;
     private FlymeSegmentedGroup chromeIconWeight;
+    private FlymeSegmentedGroup flymeSurface;
     private FlymeSegmentedGroup ventMode;
     private FlymeSwitchRow ventShowRecirc;
     private View glassScaleControls;
@@ -181,6 +182,7 @@ public final class WidgetsFragment extends Fragment {
         overlayPlacement = view.findViewById(R.id.widgetOverlayPlacement);
         overlayNeighborHint = view.findViewById(R.id.widgetOverlayNeighborHint);
         climateIconStyle = view.findViewById(R.id.widgetClimateIconStyle);
+        flymeSurface = view.findViewById(R.id.widgetFlymeSurface);
         chromeIconWeight = view.findViewById(R.id.widgetClimateIconChromeWeight);
         widgetCardBorder = view.findViewById(R.id.widgetCardBorder);
         widgetButtonBorder = view.findViewById(R.id.widgetButtonBorder);
@@ -230,11 +232,16 @@ public final class WidgetsFragment extends Fragment {
             Context context = requireContext();
             Prefs.ClimateIconStyle style;
             if (checkedId == R.id.widgetClimateIconStandard) style = Prefs.ClimateIconStyle.STANDARD;
-            else if (checkedId == R.id.widgetClimateIconOutline) style = Prefs.ClimateIconStyle.OUTLINE;
+            else if (checkedId == R.id.widgetClimateIconOutline) style = Prefs.preferredFlymeStyle(context);
             else if (checkedId == R.id.widgetClimateIconThin) style = Prefs.ClimateIconStyle.THIN;
             else if (checkedId == R.id.widgetClimateIconChrome) style = Prefs.preferredChromeIconStyle(context);
             else return;
             applyClimateIconStyle(context, style);
+        });
+        flymeSurface.addOnButtonCheckedListener((group, checkedId, checked) -> {
+            if (binding || !checked || !Prefs.climateIconStyle(requireContext()).isFlyme()) return;
+            applyClimateIconStyle(requireContext(), checkedId == R.id.widgetFlymeOutlined
+                    ? Prefs.ClimateIconStyle.OUTLINE : Prefs.ClimateIconStyle.FLYME_FILLED);
         });
         chromeIconWeight.addOnButtonCheckedListener((group, checkedId, checked) -> {
             if (binding || !checked) return;
@@ -552,13 +559,16 @@ public final class WidgetsFragment extends Fragment {
     private void updateAppearanceControls(Context c) {
         Prefs.ClimateIconStyle style = Prefs.climateIconStyle(c);
         TextView speedColorDefault = speedColorGroup.findViewById(R.id.widgetSpeedColorWhite);
-        speedColorDefault.setText(style == Prefs.ClimateIconStyle.OUTLINE ? R.string.widget_clock_color_auto : style.isChrome()
+        speedColorDefault.setText(style.isFlyme() ? R.string.widget_clock_color_auto : style.isChrome()
                 ? R.string.widgets_speed_color_chrome : R.string.widgets_speed_color_white);
         widgetAccentBoost.setVisibility(View.VISIBLE);
         boolean global = Prefs.widgetsGlobalSize(c);
         boolean wasBinding = binding;
         binding = true;
         widgetButtonBorder.setEnabled(style != Prefs.ClimateIconStyle.OUTLINE);
+        flymeSurface.setVisibility(style.isFlyme() ? View.VISIBLE : View.GONE);
+        if (style.isFlyme()) flymeSurface.check(style == Prefs.ClimateIconStyle.OUTLINE
+                ? R.id.widgetFlymeOutlined : R.id.widgetFlymeFilled);
         chromeIconWeight.setVisibility(style.isChrome() ? View.VISIBLE : View.GONE);
         if (style.isChrome()) {
             chromeIconWeight.check(style == Prefs.ClimateIconStyle.CHROME
@@ -1067,7 +1077,7 @@ public final class WidgetsFragment extends Fragment {
         updateNeighborHint(placement);
         climateIconStyle.check(switch (Prefs.climateIconStyle(c)) {
             case STANDARD -> R.id.widgetClimateIconStandard;
-            case OUTLINE -> R.id.widgetClimateIconOutline;
+            case OUTLINE, FLYME_FILLED -> R.id.widgetClimateIconOutline;
             case THIN, EXTRA_THIN -> R.id.widgetClimateIconThin;
             case CHROME, CHROME_THIN -> R.id.widgetClimateIconChrome;
         });

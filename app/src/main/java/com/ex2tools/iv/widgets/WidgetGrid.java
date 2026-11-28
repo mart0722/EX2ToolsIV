@@ -27,7 +27,7 @@ final class WidgetGrid {
     private WidgetGrid() {}
 
     static int layout(Context context, int original) {
-        if (WidgetAppearance.outline(context)) {
+        if (WidgetAppearance.flyme(context)) {
             if (original == R.layout.widget_hvac_direction_vertical) return R.layout.widget_outline_vent_vertical;
             if (original == R.layout.widget_temperature) return R.layout.widget_outline_temperature;
             if (original == R.layout.widget_fan_speed) return R.layout.widget_outline_fan_speed;

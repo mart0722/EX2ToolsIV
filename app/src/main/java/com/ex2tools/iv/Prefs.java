@@ -629,7 +629,11 @@ public final class Prefs {
     }
 
     public enum ClimateIconStyle {
-        STANDARD, THIN, EXTRA_THIN, CHROME_THIN, CHROME, OUTLINE;
+        STANDARD, THIN, EXTRA_THIN, CHROME_THIN, CHROME, OUTLINE, FLYME_FILLED;
+
+        public boolean isFlyme() {
+            return this == OUTLINE || this == FLYME_FILLED;
+        }
 
         public boolean isChrome() {
             return this == CHROME || this == CHROME_THIN;
@@ -639,6 +643,7 @@ public final class Prefs {
     public static ClimateIconStyle climateIconStyle(Context c) {
         SharedPreferences prefs = get(c);
         return switch (prefs.getString("climate_icon_style", "")) {
+            case "FLYME_FILLED" -> ClimateIconStyle.FLYME_FILLED;
             case "OUTLINE" -> ClimateIconStyle.OUTLINE;
             case "STANDARD" -> ClimateIconStyle.STANDARD;
             case "THIN" -> ClimateIconStyle.THIN;
@@ -649,6 +654,11 @@ public final class Prefs {
             case "CHROME" -> ClimateIconStyle.CHROME;
             default -> ClimateIconStyle.STANDARD;
         };
+    }
+
+    public static ClimateIconStyle preferredFlymeStyle(Context c) {
+        return get(c).getBoolean("widget_flyme_outline", climateIconStyle(c) == ClimateIconStyle.OUTLINE)
+                ? ClimateIconStyle.OUTLINE : ClimateIconStyle.FLYME_FILLED;
     }
 
     public static ClimateIconStyle preferredChromeIconStyle(Context c) {
@@ -662,8 +672,10 @@ public final class Prefs {
         boolean boldChrome = style.isChrome()
                 ? style == ClimateIconStyle.CHROME
                 : preferredChromeIconStyle(c) == ClimateIconStyle.CHROME;
-        prefs.edit()
-                .putString("climate_icon_style", style.name())
+        SharedPreferences.Editor editor = prefs.edit();
+        ClimateIconStyle flymeStyle = style.isFlyme() ? style : preferredFlymeStyle(c);
+        editor.putBoolean("widget_flyme_outline", flymeStyle == ClimateIconStyle.OUTLINE);
+        editor.putString("climate_icon_style", style.name())
                 .putBoolean("climate_icon_chrome_bold", boldChrome)
                 .apply();
     }
